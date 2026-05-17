@@ -3,6 +3,7 @@ import { Command } from "commander";
 import { loginCommand } from "./commands/login";
 import { whoamiCommand } from "./commands/whoami";
 import { scanOpenClawCommand } from "./commands/scanOpenClaw";
+import { connectCommand } from "./commands/connect";
 import { getCliConfigPath, loadCliConfig } from "./services/cliConfig";
 
 const program = new Command();
@@ -35,6 +36,16 @@ scanCommand
   .option("--local-only", "Scan locally without upload", false)
   .action(async (options) => {
     await scanOpenClawCommand(options);
+  });
+
+program
+  .command("connect")
+  .description("One-command OpenClaw connect flow: login, scan, and upload")
+  .option("--path <path>", "Path to scan")
+  .option("--local-only", "Scan locally without upload", false)
+  .option("-y, --yes", "Auto-upload detected drafts without confirmation", false)
+  .action(async (options) => {
+    await connectCommand(options);
   });
 
 program

@@ -1,0 +1,60 @@
+import axios from "axios";
+import prompts from "prompts";
+import { loadCliConfig, saveToken } from "../services/cliConfig";
+import { scanOpenClawCommand } from "./scanOpenClaw";
+
+interface ConnectOptions {
+  path?: string;
+  localOnly?: boolean;
+  yes?: boolean;
+}
+
+async function ensureAuthenticated(localOnly = false) {
+  if (localOnly) {
+    return;
+  }
+
+  const config = loadCliConfig();
+  if (config.token) {
+    return;
+  }
+
+  console.log("Connect requires login to upload drafts.\n");
+  const response = await prompts([
+    { type: "text", name: "email", message: "Email" },
+    { type: "password", name: "password", message: "Password" }
+  ]);
+
+  if (!response.email || !response.password) {
+    console.error("Login cancelled");
+    process.exit(1);
+  }
+
+  const result = await axios.post(`${config.apiUrl}/auth/login`, {
+    email: response.email,
+    password: response.password
+  });
+
+  saveToken(result.data.token);
+  console.log(`Logged in as ${result.data.user.email}`);
+}
+
+export async function connectCommand(options: ConnectOptions) {
+  console.log("Connecting OpenClaw to Chaturbo...\n");
+
+  try {
+    await ensureAuthenticated(Boolean(options.localOnly));
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error(error.response?.data?.error || "Login failed");
+      process.exit(1);
+    }
+    throw error;
+  }
+
+  await scanOpenClawCommand({
+    path: options.path,
+    localOnly: options.localOnly,
+    autoUpload: Boolean(options.yes)
+  });
+}

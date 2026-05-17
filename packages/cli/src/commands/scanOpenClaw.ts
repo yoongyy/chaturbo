@@ -8,6 +8,7 @@ import { uploadDrafts } from "../services/draftUploader";
 interface ScanOptions {
   path?: string;
   localOnly?: boolean;
+  autoUpload?: boolean;
 }
 
 function printDraftSummary(drafts: ReturnType<typeof extractWorkflowDrafts>) {
@@ -56,18 +57,24 @@ export async function scanOpenClawCommand(options: ScanOptions) {
   }
 
   if (!config.token) {
-    console.error("Not logged in. Run: chaturbo login");
+    console.error("Not logged in. Run: chaturbo connect or chaturbo login");
     process.exit(1);
   }
 
-  const answer = await prompts({
-    type: "confirm",
-    name: "upload",
-    message: "Upload sanitized workflow drafts to Chaturbo?",
-    initial: true
-  });
+  let shouldUpload = options.autoUpload === true;
 
-  if (!answer.upload) {
+  if (!shouldUpload) {
+    const answer = await prompts({
+      type: "confirm",
+      name: "upload",
+      message: "Upload sanitized workflow drafts to Chaturbo?",
+      initial: true
+    });
+
+    shouldUpload = Boolean(answer.upload);
+  }
+
+  if (!shouldUpload) {
     console.log("Upload skipped.");
     return;
   }

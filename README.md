@@ -79,7 +79,15 @@ npm link --workspace chaturbo
 chaturbo login
 ```
 
-## 7. Run scan command
+## 7. Fast connect (recommended)
+
+```bash
+chaturbo connect --path ./sample-openclaw-logs
+```
+
+This one command handles login/session, OpenClaw scan, and upload flow.
+
+## 8. Run scan command (manual mode)
 
 ```bash
 chaturbo scan openclaw --path ./sample-openclaw-logs
@@ -92,7 +100,7 @@ chaturbo scan openclaw --local-only
 chaturbo scan openclaw --path ./sample-openclaw-logs --local-only
 ```
 
-## 8. Review drafts in dashboard
+## 9. Review drafts in dashboard
 
 Visit:
 
