@@ -99,9 +99,10 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md items-center px-4">
+    <main className="mx-auto max-w-md px-4 py-12 md:py-16">
       <form onSubmit={onSubmit} className="card w-full space-y-4 p-6">
         <h1 className="text-2xl font-semibold">Create account</h1>
+        <p className="text-sm text-slate-600">Create your owner account and start publishing reusable AI workflows.</p>
         <div className="grid gap-2">
           <button
             type="button"
