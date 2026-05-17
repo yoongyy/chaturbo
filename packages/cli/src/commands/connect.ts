@@ -2,11 +2,13 @@ import axios from "axios";
 import prompts from "prompts";
 import { loadCliConfig, saveToken } from "../services/cliConfig";
 import { scanOpenClawCommand } from "./scanOpenClaw";
+import { pairAgentCommand } from "./pairAgent";
 
 interface ConnectOptions {
   path?: string;
   localOnly?: boolean;
   yes?: boolean;
+  skipPair?: boolean;
 }
 
 async function ensureAuthenticated(localOnly = false) {
@@ -50,6 +52,14 @@ export async function connectCommand(options: ConnectOptions) {
       process.exit(1);
     }
     throw error;
+  }
+
+  if (!options.localOnly && !options.skipPair) {
+    const config = loadCliConfig();
+    if (!config.ownerUid || !config.agentSecret) {
+      console.log("Pairing agent credentials for unattended sync...");
+      await pairAgentCommand("openclaw-agent");
+    }
   }
 
   await scanOpenClawCommand({

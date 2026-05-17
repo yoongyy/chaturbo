@@ -1,5 +1,6 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { z } from "zod";
 import { User } from "../models/User";
 import { sendError } from "../utils/http";
@@ -7,6 +8,7 @@ import { requireAuth } from "../middleware/auth";
 import { AuthenticatedRequest } from "../types";
 import { signJwt } from "../services/authService";
 import { getEnv } from "../config/env";
+import { AgentCredential } from "../models/AgentCredential";
 
 const router = Router();
 
@@ -34,7 +36,7 @@ router.post("/register", async (req, res) => {
 
   return res.status(201).json({
     token,
-    user: { id: user.id, email: user.email, name: user.name, credits: user.credits }
+    user: { id: user.id, email: user.email, name: user.name, credits: user.credits, ownerUid: user.ownerUid }
   });
 });
 
@@ -63,7 +65,7 @@ router.post("/login", async (req, res) => {
   const token = signJwt(user.id, user.email);
   return res.json({
     token,
-    user: { id: user.id, email: user.email, name: user.name, credits: user.credits }
+    user: { id: user.id, email: user.email, name: user.name, credits: user.credits, ownerUid: user.ownerUid }
   });
 });
 
@@ -203,7 +205,7 @@ router.post("/oauth/callback", async (req, res) => {
 
     return res.json({
       token,
-      user: { id: user.id, email: user.email, name: user.name, credits: user.credits }
+      user: { id: user.id, email: user.email, name: user.name, credits: user.credits, ownerUid: user.ownerUid }
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "OAuth login failed";
@@ -212,12 +214,68 @@ router.post("/oauth/callback", async (req, res) => {
 });
 
 router.get("/me", requireAuth, async (req: AuthenticatedRequest, res) => {
-  const user = await User.findById(req.user?.userId).select("email name credits createdAt updatedAt");
+  const user = await User.findById(req.user?.userId).select("email name credits ownerUid createdAt updatedAt");
   if (!user) {
     return sendError(res, 404, "User not found");
   }
 
   return res.json({ user });
+});
+
+const pairAgentSchema = z.object({
+  name: z.string().min(1).max(80).default("openclaw-agent")
+});
+
+router.post("/agent/pair", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const parsed = pairAgentSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return sendError(res, 400, "Invalid payload");
+  }
+
+  const owner = await User.findById(req.user?.userId);
+  if (!owner) {
+    return sendError(res, 404, "User not found");
+  }
+
+  const rawSecret = `cs_${crypto.randomBytes(24).toString("base64url")}`;
+  const secretHash = await bcrypt.hash(rawSecret, 10);
+
+  const credential = await AgentCredential.create({
+    ownerId: owner._id,
+    ownerUid: owner.ownerUid,
+    name: parsed.data.name,
+    secretHash,
+    active: true
+  });
+
+  return res.status(201).json({
+    agent: {
+      id: credential.id,
+      name: credential.name,
+      ownerUid: owner.ownerUid,
+      createdAt: credential.createdAt
+    },
+    credentials: {
+      ownerUid: owner.ownerUid,
+      agentSecret: rawSecret
+    }
+  });
+});
+
+router.get("/agent/credentials", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const owner = await User.findById(req.user?.userId).select("ownerUid");
+  if (!owner) {
+    return sendError(res, 404, "User not found");
+  }
+
+  const credentials = await AgentCredential.find({ ownerId: owner._id })
+    .select("name active lastUsedAt createdAt updatedAt")
+    .sort({ createdAt: -1 });
+
+  return res.json({
+    ownerUid: owner.ownerUid,
+    credentials
+  });
 });
 
 export default router;

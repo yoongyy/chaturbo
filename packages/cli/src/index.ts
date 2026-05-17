@@ -4,6 +4,8 @@ import { loginCommand } from "./commands/login";
 import { whoamiCommand } from "./commands/whoami";
 import { scanOpenClawCommand } from "./commands/scanOpenClaw";
 import { connectCommand } from "./commands/connect";
+import { pairAgentCommand } from "./commands/pairAgent";
+import { syncOpenClawCommand } from "./commands/syncOpenClaw";
 import { getCliConfigPath, loadCliConfig } from "./services/cliConfig";
 
 const program = new Command();
@@ -44,8 +46,25 @@ program
   .option("--path <path>", "Path to scan")
   .option("--local-only", "Scan locally without upload", false)
   .option("-y, --yes", "Auto-upload detected drafts without confirmation", false)
+  .option("--skip-pair", "Skip pairing unattended agent credentials", false)
   .action(async (options) => {
     await connectCommand(options);
+  });
+
+program
+  .command("pair")
+  .description("Create and store ownerUid + agentSecret for unattended OpenClaw sync")
+  .option("--name <name>", "Credential name", "openclaw-agent")
+  .action(async (options) => {
+    await pairAgentCommand(options.name);
+  });
+
+program
+  .command("sync")
+  .description("Non-interactive scan + upload for cron jobs")
+  .option("--path <path>", "Path to scan")
+  .action(async (options) => {
+    await syncOpenClawCommand(options);
   });
 
 program
@@ -54,7 +73,17 @@ program
   .action(() => {
     const config = loadCliConfig();
     console.log(`Config file: ${getCliConfigPath()}`);
-    console.log(JSON.stringify({ ...config, token: config.token ? "[REDACTED_TOKEN]" : undefined }, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          ...config,
+          token: config.token ? "[REDACTED_TOKEN]" : undefined,
+          agentSecret: config.agentSecret ? "[REDACTED_SECRET]" : undefined
+        },
+        null,
+        2
+      )
+    );
   });
 
 program.parseAsync(process.argv).catch((err) => {

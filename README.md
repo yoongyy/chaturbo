@@ -54,7 +54,8 @@ npm run dev:api
 API routes include:
 
 - Auth: `POST /auth/register`, `POST /auth/login`, `GET /auth/me`
-- Scan: `POST /scan/upload-drafts` (JWT)
+- Agent credentials: `POST /auth/agent/pair`, `GET /auth/agent/credentials`
+- Scan: `POST /scan/upload-drafts` (JWT or agent credentials)
 - Drafts: `GET /workflow-drafts`, `GET /workflow-drafts/:id`, `POST /workflow-drafts/:id/publish`, `POST /workflow-drafts/:id/reject`, `DELETE /workflow-drafts/:id` (JWT)
 - Workflows: `GET /workflows`, `GET /workflows/:id`, `POST /workflows/search`, `POST /workflows/:id/preflight-check`
 
@@ -85,9 +86,32 @@ chaturbo login
 chaturbo connect --path ./sample-openclaw-logs
 ```
 
-This one command handles login/session, OpenClaw scan, and upload flow.
+This one command handles login/session, OpenClaw scan, draft upload flow, and pairs unattended agent credentials.
 
-## 8. Run scan command (manual mode)
+## 8. Pair once for scheduled sync
+
+```bash
+chaturbo pair
+```
+
+This stores:
+
+- `ownerUid` (unique owner/account identifier)
+- `agentSecret` (shared secret for non-interactive sync)
+
+## 9. Run unattended sync (cron/task scheduler)
+
+```bash
+chaturbo sync
+```
+
+Example hourly cron (macOS/Linux):
+
+```bash
+0 * * * * /bin/zsh -lc "chaturbo sync"
+```
+
+## 10. Run scan command (manual mode)
 
 ```bash
 chaturbo scan openclaw --path ./sample-openclaw-logs
@@ -100,7 +124,7 @@ chaturbo scan openclaw --local-only
 chaturbo scan openclaw --path ./sample-openclaw-logs --local-only
 ```
 
-## 9. Review drafts in dashboard
+## 11. Review drafts in dashboard
 
 Visit:
 

@@ -5,6 +5,8 @@ import os from "os";
 interface CliConfig {
   apiUrl: string;
   token?: string;
+  ownerUid?: string;
+  agentSecret?: string;
 }
 
 const defaultApiUrl = process.env.CHATURBO_API_URL || "http://localhost:4000";
@@ -45,5 +47,12 @@ export function saveCliConfig(config: CliConfig) {
 export function saveToken(token: string) {
   const config = loadCliConfig();
   config.token = token;
+  saveCliConfig(config);
+}
+
+export function saveAgentCredentials(ownerUid: string, agentSecret: string) {
+  const config = loadCliConfig();
+  config.ownerUid = ownerUid;
+  config.agentSecret = agentSecret;
   saveCliConfig(config);
 }

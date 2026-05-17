@@ -1,14 +1,26 @@
 import axios from "axios";
 import { WorkflowDraftPayload } from "../types";
 
-export async function uploadDrafts(apiUrl: string, token: string, drafts: WorkflowDraftPayload[]) {
+interface UploadAuth {
+  token?: string;
+  ownerUid?: string;
+  agentSecret?: string;
+}
+
+export async function uploadDrafts(apiUrl: string, auth: UploadAuth, drafts: WorkflowDraftPayload[]) {
+  const headers: Record<string, string> = {};
+  if (auth.token) {
+    headers.Authorization = `Bearer ${auth.token}`;
+  } else if (auth.ownerUid && auth.agentSecret) {
+    headers["x-chaturbo-owner-id"] = auth.ownerUid;
+    headers["x-chaturbo-agent-secret"] = auth.agentSecret;
+  }
+
   const response = await axios.post(
     `${apiUrl}/scan/upload-drafts`,
     { drafts },
     {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      headers
     }
   );
 

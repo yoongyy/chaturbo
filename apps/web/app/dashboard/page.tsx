@@ -13,6 +13,12 @@ const connectCommands: Record<OsTab, string> = {
   windows: "chaturbo connect"
 };
 
+const cronExamples: Record<OsTab, string> = {
+  macos: '0 * * * * /bin/zsh -lc "chaturbo sync"',
+  linux: '0 * * * * /bin/bash -lc "chaturbo sync"',
+  windows: 'schtasks /Create /SC HOURLY /TN ChaturboSync /TR "chaturbo sync"'
+};
+
 export default function DashboardPage() {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [error, setError] = useState("");
@@ -84,14 +90,15 @@ export default function DashboardPage() {
             <p className="text-sm font-semibold text-slate-800">First-time owner flow</p>
             <div className="mt-2 space-y-1 text-sm text-slate-700">
               <p>1. Install OpenClaw and complete at least one task so logs exist.</p>
-              <p>2. Install Chaturbo CLI once (if command is not found).</p>
-              <p>3. Run one command: <span className="font-mono font-semibold">chaturbo connect</span></p>
-              <p>4. Review detected drafts and publish selected workflows.</p>
+              <p>2. Install Chaturbo CLI once.</p>
+              <p>3. Run: <span className="font-mono font-semibold">chaturbo connect</span></p>
+              <p>4. Run once: <span className="font-mono font-semibold">chaturbo pair</span></p>
+              <p>5. Add cron/task scheduler using: <span className="font-mono font-semibold">chaturbo sync</span></p>
             </div>
-            <p className="mt-3 text-xs text-slate-500">
-              If <span className="font-mono">chaturbo</span> is not found in this MVP repo setup, run:
-              <span className="ml-1 font-mono">npm run build --workspace chaturbo && npm link --workspace chaturbo</span>
-            </p>
+            <div className="mt-3 rounded-xl bg-white p-3 text-xs text-slate-600">
+              <p className="font-semibold text-slate-700">CLI install (local repo MVP)</p>
+              <p className="mt-1 font-mono">npm run build --workspace chaturbo && npm link --workspace chaturbo</p>
+            </div>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -119,6 +126,10 @@ export default function DashboardPage() {
             <div className="mt-3 rounded-xl bg-[#10171c] p-3">
               <p className="text-xs text-slate-300">Terminal command</p>
               <p className="mt-1 font-mono text-sm text-emerald-300">{connectCommands[activeOs]}</p>
+            </div>
+            <div className="mt-3 rounded-xl bg-slate-100 p-3">
+              <p className="text-xs text-slate-600">Hourly automation example</p>
+              <p className="mt-1 font-mono text-xs text-slate-700">{cronExamples[activeOs]}</p>
             </div>
 
             <div className="mt-3 flex flex-wrap gap-2">

@@ -9,6 +9,7 @@ interface ScanOptions {
   path?: string;
   localOnly?: boolean;
   autoUpload?: boolean;
+  nonInteractive?: boolean;
 }
 
 function printDraftSummary(drafts: ReturnType<typeof extractWorkflowDrafts>) {
@@ -56,14 +57,17 @@ export async function scanOpenClawCommand(options: ScanOptions) {
     return;
   }
 
-  if (!config.token) {
-    console.error("Not logged in. Run: chaturbo connect or chaturbo login");
+  const hasToken = Boolean(config.token);
+  const hasAgentCredentials = Boolean(config.ownerUid && config.agentSecret);
+
+  if (!hasToken && !hasAgentCredentials) {
+    console.error("No auth credentials found. Run: chaturbo connect");
     process.exit(1);
   }
 
   let shouldUpload = options.autoUpload === true;
 
-  if (!shouldUpload) {
+  if (!shouldUpload && !options.nonInteractive) {
     const answer = await prompts({
       type: "confirm",
       name: "upload",
@@ -79,7 +83,13 @@ export async function scanOpenClawCommand(options: ScanOptions) {
     return;
   }
 
-  const result = await uploadDrafts(config.apiUrl, config.token, drafts);
+  const result = await uploadDrafts(
+    config.apiUrl,
+    hasToken
+      ? { token: config.token }
+      : { ownerUid: config.ownerUid, agentSecret: config.agentSecret },
+    drafts
+  );
   console.log(`Uploaded ${result.drafts.length} draft(s).`);
   console.log("Dashboard summary:");
   console.log(JSON.stringify(result.summary, null, 2));

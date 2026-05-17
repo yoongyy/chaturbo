@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { requireAuth } from "../middleware/auth";
+import { requireIngestionAuth } from "../middleware/ingestionAuth";
 import { AuthenticatedRequest } from "../types";
 import { WorkflowDraft } from "../models/WorkflowDraft";
 import { sendError } from "../utils/http";
@@ -64,7 +64,7 @@ const uploadSchema = z.object({
   drafts: z.array(draftSchema).min(1)
 });
 
-router.post("/upload-drafts", requireAuth, async (req: AuthenticatedRequest, res) => {
+router.post("/upload-drafts", requireIngestionAuth, async (req: AuthenticatedRequest, res) => {
   const parsed = uploadSchema.safeParse(req.body);
   if (!parsed.success) {
     return sendError(res, 400, "Invalid draft payload");
