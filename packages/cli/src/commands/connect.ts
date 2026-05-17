@@ -1,6 +1,6 @@
 import axios from "axios";
 import prompts from "prompts";
-import { loadCliConfig, saveToken } from "../services/cliConfig";
+import { loadCliConfig, saveAgentCredentials, saveApiUrl, saveToken } from "../services/cliConfig";
 import { scanOpenClawCommand } from "./scanOpenClaw";
 import { pairAgentCommand } from "./pairAgent";
 
@@ -9,6 +9,9 @@ interface ConnectOptions {
   localOnly?: boolean;
   yes?: boolean;
   skipPair?: boolean;
+  ownerId?: string;
+  agentSecret?: string;
+  apiUrl?: string;
 }
 
 async function ensureAuthenticated(localOnly = false) {
@@ -44,8 +47,20 @@ async function ensureAuthenticated(localOnly = false) {
 export async function connectCommand(options: ConnectOptions) {
   console.log("Connecting OpenClaw to Chaturbo...\n");
 
+  if (options.apiUrl) {
+    saveApiUrl(options.apiUrl);
+  }
+
+  if (options.ownerId && options.agentSecret) {
+    saveAgentCredentials(options.ownerId, options.agentSecret);
+  }
+
+  const hasDirectAgentCredentials = Boolean(options.ownerId && options.agentSecret);
+
   try {
-    await ensureAuthenticated(Boolean(options.localOnly));
+    if (!hasDirectAgentCredentials) {
+      await ensureAuthenticated(Boolean(options.localOnly));
+    }
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.error(error.response?.data?.error || "Login failed");
@@ -65,6 +80,7 @@ export async function connectCommand(options: ConnectOptions) {
   await scanOpenClawCommand({
     path: options.path,
     localOnly: options.localOnly,
-    autoUpload: Boolean(options.yes)
+    autoUpload: Boolean(options.yes || hasDirectAgentCredentials),
+    nonInteractive: Boolean(hasDirectAgentCredentials)
   });
 }

@@ -42,11 +42,14 @@ scanCommand
 
 program
   .command("connect")
-  .description("One-command OpenClaw connect flow: login, scan, and upload")
+  .description("One-command OpenClaw connect flow: login/pair or owner-secret connect, scan, and upload")
   .option("--path <path>", "Path to scan")
   .option("--local-only", "Scan locally without upload", false)
   .option("-y, --yes", "Auto-upload detected drafts without confirmation", false)
   .option("--skip-pair", "Skip pairing unattended agent credentials", false)
+  .option("--owner-id <ownerId>", "Owner UID from dashboard machine credentials")
+  .option("--agent-secret <agentSecret>", "Agent secret from dashboard machine credentials")
+  .option("--api-url <apiUrl>", "Override API URL for this machine")
   .action(async (options) => {
     await connectCommand(options);
   });

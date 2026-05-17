@@ -35,7 +35,9 @@ export function loadCliConfig(): CliConfig {
   const parsed = JSON.parse(raw) as CliConfig;
   return {
     apiUrl: process.env.CHATURBO_API_URL || parsed.apiUrl || defaultApiUrl,
-    token: parsed.token
+    token: parsed.token,
+    ownerUid: parsed.ownerUid,
+    agentSecret: parsed.agentSecret
   };
 }
 
@@ -54,5 +56,11 @@ export function saveAgentCredentials(ownerUid: string, agentSecret: string) {
   const config = loadCliConfig();
   config.ownerUid = ownerUid;
   config.agentSecret = agentSecret;
+  saveCliConfig(config);
+}
+
+export function saveApiUrl(apiUrl: string) {
+  const config = loadCliConfig();
+  config.apiUrl = apiUrl;
   saveCliConfig(config);
 }

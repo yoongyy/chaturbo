@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { apiRequest } from "../../lib/api";
+import { API_URL, apiRequest } from "../../lib/api";
 import { Draft } from "../../lib/types";
 import StatCard from "../../components/StatCard";
 
@@ -25,6 +25,9 @@ export default function DashboardPage() {
   const [loadingDrafts, setLoadingDrafts] = useState(false);
   const [activeOs, setActiveOs] = useState<OsTab>("macos");
   const [copyMessage, setCopyMessage] = useState("");
+  const [ownerUid, setOwnerUid] = useState("");
+  const [agentSecret, setAgentSecret] = useState("");
+  const [pairing, setPairing] = useState(false);
 
   async function loadDrafts() {
     setLoadingDrafts(true);
@@ -41,6 +44,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadDrafts();
+    apiRequest<{ user: { ownerUid?: string } }>("/auth/me", {}, true)
+      .then((res) => setOwnerUid(res.user.ownerUid || ""))
+      .catch(() => {});
   }, []);
 
   const stats = useMemo(() => {
@@ -53,6 +59,10 @@ export default function DashboardPage() {
     const hours = drafts.reduce((s, d) => s + d.estimates.timeSpentHours, 0);
     return { detected, ready, cleanup, revenueLow, revenueHigh, tokenCost, hours };
   }, [drafts]);
+
+  const quickConnectCommand = ownerUid && agentSecret
+    ? `npx -y chaturbo-cli@latest connect --api-url ${API_URL} --owner-id ${ownerUid} --agent-secret ${agentSecret}`
+    : "";
 
   return (
     <div className="space-y-6">
@@ -90,14 +100,38 @@ export default function DashboardPage() {
             <p className="text-sm font-semibold text-slate-800">First-time owner flow</p>
             <div className="mt-2 space-y-1 text-sm text-slate-700">
               <p>1. Install OpenClaw and complete at least one task so logs exist.</p>
-              <p>2. Install Chaturbo CLI once.</p>
-              <p>3. Run: <span className="font-mono font-semibold">chaturbo connect</span></p>
-              <p>4. Run once: <span className="font-mono font-semibold">chaturbo pair</span></p>
-              <p>5. Add cron/task scheduler using: <span className="font-mono font-semibold">chaturbo sync</span></p>
+              <p>2. Generate machine credentials from this page (owner UID + secret).</p>
+              <p>3. Copy one command and run it on the OpenClaw machine.</p>
+              <p>4. Add hourly/daily scheduler using <span className="font-mono font-semibold">chaturbo sync</span>.</p>
             </div>
             <div className="mt-3 rounded-xl bg-white p-3 text-xs text-slate-600">
-              <p className="font-semibold text-slate-700">CLI install (local repo MVP)</p>
-              <p className="mt-1 font-mono">npm run build --workspace chaturbo && npm link --workspace chaturbo</p>
+              <p className="font-semibold text-slate-700">Owner UID</p>
+              <p className="mt-1 font-mono">{ownerUid || "Loading..."}</p>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                disabled={pairing}
+                onClick={async () => {
+                  setPairing(true);
+                  setError("");
+                  try {
+                    const res = await apiRequest<{
+                      credentials: { ownerUid: string; agentSecret: string };
+                    }>("/auth/agent/pair", { method: "POST", body: JSON.stringify({ name: "openclaw-agent" }) }, true);
+                    setOwnerUid(res.credentials.ownerUid);
+                    setAgentSecret(res.credentials.agentSecret);
+                    setCopyMessage("Machine credentials generated. Copy command below.");
+                    setTimeout(() => setCopyMessage(""), 2500);
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "Failed to generate machine credentials");
+                  } finally {
+                    setPairing(false);
+                  }
+                }}
+                className="rounded-lg bg-ink px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {pairing ? "Generating..." : "Generate machine credentials"}
+              </button>
             </div>
           </div>
 
@@ -125,7 +159,9 @@ export default function DashboardPage() {
 
             <div className="mt-3 rounded-xl bg-[#10171c] p-3">
               <p className="text-xs text-slate-300">Terminal command</p>
-              <p className="mt-1 font-mono text-sm text-emerald-300">{connectCommands[activeOs]}</p>
+              <p className="mt-1 font-mono text-sm text-emerald-300">
+                {quickConnectCommand || "Generate machine credentials to get one-shot connect command"}
+              </p>
             </div>
             <div className="mt-3 rounded-xl bg-slate-100 p-3">
               <p className="text-xs text-slate-600">Hourly automation example</p>
@@ -134,16 +170,17 @@ export default function DashboardPage() {
 
             <div className="mt-3 flex flex-wrap gap-2">
               <button
+                disabled={!quickConnectCommand}
                 onClick={async () => {
                   try {
-                    await navigator.clipboard.writeText(connectCommands[activeOs]);
+                    await navigator.clipboard.writeText(quickConnectCommand);
                     setCopyMessage("Copied command");
                   } catch {
                     setCopyMessage("Copy failed. Select and copy manually.");
                   }
                   setTimeout(() => setCopyMessage(""), 1800);
                 }}
-                className="rounded-lg bg-mint px-3 py-2 text-sm font-medium text-white"
+                className="rounded-lg bg-mint px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
               >
                 Copy command
               </button>
