@@ -1,10 +1,17 @@
 import { NextFunction, Response } from "express";
 import jwt from "jsonwebtoken";
-import { env } from "../config/env";
+import { getEnv } from "../config/env";
 import { sendError } from "../utils/http";
 import { AuthenticatedRequest, AuthUser } from "../types";
 
 export function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  let env;
+  try {
+    env = getEnv();
+  } catch {
+    return sendError(res, 500, "Invalid server environment configuration");
+  }
+
   const authHeader = req.header("authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return sendError(res, 401, "Missing or invalid Authorization header");

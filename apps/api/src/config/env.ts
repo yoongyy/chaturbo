@@ -10,11 +10,27 @@ const schema = z.object({
   CORS_ORIGIN: z.string().default("http://localhost:3000")
 });
 
-const parsed = schema.safeParse(process.env);
+type Env = z.infer<typeof schema>;
 
-if (!parsed.success) {
-  console.error("Invalid environment variables", parsed.error.flatten().fieldErrors);
-  process.exit(1);
+let cachedEnv: Env | null = null;
+
+export function getEnv(): Env {
+  if (cachedEnv) {
+    return cachedEnv;
+  }
+
+  const parsed = schema.safeParse({
+    PORT: process.env.PORT,
+    MONGODB_URI: process.env.MONGODB_URI ?? process.env.MONGO_URI,
+    JWT_SECRET: process.env.JWT_SECRET,
+    CORS_ORIGIN: process.env.CORS_ORIGIN
+  });
+
+  if (!parsed.success) {
+    const fieldErrors = parsed.error.flatten().fieldErrors;
+    throw new Error(`Invalid environment variables: ${JSON.stringify(fieldErrors)}`);
+  }
+
+  cachedEnv = parsed.data;
+  return cachedEnv;
 }
-
-export const env = parsed.data;
