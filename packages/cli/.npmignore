@@ -1,0 +1,13 @@
+# Never publish source or local artifacts
+src/
+.env
+.env.*
+*.log
+coverage/
+node_modules/
+.npmrc
+
+# Optional local/editor files
+.DS_Store
+*.swp
+*.swo
