@@ -5,18 +5,42 @@ import { sendError } from "../utils/http";
 
 const router = Router();
 
+function toPublicWorkflow(workflow: any) {
+  return {
+    _id: workflow._id,
+    ownerId: workflow.ownerId,
+    draftId: workflow.draftId,
+    title: workflow.title,
+    slug: workflow.slug,
+    category: workflow.category,
+    summary: workflow.summary,
+    priceCredits: workflow.priceCredits,
+    previewContent: workflow.previewContent,
+    compatibility: workflow.compatibility,
+    stats: workflow.stats,
+    status: workflow.status,
+    createdAt: workflow.createdAt,
+    updatedAt: workflow.updatedAt
+  };
+}
+
 router.get("/", async (_req, res) => {
-  const workflows = await Workflow.find({ status: "published" }).sort({ createdAt: -1 });
-  return res.json({ workflows });
+  const workflows = await Workflow.find({ status: "published" })
+    .select("ownerId draftId title slug category summary priceCredits previewContent compatibility stats status createdAt updatedAt")
+    .sort({ createdAt: -1 })
+    .lean();
+  return res.json({ workflows: workflows.map(toPublicWorkflow) });
 });
 
 router.get("/:id", async (req, res) => {
-  const workflow = await Workflow.findOne({ _id: req.params.id, status: { $in: ["published", "unlisted"] } });
+  const workflow = await Workflow.findOne({ _id: req.params.id, status: { $in: ["published", "unlisted"] } })
+    .select("ownerId draftId title slug category summary priceCredits previewContent compatibility stats status createdAt updatedAt")
+    .lean();
   if (!workflow) {
     return sendError(res, 404, "Workflow not found");
   }
 
-  return res.json({ workflow });
+  return res.json({ workflow: toPublicWorkflow(workflow) });
 });
 
 const searchSchema = z.object({
@@ -54,8 +78,11 @@ router.post("/search", async (req, res) => {
     };
   }
 
-  const workflows = await Workflow.find(mongoQuery).sort({ createdAt: -1 });
-  return res.json({ workflows });
+  const workflows = await Workflow.find(mongoQuery)
+    .select("ownerId draftId title slug category summary priceCredits previewContent compatibility stats status createdAt updatedAt")
+    .sort({ createdAt: -1 })
+    .lean();
+  return res.json({ workflows: workflows.map(toPublicWorkflow) });
 });
 
 const preflightSchema = z.object({
