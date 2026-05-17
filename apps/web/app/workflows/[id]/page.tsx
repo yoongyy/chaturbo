@@ -8,16 +8,25 @@ import { apiRequest } from "../../../lib/api";
 import { Workflow } from "../../../lib/types";
 
 export default function PublicWorkflowDetailPage() {
+  const MAX_PROBLEM_PREVIEW_CHARS = 1000;
   const params = useParams<{ id: string }>();
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
+  const [showFullProblem, setShowFullProblem] = useState(false);
 
   useEffect(() => {
     apiRequest<{ workflow: Workflow }>(`/workflows/${params.id}`).then((res) => setWorkflow(res.workflow));
   }, [params.id]);
 
+  useEffect(() => {
+    setShowFullProblem(false);
+  }, [workflow?._id]);
+
   if (!workflow) return <main className="p-6">Loading workflow...</main>;
 
   const preview = workflow.previewContent;
+  const rawProblem = preview?.problemDescription || "Problem description available after publish validation.";
+  const problemTooLong = rawProblem.length > MAX_PROBLEM_PREVIEW_CHARS;
+  const shownProblem = showFullProblem ? rawProblem : rawProblem.slice(0, MAX_PROBLEM_PREVIEW_CHARS);
 
   return (
     <main className="mx-auto max-w-4xl space-y-4 px-4 py-8">
@@ -37,9 +46,23 @@ export default function PublicWorkflowDetailPage() {
         </div>
       </div>
 
-      <div className="card space-y-3 p-6">
+      <div className="card min-w-0 space-y-3 p-6">
         <h2 className="text-xl font-semibold">Problem</h2>
-        <p>{preview?.problemDescription || "Problem description available after publish validation."}</p>
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="text-sm leading-7 text-slate-700 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+            {shownProblem}
+            {!showFullProblem && problemTooLong ? "..." : ""}
+          </p>
+        </div>
+        {problemTooLong ? (
+          <button
+            type="button"
+            onClick={() => setShowFullProblem((value) => !value)}
+            className="w-fit rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700"
+          >
+            {showFullProblem ? "Show less" : "Show full problem text"}
+          </button>
+        ) : null}
         <h2 className="text-xl font-semibold">Compatibility</h2>
         <p>Model requirement: {preview?.compatibility?.modelRequirement || "intermediate"}</p>
         <p>Required tools: {preview?.compatibility?.requiredTools?.join(", ") || "-"}</p>

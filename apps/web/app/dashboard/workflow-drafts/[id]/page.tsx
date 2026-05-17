@@ -7,12 +7,14 @@ import { apiRequest } from "../../../../lib/api";
 import { Draft } from "../../../../lib/types";
 
 export default function DraftDetailPage() {
+  const MAX_PROBLEM_PREVIEW_CHARS = 1200;
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showFullProblem, setShowFullProblem] = useState(false);
 
   function load() {
     setSuccess("");
@@ -24,6 +26,10 @@ export default function DraftDetailPage() {
   useEffect(() => {
     load();
   }, [params.id]);
+
+  useEffect(() => {
+    setShowFullProblem(false);
+  }, [draft?._id]);
 
   async function action(path: string, method = "POST") {
     setLoading(true);
@@ -48,6 +54,10 @@ export default function DraftDetailPage() {
   if (!draft) {
     return <div className="p-4 text-slate-600">Loading draft...</div>;
   }
+
+  const rawProblem = draft.problem.description || "-";
+  const problemTooLong = rawProblem.length > MAX_PROBLEM_PREVIEW_CHARS;
+  const shownProblem = showFullProblem ? rawProblem : rawProblem.slice(0, MAX_PROBLEM_PREVIEW_CHARS);
 
   return (
     <div className="space-y-4">
@@ -86,9 +96,23 @@ export default function DraftDetailPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="card space-y-3 p-4">
+        <div className="card min-w-0 space-y-3 p-4">
           <h2 className="text-lg font-semibold">Problem</h2>
-          <p>{draft.problem.description}</p>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-sm leading-7 text-slate-700 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+              {shownProblem}
+              {!showFullProblem && problemTooLong ? "..." : ""}
+            </p>
+          </div>
+          {problemTooLong ? (
+            <button
+              type="button"
+              onClick={() => setShowFullProblem((value) => !value)}
+              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700"
+            >
+              {showFullProblem ? "Show less" : "Show full problem text"}
+            </button>
+          ) : null}
           <div className="flex flex-wrap gap-2">
             {draft.problem.symptoms.map((symptom) => (
               <Badge key={symptom} tone="warn">{symptom}</Badge>
