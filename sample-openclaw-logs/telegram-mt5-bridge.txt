@@ -1,0 +1,6 @@
+Automation bridge between Telegram and MT5
+failed order execution due to timeout error
+solved by persistent queue and reconnection strategy
+install python dependency and setup cron health check
+API integration status improved after webhook retry guard.
+Private URL: https://example.com/webhook?token=super-secret-token

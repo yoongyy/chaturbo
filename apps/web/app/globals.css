@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f4f3ee;
+  --text: #0e1a22;
+  --card: #ffffff;
+  --muted: #5d6d75;
+  --accent: #1d7a6b;
+  --accent-2: #e96a41;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 15% 12%, #d8efe9 0%, transparent 30%),
+    radial-gradient(circle at 80% 8%, #ffe1d4 0%, transparent 24%),
+    var(--bg);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.card {
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(18, 46, 54, 0.08);
+}
