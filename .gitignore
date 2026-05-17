@@ -9,3 +9,4 @@ coverage
 apps/web/.next
 apps/web/out
 packages/cli/.chaturbo
+.run-logs/
