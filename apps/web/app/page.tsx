@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export default function HomePage() {
-  const dummyWorkflows = [
+  const featuredWorkflows = [
     {
       title: "Fix OpenRouter Rate-Limit Fallback",
       category: "API reliability",
@@ -130,7 +130,7 @@ export default function HomePage() {
       <section className="mt-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_12px_30px_rgba(24,47,57,0.08)] md:p-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Dummy workflows</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Featured workflows</p>
             <h2 className="mt-1 text-3xl font-semibold text-ink">What owners can list and monetize</h2>
           </div>
           <Link href="/workflows" className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700">
@@ -139,7 +139,7 @@ export default function HomePage() {
         </div>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-          {dummyWorkflows.map((workflow) => (
+          {featuredWorkflows.map((workflow) => (
             <div key={workflow.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs uppercase tracking-wide text-slate-500">{workflow.category}</p>

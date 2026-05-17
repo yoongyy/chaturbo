@@ -30,7 +30,7 @@ export default function AppFooter() {
         </div>
       </div>
       <div className="border-t border-slate-200 py-3 text-center text-xs text-slate-500">
-        © {new Date().getFullYear()} Chaturbo. MVP portal.
+        © {new Date().getFullYear()} Chaturbo. Workflow monetization portal.
       </div>
     </footer>
   );
