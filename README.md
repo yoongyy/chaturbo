@@ -15,7 +15,7 @@ Chaturbo is an AI-agent workflow monetization MVP.
 - Monorepo with npm workspaces
 - `apps/web`: Next.js App Router + TypeScript + Tailwind
 - `apps/api`: Express + TypeScript + MongoDB Atlas (Mongoose)
-- `packages/cli`: TypeScript CLI (`chaturbo`)
+- `packages/cli`: TypeScript CLI (`chaturbo`, npm package: `chaturbo-cli`)
 - JWT auth with email/password
 
 ## 1. Install dependencies
@@ -70,8 +70,14 @@ Open `http://localhost:3000`.
 ## 5. Build CLI
 
 ```bash
-npm run build --workspace chaturbo
-npm link --workspace chaturbo
+npm run build --workspace chaturbo-cli
+npm link --workspace chaturbo-cli
+```
+
+Owner quickstart (without cloning this repo):
+
+```bash
+npx -y chaturbo-cli@latest connect --api-url https://api.chaturbo.com --owner-id <owner_uid> --agent-secret <agent_secret>
 ```
 
 ## 6. Login with CLI
