@@ -51,4 +51,8 @@ const workflowSchema = new Schema<IWorkflow>(
   { timestamps: true }
 );
 
+workflowSchema.index({ status: 1, createdAt: -1 });
+workflowSchema.index({ status: 1, category: 1, createdAt: -1 });
+workflowSchema.index({ status: 1, priceCredits: 1, createdAt: -1 });
+
 export const Workflow = model<IWorkflow>("Workflow", workflowSchema);

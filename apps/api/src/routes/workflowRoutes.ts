@@ -31,6 +31,8 @@ const listQuerySchema = z.object({
 });
 
 router.get("/", async (req, res) => {
+  res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=600");
+
   const parsed = listQuerySchema.safeParse(req.query ?? {});
   if (!parsed.success) {
     return sendError(res, 400, "Invalid pagination query");
@@ -64,6 +66,8 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
+  res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=600");
+
   const workflow = await Workflow.findOne({ _id: req.params.id, status: { $in: ["published", "unlisted"] } })
     .select("ownerId draftId title slug category summary priceCredits previewContent compatibility stats status createdAt updatedAt")
     .lean();
@@ -84,6 +88,8 @@ const searchSchema = z.object({
 });
 
 router.post("/search", async (req, res) => {
+  res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+
   const parsed = searchSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
     return sendError(res, 400, "Invalid search payload");
