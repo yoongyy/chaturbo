@@ -10,7 +10,7 @@ export default function DashboardWorkflowsPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    apiRequest<{ workflows: Workflow[] }>("/workflows")
+    apiRequest<{ workflows: Workflow[] }>("/workflows?page=1&limit=50")
       .then((res) => setWorkflows(res.workflows))
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load workflows"));
   }, []);

@@ -4,6 +4,7 @@ import { Workflow } from "../models/Workflow";
 import { sendError } from "../utils/http";
 
 const router = Router();
+const MAX_PAGE_SIZE = 50;
 
 function toPublicWorkflow(workflow: any) {
   return {
@@ -24,12 +25,42 @@ function toPublicWorkflow(workflow: any) {
   };
 }
 
-router.get("/", async (_req, res) => {
-  const workflows = await Workflow.find({ status: "published" })
+const listQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(12)
+});
+
+router.get("/", async (req, res) => {
+  const parsed = listQuerySchema.safeParse(req.query ?? {});
+  if (!parsed.success) {
+    return sendError(res, 400, "Invalid pagination query");
+  }
+
+  const { page, limit } = parsed.data;
+  const query = { status: "published" as const };
+  const skip = (page - 1) * limit;
+
+  const [workflows, total] = await Promise.all([
+    Workflow.find(query)
     .select("ownerId draftId title slug category summary priceCredits previewContent compatibility stats status createdAt updatedAt")
     .sort({ createdAt: -1 })
-    .lean();
-  return res.json({ workflows: workflows.map(toPublicWorkflow) });
+    .skip(skip)
+    .limit(limit)
+    .lean(),
+    Workflow.countDocuments(query)
+  ]);
+
+  return res.json({
+    workflows: workflows.map(toPublicWorkflow),
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+      hasNextPage: skip + workflows.length < total,
+      hasPrevPage: page > 1
+    }
+  });
 });
 
 router.get("/:id", async (req, res) => {
@@ -47,7 +78,9 @@ const searchSchema = z.object({
   query: z.string().optional(),
   category: z.string().optional(),
   minPrice: z.number().optional(),
-  maxPrice: z.number().optional()
+  maxPrice: z.number().optional(),
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(MAX_PAGE_SIZE).default(12)
 });
 
 router.post("/search", async (req, res) => {
@@ -56,7 +89,7 @@ router.post("/search", async (req, res) => {
     return sendError(res, 400, "Invalid search payload");
   }
 
-  const { query, category, minPrice, maxPrice } = parsed.data;
+  const { query, category, minPrice, maxPrice, page, limit } = parsed.data;
   const mongoQuery: Record<string, unknown> = { status: "published" };
 
   if (query) {
@@ -78,11 +111,28 @@ router.post("/search", async (req, res) => {
     };
   }
 
-  const workflows = await Workflow.find(mongoQuery)
+  const skip = (page - 1) * limit;
+  const [workflows, total] = await Promise.all([
+    Workflow.find(mongoQuery)
     .select("ownerId draftId title slug category summary priceCredits previewContent compatibility stats status createdAt updatedAt")
     .sort({ createdAt: -1 })
-    .lean();
-  return res.json({ workflows: workflows.map(toPublicWorkflow) });
+    .skip(skip)
+    .limit(limit)
+    .lean(),
+    Workflow.countDocuments(mongoQuery)
+  ]);
+
+  return res.json({
+    workflows: workflows.map(toPublicWorkflow),
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+      hasNextPage: skip + workflows.length < total,
+      hasPrevPage: page > 1
+    }
+  });
 });
 
 const preflightSchema = z.object({

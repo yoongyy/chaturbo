@@ -66,3 +66,12 @@ export interface Workflow {
   };
   status: "published" | "unlisted" | "archived";
 }
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
