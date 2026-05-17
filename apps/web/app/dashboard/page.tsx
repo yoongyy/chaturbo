@@ -20,6 +20,16 @@ const cronExamples: Record<OsTab, string> = {
 };
 
 export default function DashboardPage() {
+  const secretStorageKey = (uid: string) => `chaturbo_agent_secret_${uid}`;
+  const readSavedSecret = (uid: string) => {
+    if (typeof window === "undefined" || !uid) return "";
+    return localStorage.getItem(secretStorageKey(uid)) || "";
+  };
+  const saveSecret = (uid: string, secret: string) => {
+    if (typeof window === "undefined" || !uid || !secret) return;
+    localStorage.setItem(secretStorageKey(uid), secret);
+  };
+
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [error, setError] = useState("");
   const [loadingDrafts, setLoadingDrafts] = useState(false);
@@ -27,6 +37,7 @@ export default function DashboardPage() {
   const [copyMessage, setCopyMessage] = useState("");
   const [ownerUid, setOwnerUid] = useState("");
   const [agentSecret, setAgentSecret] = useState("");
+  const [hasExistingCredential, setHasExistingCredential] = useState(false);
   const [pairing, setPairing] = useState(false);
 
   async function loadDrafts() {
@@ -45,8 +56,19 @@ export default function DashboardPage() {
   useEffect(() => {
     loadDrafts();
     apiRequest<{ user: { ownerUid?: string } }>("/auth/me", {}, true)
-      .then((res) => setOwnerUid(res.user.ownerUid || ""))
+      .then((res) => {
+        const uid = res.user.ownerUid || "";
+        setOwnerUid(uid);
+        const savedSecret = readSavedSecret(uid);
+        if (savedSecret) {
+          setAgentSecret(savedSecret);
+        }
+      })
       .catch(() => {});
+
+    apiRequest<{ credentials: Array<Record<string, unknown>> }>("/auth/agent/credentials", {}, true)
+      .then((res) => setHasExistingCredential((res.credentials || []).length > 0))
+      .catch(() => setHasExistingCredential(false));
   }, []);
 
   const stats = useMemo(() => {
@@ -63,6 +85,13 @@ export default function DashboardPage() {
   const quickConnectCommand = ownerUid && agentSecret
     ? `npx -y chaturbo-cli@latest connect --api-url ${API_URL} --owner-id ${ownerUid} --agent-secret ${agentSecret}`
     : "";
+  const fallbackConnectCommand = `npx -y chaturbo-cli@latest connect --api-url ${API_URL}`;
+  const commandToCopy = quickConnectCommand || fallbackConnectCommand;
+  const commandText = quickConnectCommand
+    ? quickConnectCommand
+    : hasExistingCredential
+      ? fallbackConnectCommand
+      : "Generate machine credentials to get one-shot connect command";
 
   return (
     <div className="space-y-6">
@@ -120,6 +149,8 @@ export default function DashboardPage() {
                     }>("/auth/agent/pair", { method: "POST", body: JSON.stringify({ name: "openclaw-agent" }) }, true);
                     setOwnerUid(res.credentials.ownerUid);
                     setAgentSecret(res.credentials.agentSecret);
+                    saveSecret(res.credentials.ownerUid, res.credentials.agentSecret);
+                    setHasExistingCredential(true);
                     setCopyMessage("Machine credentials generated. Copy command below.");
                     setTimeout(() => setCopyMessage(""), 2500);
                   } catch (err) {
@@ -130,9 +161,14 @@ export default function DashboardPage() {
                 }}
                 className="rounded-lg bg-ink px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
               >
-                {pairing ? "Generating..." : "Generate machine credentials"}
+                {pairing ? "Generating..." : hasExistingCredential ? "Rotate machine credentials" : "Generate machine credentials"}
               </button>
             </div>
+            {hasExistingCredential && !quickConnectCommand ? (
+              <p className="mt-2 text-xs text-slate-600">
+                Agent is already paired. Existing secret is hidden for security. Use the connect command below or rotate credentials.
+              </p>
+            ) : null}
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -160,7 +196,7 @@ export default function DashboardPage() {
             <div className="mt-3 rounded-xl bg-[#10171c] p-3">
               <p className="text-xs text-slate-300">Terminal command</p>
               <p className="mt-1 font-mono text-sm text-emerald-300">
-                {quickConnectCommand || "Generate machine credentials to get one-shot connect command"}
+                {commandText}
               </p>
             </div>
             <div className="mt-3 rounded-xl bg-slate-100 p-3">
@@ -170,10 +206,10 @@ export default function DashboardPage() {
 
             <div className="mt-3 flex flex-wrap gap-2">
               <button
-                disabled={!quickConnectCommand}
+                disabled={!commandToCopy}
                 onClick={async () => {
                   try {
-                    await navigator.clipboard.writeText(quickConnectCommand);
+                    await navigator.clipboard.writeText(commandToCopy);
                     setCopyMessage("Copied command");
                   } catch {
                     setCopyMessage("Copy failed. Select and copy manually.");
