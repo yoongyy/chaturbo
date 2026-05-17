@@ -20,23 +20,31 @@ export async function requireIngestionAuth(req: AuthenticatedRequest, res: Respo
     return sendError(res, 401, "Missing JWT or agent credentials");
   }
 
-  const credential = await AgentCredential.findOne({ ownerUid, active: true }).sort({ createdAt: -1 });
-  if (!credential) {
+  const credentials = await AgentCredential.find({ ownerUid, active: true }).sort({ createdAt: -1 }).limit(20);
+  if (!credentials.length) {
     return sendError(res, 401, "Invalid agent owner id");
   }
 
-  const secretMatches = await bcrypt.compare(agentSecret, credential.secretHash);
-  if (!secretMatches) {
+  let matchedCredential: (typeof credentials)[number] | null = null;
+  for (const credential of credentials) {
+    const secretMatches = await bcrypt.compare(agentSecret, credential.secretHash);
+    if (secretMatches) {
+      matchedCredential = credential;
+      break;
+    }
+  }
+
+  if (!matchedCredential) {
     return sendError(res, 401, "Invalid agent secret");
   }
 
-  const owner = await User.findById(credential.ownerId).select("email ownerUid");
+  const owner = await User.findById(matchedCredential.ownerId).select("email ownerUid");
   if (!owner) {
     return sendError(res, 401, "Agent owner not found");
   }
 
-  credential.lastUsedAt = new Date();
-  await credential.save();
+  matchedCredential.lastUsedAt = new Date();
+  await matchedCredential.save();
 
   const user: AuthUser = {
     userId: owner.id,
