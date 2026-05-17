@@ -1,4 +1,5 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const REQUEST_TIMEOUT_MS = 15000;
 
 export function getToken() {
   if (typeof window === "undefined") return "";
@@ -26,17 +27,43 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}, aut
     }
   }
 
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data.error || `Request failed: ${response.status}`);
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers,
+      cache: "no-store",
+      signal: controller.signal
+    });
+  } catch (error) {
+    clearTimeout(timeout);
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Request timed out. Please try again.");
+    }
+    throw new Error("Network error. Check your connection and API URL.");
+  } finally {
+    clearTimeout(timeout);
   }
 
-  return data as T;
+  const text = await response.text();
+  let data: unknown = {};
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { error: text };
+    }
+  }
+
+  if (!response.ok) {
+    const payload = data as { error?: string };
+    throw new Error(payload.error || `Request failed: ${response.status}`);
+  }
+
+  return (data as T) ?? ({} as T);
 }
 
 export { API_URL };

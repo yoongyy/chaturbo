@@ -14,6 +14,7 @@ import {
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const oauthProcessed = useRef(false);
 
@@ -21,6 +22,7 @@ export default function LoginPage() {
     event.preventDefault();
     setLoading(true);
     setError("");
+    setStatus("Signing in...");
 
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email") || "");
@@ -32,9 +34,11 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password })
       });
       setToken(data.token);
+      setStatus("Login successful. Redirecting to dashboard...");
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
+      setStatus("");
     } finally {
       setLoading(false);
     }
@@ -55,6 +59,7 @@ export default function LoginPage() {
     oauthProcessed.current = true;
     setLoading(true);
     setError("");
+    setStatus("Completing Google login...");
 
     const provider = state as SocialProvider;
     const redirectUri = getRedirectUri("/login");
@@ -70,21 +75,25 @@ export default function LoginPage() {
     })
       .then((data) => {
         setToken(data.token);
+        setStatus("Login successful. Redirecting to dashboard...");
         router.push("/dashboard");
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : "Social login failed");
+        setStatus("");
       })
       .finally(() => setLoading(false));
   }, [router]);
 
   function startSocialLogin(provider: SocialProvider) {
     setError("");
+    setStatus(provider === "google" ? "Redirecting to Google..." : "Redirecting...");
     try {
       const redirectUri = getRedirectUri("/login");
       window.location.href = buildOAuthUrl(provider, redirectUri);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Social login is unavailable");
+      setStatus("");
     }
   }
 
@@ -105,6 +114,7 @@ export default function LoginPage() {
         <p className="text-center text-xs text-slate-500">or use email login</p>
         <input name="email" placeholder="Email" type="email" className="w-full rounded-xl border p-3" required />
         <input name="password" placeholder="Password" type="password" className="w-full rounded-xl border p-3" required />
+        {status ? <p className="text-sm text-slate-600">{status}</p> : null}
         {error ? <p className="text-sm text-rose-600">{error}</p> : null}
         <button disabled={loading} className="w-full rounded-xl bg-mint p-3 text-white">
           {loading ? "Signing in..." : "Login"}

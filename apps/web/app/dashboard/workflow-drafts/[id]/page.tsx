@@ -11,9 +11,11 @@ export default function DraftDetailPage() {
   const router = useRouter();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   function load() {
+    setSuccess("");
     apiRequest<{ draft: Draft }>(`/workflow-drafts/${params.id}`, {}, true)
       .then((res) => setDraft(res.draft))
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load draft"));
@@ -26,11 +28,14 @@ export default function DraftDetailPage() {
   async function action(path: string, method = "POST") {
     setLoading(true);
     setError("");
+    setSuccess("");
     try {
       await apiRequest(path, { method }, true);
       if (method === "DELETE") {
-        router.push("/dashboard/workflow-drafts");
+        setSuccess("Draft deleted successfully. Redirecting...");
+        setTimeout(() => router.push("/dashboard/workflow-drafts"), 700);
       } else {
+        setSuccess(path.endsWith("/publish") ? "Draft published successfully." : "Draft rejected successfully.");
         load();
       }
     } catch (err) {
@@ -58,24 +63,25 @@ export default function DraftDetailPage() {
               onClick={() => action(`/workflow-drafts/${draft._id}/publish`)}
               className="rounded-lg bg-mint px-4 py-2 text-white"
             >
-              Publish
+              {loading ? "Working..." : "Publish"}
             </button>
             <button
               disabled={loading}
               onClick={() => action(`/workflow-drafts/${draft._id}/reject`)}
               className="rounded-lg border border-slate-300 px-4 py-2"
             >
-              Reject
+              {loading ? "Working..." : "Reject"}
             </button>
             <button
               disabled={loading}
               onClick={() => action(`/workflow-drafts/${draft._id}`, "DELETE")}
               className="rounded-lg bg-rose-600 px-4 py-2 text-white"
             >
-              Delete
+              {loading ? "Working..." : "Delete"}
             </button>
           </div>
         </div>
+        {success ? <p className="mt-3 text-sm text-emerald-700">{success}</p> : null}
         {error ? <p className="mt-3 text-sm text-rose-600">{error}</p> : null}
       </div>
 

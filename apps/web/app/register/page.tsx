@@ -14,6 +14,7 @@ import {
 export default function RegisterPage() {
   const router = useRouter();
   const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const oauthProcessed = useRef(false);
 
@@ -21,6 +22,7 @@ export default function RegisterPage() {
     event.preventDefault();
     setLoading(true);
     setError("");
+    setStatus("Creating account...");
 
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email") || "");
@@ -33,9 +35,11 @@ export default function RegisterPage() {
         body: JSON.stringify({ email, name, password })
       });
       setToken(data.token);
+      setStatus("Registration successful. Redirecting to dashboard...");
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
+      setStatus("");
     } finally {
       setLoading(false);
     }
@@ -56,6 +60,7 @@ export default function RegisterPage() {
     oauthProcessed.current = true;
     setLoading(true);
     setError("");
+    setStatus("Completing Google registration...");
 
     const provider = state as SocialProvider;
     const redirectUri = getRedirectUri("/register");
@@ -71,21 +76,25 @@ export default function RegisterPage() {
     })
       .then((data) => {
         setToken(data.token);
+        setStatus("Registration successful. Redirecting to dashboard...");
         router.push("/dashboard");
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : "Social login failed");
+        setStatus("");
       })
       .finally(() => setLoading(false));
   }, [router]);
 
   function startSocialLogin(provider: SocialProvider) {
     setError("");
+    setStatus(provider === "google" ? "Redirecting to Google..." : "Redirecting...");
     try {
       const redirectUri = getRedirectUri("/register");
       window.location.href = buildOAuthUrl(provider, redirectUri);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Social login is unavailable");
+      setStatus("");
     }
   }
 
@@ -114,6 +123,7 @@ export default function RegisterPage() {
           className="w-full rounded-xl border p-3"
           required
         />
+        {status ? <p className="text-sm text-slate-600">{status}</p> : null}
         {error ? <p className="text-sm text-rose-600">{error}</p> : null}
         <button disabled={loading} className="w-full rounded-xl bg-mint p-3 text-white">
           {loading ? "Creating..." : "Register"}
