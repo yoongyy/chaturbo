@@ -2,9 +2,9 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import Badge from "@/components/Badge";
-import { apiRequest } from "@/lib/api";
-import { Draft } from "@/lib/types";
+import Badge from "../../../../components/Badge";
+import { apiRequest } from "../../../../lib/api";
+import { Draft } from "../../../../lib/types";
 
 export default function DraftDetailPage() {
   const params = useParams<{ id: string }>();

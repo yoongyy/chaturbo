@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { PropsWithChildren, useEffect, useState } from "react";
-import { getToken } from "@/lib/api";
+import { getToken } from "../lib/api";
 
 export default function AuthGuard({ children }: PropsWithChildren) {
   const router = useRouter();

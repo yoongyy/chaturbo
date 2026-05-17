@@ -10,3 +10,5 @@ apps/web/.next
 apps/web/out
 packages/cli/.chaturbo
 .run-logs/
+
+apps/web/tsconfig.tsbuildinfo

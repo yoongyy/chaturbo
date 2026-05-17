@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import Badge from "@/components/Badge";
-import { apiRequest } from "@/lib/api";
-import { Workflow } from "@/lib/types";
+import Badge from "../../../components/Badge";
+import { apiRequest } from "../../../lib/api";
+import { Workflow } from "../../../lib/types";
 
 export default function PublicWorkflowDetailPage() {
   const params = useParams<{ id: string }>();

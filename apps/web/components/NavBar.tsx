@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { clearToken } from "@/lib/api";
+import { clearToken } from "../lib/api";
 
 const links = [
   { href: "/dashboard", label: "Dashboard" },

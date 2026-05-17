@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { apiRequest } from "@/lib/api";
-import { Draft } from "@/lib/types";
-import StatCard from "@/components/StatCard";
+import { apiRequest } from "../../lib/api";
+import { Draft } from "../../lib/types";
+import StatCard from "../../components/StatCard";
 
 export default function DashboardPage() {
   const [drafts, setDrafts] = useState<Draft[]>([]);

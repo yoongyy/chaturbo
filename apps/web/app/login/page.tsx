@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { apiRequest, setToken } from "@/lib/api";
+import { apiRequest, setToken } from "../../lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
