@@ -73,6 +73,10 @@ function normText(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+function escapeRegex(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function draftFingerprint(draft: z.infer<typeof draftSchema>) {
   const title = slugify(draft.title);
   const category = normText(draft.category);
@@ -90,6 +94,16 @@ function canAutoPublish(draft: z.infer<typeof draftSchema>, threshold: number): 
 }
 
 async function publishDraftDocument(draft: any) {
+  const existingSameTitle = await Workflow.findOne({
+    ownerId: draft.ownerId,
+    title: { $regex: `^${escapeRegex(draft.title)}$`, $options: "i" }
+  });
+  if (existingSameTitle) {
+    draft.status = "published";
+    await draft.save();
+    return existingSameTitle;
+  }
+
   const baseSlug = slugify(draft.title);
   let slug = baseSlug;
   let index = 1;
@@ -156,6 +170,7 @@ router.post("/upload-drafts", requireIngestionAuth, async (req: AuthenticatedReq
   const existingDrafts = await WorkflowDraft.find({ ownerId }).select(
     "title category problem.description summary status quality.publishReadinessScore privacy.riskLevel"
   );
+  const existingWorkflows = await Workflow.find({ ownerId }).select("title category summary");
   const existingFingerprints = new Set(
     existingDrafts.map((draft) =>
       draftFingerprint({
@@ -201,6 +216,51 @@ router.post("/upload-drafts", requireIngestionAuth, async (req: AuthenticatedReq
       })
     )
   );
+  for (const workflow of existingWorkflows) {
+    existingFingerprints.add(
+      draftFingerprint({
+        source: { type: "agent_log", scannedAt: new Date() },
+        title: workflow.title,
+        category: workflow.category,
+        summary: workflow.summary,
+        problem: { description: workflow.summary || workflow.title, symptoms: [] },
+        solution: {
+          overview: "",
+          steps: [],
+          doNotDo: [],
+          commonErrors: [],
+          verificationSteps: []
+        },
+        compatibility: {
+          agents: [],
+          os: [],
+          minRamGb: 8,
+          requiredTools: [],
+          requiredSoftware: {},
+          modelRequirement: "intermediate",
+          contextLength: 8000
+        },
+        estimates: {
+          timeSpentHours: 0,
+          tokenCostUsd: 0,
+          suggestedPriceCredits: 0,
+          potentialMonthlyRevenueLow: 0,
+          potentialMonthlyRevenueHigh: 0
+        },
+        privacy: {
+          sanitized: true,
+          removedItems: [],
+          riskLevel: "low"
+        },
+        quality: {
+          publishReadinessScore: 0,
+          missingFields: [],
+          reasonWhySellable: ""
+        },
+        status: "draft"
+      })
+    );
+  }
 
   const incomingFingerprints = new Set<string>();
   const inserts = parsed.data.drafts

@@ -11,6 +11,10 @@ const router = Router();
 
 router.use(requireAuth);
 
+function escapeRegex(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function canAutoPublishDraft(draft: any, threshold: number) {
   if ((draft.quality?.publishReadinessScore ?? 0) < threshold) return false;
   if (draft.privacy?.riskLevel === "high") return false;
@@ -21,6 +25,16 @@ function canAutoPublishDraft(draft: any, threshold: number) {
 }
 
 async function publishDraftToWorkflow(draft: any) {
+  const existingSameTitle = await Workflow.findOne({
+    ownerId: draft.ownerId,
+    title: { $regex: `^${escapeRegex(draft.title)}$`, $options: "i" }
+  });
+  if (existingSameTitle) {
+    draft.status = "published";
+    await draft.save();
+    return existingSameTitle;
+  }
+
   const baseSlug = slugify(draft.title);
   let slug = baseSlug;
   let index = 1;
