@@ -13,6 +13,9 @@ interface ConnectOptions {
   agentSecret?: string;
   apiUrl?: string;
   localAgentCmd?: string;
+  autoPublish?: boolean;
+  publishThreshold?: number;
+  maxAutoPublish?: number;
 }
 
 async function ensureAuthenticated(localOnly = false) {
@@ -86,6 +89,9 @@ export async function connectCommand(options: ConnectOptions) {
     localOnly: options.localOnly,
     autoUpload: Boolean(options.yes || hasDirectAgentCredentials),
     nonInteractive: Boolean(hasDirectAgentCredentials),
-    localAgentCmd: options.localAgentCmd
+    localAgentCmd: options.localAgentCmd,
+    autoPublish: options.autoPublish,
+    publishThreshold: options.publishThreshold,
+    maxAutoPublish: options.maxAutoPublish
   });
 }

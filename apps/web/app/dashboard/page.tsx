@@ -42,7 +42,11 @@ export default function DashboardPage() {
   const [agentSecret, setAgentSecret] = useState("");
   const [hasExistingCredential, setHasExistingCredential] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
+  const [creditsPurchased, setCreditsPurchased] = useState<number | null>(null);
+  const [creditsEarned, setCreditsEarned] = useState<number | null>(null);
   const [toppingUp, setToppingUp] = useState(false);
+  const [requestingPayout, setRequestingPayout] = useState(false);
+  const [autoPublishing, setAutoPublishing] = useState(false);
   const [pairing, setPairing] = useState(false);
 
   async function loadDrafts() {
@@ -75,9 +79,51 @@ export default function DashboardPage() {
       .then((res) => setHasExistingCredential((res.credentials || []).length > 0))
       .catch(() => setHasExistingCredential(false));
 
-    apiRequest<{ credits: number }>("/credits/balance", {}, true)
-      .then((res) => setCredits(res.credits))
-      .catch(() => setCredits(null));
+    apiRequest<{ credits: number; creditsPurchased?: number; creditsEarned?: number }>("/credits/balance", {}, true)
+      .then((res) => {
+        setCredits(res.credits);
+        setCreditsPurchased(res.creditsPurchased ?? null);
+        setCreditsEarned(res.creditsEarned ?? null);
+      })
+      .catch(() => {
+        setCredits(null);
+        setCreditsPurchased(null);
+        setCreditsEarned(null);
+      });
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const topupState = params.get("topup");
+      const sessionId = params.get("session_id");
+      if (topupState === "success" && sessionId) {
+        apiRequest<{
+          processed?: boolean;
+          alreadyProcessed?: boolean;
+          addedCredits?: number;
+          credits: number;
+          creditsPurchased?: number;
+          creditsEarned?: number;
+        }>(
+          "/credits/checkout-confirm",
+          {
+            method: "POST",
+            body: JSON.stringify({ sessionId })
+          },
+          true
+        )
+          .then((res) => {
+            setCredits(res.credits);
+            if (typeof res.creditsPurchased === "number") setCreditsPurchased(res.creditsPurchased);
+            if (typeof res.creditsEarned === "number") setCreditsEarned(res.creditsEarned);
+            if (res.alreadyProcessed) {
+              setCopyMessage("Top-up already processed.");
+            } else {
+              setCopyMessage(`Top-up success: +${res.addedCredits ?? 0} credits`);
+            }
+          })
+          .catch((err) => setError(err instanceof Error ? err.message : "Failed to confirm top-up"));
+      }
+    }
   }, []);
 
   const stats = useMemo(() => {
@@ -154,6 +200,101 @@ Important constraints:
       </div>
 
       <div className="card p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold text-ink">Credits & Purchases</h2>
+            <p className="mt-1 text-sm text-slate-600">Top up credits here, then your local agent can buy and reuse workflows via CLI.</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs uppercase tracking-wide text-slate-500">Current balance</p>
+            <p className="text-2xl font-semibold text-ink">{credits ?? "-"} credits</p>
+            <p className="mt-1 text-xs text-slate-500">Top-up: {creditsPurchased ?? "-"} | Earned: {creditsEarned ?? "-"}</p>
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            disabled={toppingUp}
+            onClick={async () => {
+              setToppingUp(true);
+              setError("");
+              try {
+                const origin = typeof window !== "undefined" ? window.location.origin : "";
+                const res = await apiRequest<{ url: string }>("/credits/checkout-session", {
+                  method: "POST",
+                  body: JSON.stringify({
+                    credits: 100,
+                    successUrl: `${origin}/dashboard?topup=success&session_id={CHECKOUT_SESSION_ID}`,
+                    cancelUrl: `${origin}/dashboard?topup=cancelled`
+                  })
+                }, true);
+                if (typeof window !== "undefined") {
+                  window.location.href = res.url;
+                }
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Top-up failed");
+                setToppingUp(false);
+              }
+            }}
+            className="rounded-lg bg-ink px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+          >
+            {toppingUp ? "Redirecting..." : "Top up +100 credits"}
+          </button>
+          <a href="/workflows" className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700">
+            Browse workflows to buy
+          </a>
+          <button
+            disabled={requestingPayout || !creditsEarned || creditsEarned < 10}
+            onClick={async () => {
+              setRequestingPayout(true);
+              setError("");
+              try {
+                const payoutCredits = Math.min(creditsEarned ?? 0, 100);
+                const res = await apiRequest<{
+                  credits: number;
+                  creditsPurchased: number;
+                  creditsEarned: number;
+                  payoutRequest: { id: string; usdAmount: number; status: string };
+                }>(
+                  "/credits/payout-request",
+                  {
+                    method: "POST",
+                    body: JSON.stringify({ credits: payoutCredits, note: "dashboard_requested" })
+                  },
+                  true
+                );
+                setCredits(res.credits);
+                setCreditsPurchased(res.creditsPurchased);
+                setCreditsEarned(res.creditsEarned);
+                setCopyMessage(`Payout requested: ${payoutCredits} credits ($${res.payoutRequest.usdAmount})`);
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Failed to request payout");
+              } finally {
+                setRequestingPayout(false);
+                setTimeout(() => setCopyMessage(""), 2200);
+              }
+            }}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 disabled:opacity-50"
+          >
+            {requestingPayout ? "Requesting payout..." : "Request payout (up to 100 earned credits)"}
+          </button>
+        </div>
+        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+          <p className="font-medium text-slate-700">Agent CLI buy flow</p>
+          <p className="mt-1 font-mono">chaturbo marketplace search --query "oauth"</p>
+          <p className="mt-1 font-mono">chaturbo marketplace buy --id &lt;workflow_id&gt;</p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <StatCard label="Detected workflows" value={String(stats.detected)} />
+        <StatCard label="Publish-ready workflows" value={String(stats.ready)} />
+        <StatCard label="Needs cleanup" value={String(stats.cleanup)} />
+        <StatCard label="Est. monthly earning low/high" value={`$${stats.revenueLow} - $${stats.revenueHigh}`} />
+        <StatCard label="Total token cost invested" value={`$${stats.tokenCost.toFixed(2)}`} />
+        <StatCard label="Total time spent" value={`${stats.hours.toFixed(1)} h`} />
+      </div>
+
+      <div className="card p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-mint">Connect Your AI Agent</p>
@@ -169,6 +310,33 @@ Important constraints:
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 disabled:opacity-50"
           >
             {loadingDrafts ? "Refreshing..." : "I ran connect, refresh drafts"}
+          </button>
+          <button
+            onClick={async () => {
+              setAutoPublishing(true);
+              setError("");
+              try {
+                const res = await apiRequest<{ evaluated: number; eligible: number; published: number }>(
+                  "/workflow-drafts/auto-publish",
+                  {
+                    method: "POST",
+                    body: JSON.stringify({ threshold: 85, maxCount: 50 })
+                  },
+                  true
+                );
+                setCopyMessage(`Auto-publish done: ${res.published}/${res.eligible} published`);
+                setTimeout(() => setCopyMessage(""), 2200);
+                await loadDrafts();
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Auto-publish failed");
+              } finally {
+                setAutoPublishing(false);
+              }
+            }}
+            disabled={autoPublishing}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 disabled:opacity-50"
+          >
+            {autoPublishing ? "Auto-publishing..." : "Auto-publish ready drafts"}
           </button>
         </div>
 
@@ -309,62 +477,7 @@ Important constraints:
         </div>
       </div>
 
-      <div className="card p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold text-ink">Credits & Purchases</h2>
-            <p className="mt-1 text-sm text-slate-600">Top up credits here, then your local agent can buy and reuse workflows via CLI.</p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs uppercase tracking-wide text-slate-500">Current balance</p>
-            <p className="text-2xl font-semibold text-ink">{credits ?? "-"} credits</p>
-          </div>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            disabled={toppingUp}
-            onClick={async () => {
-              setToppingUp(true);
-              setError("");
-              try {
-                const res = await apiRequest<{ credits: number }>("/credits/topup", {
-                  method: "POST",
-                  body: JSON.stringify({ credits: 100, note: "manual_dashboard_topup" })
-                }, true);
-                setCredits(res.credits);
-                setCopyMessage("Top-up success: +100 credits");
-                setTimeout(() => setCopyMessage(""), 2200);
-              } catch (err) {
-                setError(err instanceof Error ? err.message : "Top-up failed");
-              } finally {
-                setToppingUp(false);
-              }
-            }}
-            className="rounded-lg bg-ink px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-          >
-            {toppingUp ? "Processing..." : "Top up +100 credits"}
-          </button>
-          <a href="/workflows" className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700">
-            Browse workflows to buy
-          </a>
-        </div>
-        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-          <p className="font-medium text-slate-700">Agent CLI buy flow</p>
-          <p className="mt-1 font-mono">chaturbo marketplace search --query "oauth"</p>
-          <p className="mt-1 font-mono">chaturbo marketplace buy --id &lt;workflow_id&gt;</p>
-        </div>
-      </div>
-
       {error ? <div className="rounded-xl bg-rose-50 p-3 text-rose-700">{error}</div> : null}
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <StatCard label="Detected workflows" value={String(stats.detected)} />
-        <StatCard label="Publish-ready workflows" value={String(stats.ready)} />
-        <StatCard label="Needs cleanup" value={String(stats.cleanup)} />
-        <StatCard label="Est. monthly earning low/high" value={`$${stats.revenueLow} - $${stats.revenueHigh}`} />
-        <StatCard label="Total token cost invested" value={`$${stats.tokenCost.toFixed(2)}`} />
-        <StatCard label="Total time spent" value={`${stats.hours.toFixed(1)} h`} />
-      </div>
     </div>
   );
 }

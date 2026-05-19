@@ -11,38 +11,16 @@ const router = Router();
 
 router.use(requireAuth);
 
-router.get("/", async (req: AuthenticatedRequest, res) => {
-  const ownerId = req.user?.userId;
-  const status = req.query.status as string | undefined;
-  const query: Record<string, unknown> = { ownerId };
-  if (status && ["draft", "published", "rejected"].includes(status)) {
-    query.status = status;
-  }
+function canAutoPublishDraft(draft: any, threshold: number) {
+  if ((draft.quality?.publishReadinessScore ?? 0) < threshold) return false;
+  if (draft.privacy?.riskLevel === "high") return false;
+  if ((draft.quality?.missingFields || []).length > 1) return false;
+  if ((draft.solution?.steps || []).length < 3) return false;
+  if ((draft.solution?.verificationSteps || []).length < 2) return false;
+  return true;
+}
 
-  const drafts = await WorkflowDraft.find(query).sort({ createdAt: -1 });
-  return res.json({ drafts });
-});
-
-router.get("/:id", async (req: AuthenticatedRequest, res) => {
-  const draft = await WorkflowDraft.findOne({ _id: req.params.id, ownerId: req.user?.userId });
-  if (!draft) {
-    return sendError(res, 404, "Draft not found");
-  }
-
-  return res.json({ draft });
-});
-
-router.post("/:id/publish", async (req: AuthenticatedRequest, res) => {
-  const draft = await WorkflowDraft.findOne({ _id: req.params.id, ownerId: req.user?.userId });
-  if (!draft) {
-    return sendError(res, 404, "Draft not found");
-  }
-
-  if (draft.status === "published") {
-    const existingWorkflow = await Workflow.findOne({ draftId: draft._id });
-    return res.json({ workflow: existingWorkflow, draft });
-  }
-
+async function publishDraftToWorkflow(draft: any) {
   const baseSlug = slugify(draft.title);
   let slug = baseSlug;
   let index = 1;
@@ -91,8 +69,81 @@ router.post("/:id/publish", async (req: AuthenticatedRequest, res) => {
 
   draft.status = "published";
   await draft.save();
+  return workflow;
+}
+
+router.get("/", async (req: AuthenticatedRequest, res) => {
+  const ownerId = req.user?.userId;
+  const status = req.query.status as string | undefined;
+  const query: Record<string, unknown> = { ownerId };
+  if (status && ["draft", "published", "rejected"].includes(status)) {
+    query.status = status;
+  }
+
+  const drafts = await WorkflowDraft.find(query).sort({ createdAt: -1 });
+  return res.json({ drafts });
+});
+
+router.get("/:id", async (req: AuthenticatedRequest, res) => {
+  const draft = await WorkflowDraft.findOne({ _id: req.params.id, ownerId: req.user?.userId });
+  if (!draft) {
+    return sendError(res, 404, "Draft not found");
+  }
+
+  return res.json({ draft });
+});
+
+router.post("/:id/publish", async (req: AuthenticatedRequest, res) => {
+  const draft = await WorkflowDraft.findOne({ _id: req.params.id, ownerId: req.user?.userId });
+  if (!draft) {
+    return sendError(res, 404, "Draft not found");
+  }
+
+  if (draft.status === "published") {
+    const existingWorkflow = await Workflow.findOne({ draftId: draft._id });
+    return res.json({ workflow: existingWorkflow, draft });
+  }
+
+  const workflow = await publishDraftToWorkflow(draft);
 
   return res.json({ workflow, draft });
+});
+
+const autoPublishSchema = z.object({
+  threshold: z.number().min(50).max(100).default(85),
+  maxCount: z.number().int().min(1).max(200).default(50)
+});
+
+router.post("/auto-publish", async (req: AuthenticatedRequest, res) => {
+  const parsed = autoPublishSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return sendError(res, 400, "Invalid auto-publish payload");
+  }
+
+  const ownerId = req.user?.userId;
+  const drafts = await WorkflowDraft.find({ ownerId, status: "draft" }).sort({ createdAt: -1 });
+  const eligible = drafts.filter((draft) => canAutoPublishDraft(draft, parsed.data.threshold)).slice(0, parsed.data.maxCount);
+
+  const publishedIds: string[] = [];
+  for (const draft of eligible) {
+    const existingWorkflow = await Workflow.findOne({ draftId: draft._id });
+    if (existingWorkflow) {
+      draft.status = "published";
+      await draft.save();
+      publishedIds.push(String(existingWorkflow._id));
+      continue;
+    }
+
+    const workflow = await publishDraftToWorkflow(draft);
+    publishedIds.push(String(workflow._id));
+  }
+
+  return res.status(201).json({
+    evaluated: drafts.length,
+    eligible: eligible.length,
+    published: publishedIds.length,
+    workflowIds: publishedIds
+  });
 });
 
 router.post("/:id/reject", async (req: AuthenticatedRequest, res) => {

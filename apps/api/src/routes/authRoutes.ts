@@ -36,7 +36,15 @@ router.post("/register", async (req, res) => {
 
   return res.status(201).json({
     token,
-    user: { id: user.id, email: user.email, name: user.name, credits: user.credits, ownerUid: user.ownerUid }
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      credits: user.credits,
+      creditsPurchased: user.creditsPurchased,
+      creditsEarned: user.creditsEarned,
+      ownerUid: user.ownerUid
+    }
   });
 });
 
@@ -65,7 +73,15 @@ router.post("/login", async (req, res) => {
   const token = signJwt(user.id, user.email);
   return res.json({
     token,
-    user: { id: user.id, email: user.email, name: user.name, credits: user.credits, ownerUid: user.ownerUid }
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      credits: user.credits,
+      creditsPurchased: user.creditsPurchased,
+      creditsEarned: user.creditsEarned,
+      ownerUid: user.ownerUid
+    }
   });
 });
 
@@ -205,7 +221,15 @@ router.post("/oauth/callback", async (req, res) => {
 
     return res.json({
       token,
-      user: { id: user.id, email: user.email, name: user.name, credits: user.credits, ownerUid: user.ownerUid }
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        credits: user.credits,
+        creditsPurchased: user.creditsPurchased,
+        creditsEarned: user.creditsEarned,
+        ownerUid: user.ownerUid
+      }
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "OAuth login failed";
@@ -214,7 +238,9 @@ router.post("/oauth/callback", async (req, res) => {
 });
 
 router.get("/me", requireAuth, async (req: AuthenticatedRequest, res) => {
-  const user = await User.findById(req.user?.userId).select("email name credits ownerUid createdAt updatedAt");
+  const user = await User.findById(req.user?.userId).select(
+    "email name credits creditsPurchased creditsEarned ownerUid createdAt updatedAt"
+  );
   if (!user) {
     return sendError(res, 404, "User not found");
   }

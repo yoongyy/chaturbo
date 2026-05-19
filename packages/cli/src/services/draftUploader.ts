@@ -7,7 +7,18 @@ interface UploadAuth {
   agentSecret?: string;
 }
 
-export async function uploadDrafts(apiUrl: string, auth: UploadAuth, drafts: WorkflowDraftPayload[]) {
+interface UploadOptions {
+  autoPublish?: boolean;
+  publishThreshold?: number;
+  maxAutoPublish?: number;
+}
+
+export async function uploadDrafts(
+  apiUrl: string,
+  auth: UploadAuth,
+  drafts: WorkflowDraftPayload[],
+  options: UploadOptions = {}
+) {
   const headers: Record<string, string> = {};
   if (auth.token) {
     headers.Authorization = `Bearer ${auth.token}`;
@@ -18,7 +29,12 @@ export async function uploadDrafts(apiUrl: string, auth: UploadAuth, drafts: Wor
 
   const response = await axios.post(
     `${apiUrl}/scan/upload-drafts`,
-    { drafts },
+    {
+      drafts,
+      autoPublish: options.autoPublish ?? false,
+      publishThreshold: options.publishThreshold ?? 85,
+      maxAutoPublish: options.maxAutoPublish ?? 25
+    },
     {
       headers
     }
@@ -26,6 +42,8 @@ export async function uploadDrafts(apiUrl: string, auth: UploadAuth, drafts: Wor
 
   return response.data as {
     drafts: Array<Record<string, unknown>>;
+    dedupe?: Record<string, unknown>;
+    autoPublished?: Record<string, unknown>;
     summary: Record<string, unknown>;
   };
 }

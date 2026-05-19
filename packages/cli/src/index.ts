@@ -41,11 +41,17 @@ scanCommand
   .option("--path <path>", "Path to scan")
   .option("--local-only", "Scan locally without upload", false)
   .option("--local-agent-cmd <command>", "Run local AI command to refine draft readability before upload")
+  .option("--auto-publish", "Auto-publish high-confidence drafts after upload", false)
+  .option("--publish-threshold <score>", "Auto-publish readiness threshold (50-100)", "85")
+  .option("--max-auto-publish <count>", "Max drafts to auto-publish per run", "25")
   .action(async (options) => {
     await scanOpenClawCommand({
       path: options.path,
       localOnly: options.localOnly,
-      localAgentCmd: options.localAgentCmd
+      localAgentCmd: options.localAgentCmd,
+      autoPublish: options.autoPublish,
+      publishThreshold: Number(options.publishThreshold),
+      maxAutoPublish: Number(options.maxAutoPublish)
     });
   });
 
@@ -55,11 +61,17 @@ scanCommand
   .option("--path <path>", "Path to scan")
   .option("--local-only", "Scan locally without upload", false)
   .option("--local-agent-cmd <command>", "Run local AI command to refine draft readability before upload")
+  .option("--auto-publish", "Auto-publish high-confidence drafts after upload", false)
+  .option("--publish-threshold <score>", "Auto-publish readiness threshold (50-100)", "85")
+  .option("--max-auto-publish <count>", "Max drafts to auto-publish per run", "25")
   .action(async (options) => {
     await scanOpenClawCommand({
       path: options.path,
       localOnly: options.localOnly,
-      localAgentCmd: options.localAgentCmd
+      localAgentCmd: options.localAgentCmd,
+      autoPublish: options.autoPublish,
+      publishThreshold: Number(options.publishThreshold),
+      maxAutoPublish: Number(options.maxAutoPublish)
     });
   });
 
@@ -74,8 +86,15 @@ program
   .option("--agent-secret <agentSecret>", "Agent secret from dashboard machine credentials")
   .option("--api-url <apiUrl>", "Override API URL for this machine")
   .option("--local-agent-cmd <command>", "Run local AI command to refine draft readability before upload")
+  .option("--auto-publish", "Auto-publish high-confidence drafts after upload", false)
+  .option("--publish-threshold <score>", "Auto-publish readiness threshold (50-100)", "85")
+  .option("--max-auto-publish <count>", "Max drafts to auto-publish per run", "25")
   .action(async (options) => {
-    await connectCommand(options);
+    await connectCommand({
+      ...options,
+      publishThreshold: Number(options.publishThreshold),
+      maxAutoPublish: Number(options.maxAutoPublish)
+    });
   });
 
 program
@@ -91,8 +110,15 @@ program
   .description("Non-interactive scan + upload for cron jobs")
   .option("--path <path>", "Path to scan")
   .option("--local-agent-cmd <command>", "Run local AI command to refine draft readability before upload")
+  .option("--auto-publish", "Auto-publish high-confidence drafts after upload", false)
+  .option("--publish-threshold <score>", "Auto-publish readiness threshold (50-100)", "85")
+  .option("--max-auto-publish <count>", "Max drafts to auto-publish per run", "25")
   .action(async (options) => {
-    await syncOpenClawCommand(options);
+    await syncOpenClawCommand({
+      ...options,
+      publishThreshold: Number(options.publishThreshold),
+      maxAutoPublish: Number(options.maxAutoPublish)
+    });
   });
 
 const marketplaceCommand = program.command("marketplace").description("Search/buy workflows for local agent execution");

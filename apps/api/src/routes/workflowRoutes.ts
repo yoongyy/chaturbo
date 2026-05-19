@@ -6,6 +6,7 @@ import { requireAuth } from "../middleware/auth";
 import { AuthenticatedRequest } from "../types";
 import { User } from "../models/User";
 import { WorkflowPurchase } from "../models/WorkflowPurchase";
+import { CreditTransaction } from "../models/CreditTransaction";
 
 const router = Router();
 const MAX_PAGE_SIZE = 50;
@@ -155,6 +156,11 @@ const preflightSchema = z.object({
   contextLength: z.number()
 });
 
+const verificationReportSchema = z.object({
+  result: z.enum(["success", "failure"]),
+  note: z.string().max(500).optional()
+});
+
 const modelRank: Record<string, number> = {
   beginner: 1,
   intermediate: 2,
@@ -261,6 +267,36 @@ router.post("/:id/preflight-check", async (req, res) => {
   });
 });
 
+router.post("/:id/verification-report", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const parsed = verificationReportSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return sendError(res, 400, "Invalid verification payload");
+  }
+
+  const workflow = await Workflow.findById(req.params.id);
+  if (!workflow) {
+    return sendError(res, 404, "Workflow not found");
+  }
+
+  if (String(workflow.ownerId) !== String(req.user?.userId)) {
+    return sendError(res, 403, "Only workflow owner can submit verification report");
+  }
+
+  if (parsed.data.result === "success") {
+    workflow.stats.successfulRuns = (workflow.stats?.successfulRuns ?? 0) + 1;
+  } else {
+    workflow.stats.failedRuns = (workflow.stats?.failedRuns ?? 0) + 1;
+  }
+
+  await workflow.save();
+
+  return res.status(201).json({
+    verified: true,
+    result: parsed.data.result,
+    stats: workflow.stats
+  });
+});
+
 router.post("/:id/purchase", requireAuth, async (req: AuthenticatedRequest, res) => {
   const owner = await User.findById(req.user?.userId);
   if (!owner) {
@@ -270,6 +306,10 @@ router.post("/:id/purchase", requireAuth, async (req: AuthenticatedRequest, res)
   const workflow = await Workflow.findOne({ _id: req.params.id, status: "published" });
   if (!workflow) {
     return sendError(res, 404, "Workflow not found");
+  }
+
+  if ((workflow.stats?.successfulRuns ?? 0) < 1) {
+    return sendError(res, 412, "Workflow is not verified yet (no successful run reported)");
   }
 
   const existingPurchase = await WorkflowPurchase.findOne({ ownerId: owner._id, workflowId: workflow._id });
@@ -292,6 +332,13 @@ router.post("/:id/purchase", requireAuth, async (req: AuthenticatedRequest, res)
   }
 
   owner.credits -= workflow.priceCredits;
+  if (owner.creditsPurchased >= workflow.priceCredits) {
+    owner.creditsPurchased -= workflow.priceCredits;
+  } else {
+    const remainder = workflow.priceCredits - owner.creditsPurchased;
+    owner.creditsPurchased = 0;
+    owner.creditsEarned = Math.max(0, owner.creditsEarned - remainder);
+  }
   await owner.save();
 
   workflow.stats = {
@@ -306,6 +353,32 @@ router.post("/:id/purchase", requireAuth, async (req: AuthenticatedRequest, res)
     priceCredits: workflow.priceCredits,
     source: "dashboard"
   });
+
+  await CreditTransaction.create({
+    ownerId: owner._id,
+    type: "purchase_debit",
+    source: "dashboard_purchase",
+    amount: -workflow.priceCredits,
+    workflowId: workflow._id
+  });
+
+  if (String(workflow.ownerId) !== String(owner._id)) {
+    const seller = await User.findById(workflow.ownerId);
+    if (seller) {
+      seller.credits += workflow.priceCredits;
+      seller.creditsEarned += workflow.priceCredits;
+      await seller.save();
+
+      await CreditTransaction.create({
+        ownerId: seller._id,
+        type: "sale_credit",
+        source: "dashboard_purchase",
+        amount: workflow.priceCredits,
+        workflowId: workflow._id,
+        metadata: { buyerOwnerId: owner._id }
+      });
+    }
+  }
 
   return res.status(201).json({
     purchased: true,

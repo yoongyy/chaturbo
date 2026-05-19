@@ -6,6 +6,8 @@ export interface IUser extends Document {
   name?: string;
   passwordHash: string;
   credits: number;
+  creditsPurchased: number;
+  creditsEarned: number;
   ownerUid: string;
   createdAt: Date;
   updatedAt: Date;
@@ -17,6 +19,8 @@ const userSchema = new Schema<IUser>(
     name: { type: String, trim: true },
     passwordHash: { type: String, required: true },
     credits: { type: Number, default: 0 },
+    creditsPurchased: { type: Number, default: 0 },
+    creditsEarned: { type: Number, default: 0 },
     ownerUid: {
       type: String,
       unique: true,

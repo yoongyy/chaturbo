@@ -3,6 +3,9 @@ import { scanOpenClawCommand } from "./scanOpenClaw";
 interface SyncOptions {
   path?: string;
   localAgentCmd?: string;
+  autoPublish?: boolean;
+  publishThreshold?: number;
+  maxAutoPublish?: number;
 }
 
 export async function syncOpenClawCommand(options: SyncOptions) {
@@ -11,6 +14,9 @@ export async function syncOpenClawCommand(options: SyncOptions) {
     localOnly: false,
     autoUpload: true,
     nonInteractive: true,
-    localAgentCmd: options.localAgentCmd
+    localAgentCmd: options.localAgentCmd,
+    autoPublish: options.autoPublish,
+    publishThreshold: options.publishThreshold,
+    maxAutoPublish: options.maxAutoPublish
   });
 }

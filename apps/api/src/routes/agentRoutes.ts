@@ -6,6 +6,7 @@ import { User } from "../models/User";
 import { Workflow } from "../models/Workflow";
 import { WorkflowPurchase } from "../models/WorkflowPurchase";
 import { sendError } from "../utils/http";
+import { CreditTransaction } from "../models/CreditTransaction";
 
 const router = Router();
 const MAX_PAGE_SIZE = 50;
@@ -113,6 +114,10 @@ router.post("/workflows/:id/purchase", async (req: AuthenticatedRequest, res) =>
     return sendError(res, 404, "Workflow not found");
   }
 
+  if ((workflow.stats?.successfulRuns ?? 0) < 1) {
+    return sendError(res, 412, "Workflow is not verified yet (no successful run reported)");
+  }
+
   const existingPurchase = await WorkflowPurchase.findOne({ ownerId: owner._id, workflowId: workflow._id });
   if (existingPurchase) {
     return res.json({
@@ -133,6 +138,13 @@ router.post("/workflows/:id/purchase", async (req: AuthenticatedRequest, res) =>
   }
 
   owner.credits -= workflow.priceCredits;
+  if (owner.creditsPurchased >= workflow.priceCredits) {
+    owner.creditsPurchased -= workflow.priceCredits;
+  } else {
+    const remainder = workflow.priceCredits - owner.creditsPurchased;
+    owner.creditsPurchased = 0;
+    owner.creditsEarned = Math.max(0, owner.creditsEarned - remainder);
+  }
   await owner.save();
 
   workflow.stats = {
@@ -147,6 +159,32 @@ router.post("/workflows/:id/purchase", async (req: AuthenticatedRequest, res) =>
     priceCredits: workflow.priceCredits,
     source: "agent"
   });
+
+  await CreditTransaction.create({
+    ownerId: owner._id,
+    type: "purchase_debit",
+    source: "agent_purchase",
+    amount: -workflow.priceCredits,
+    workflowId: workflow._id
+  });
+
+  if (String(workflow.ownerId) !== String(owner._id)) {
+    const seller = await User.findById(workflow.ownerId);
+    if (seller) {
+      seller.credits += workflow.priceCredits;
+      seller.creditsEarned += workflow.priceCredits;
+      await seller.save();
+
+      await CreditTransaction.create({
+        ownerId: seller._id,
+        type: "sale_credit",
+        source: "agent_purchase",
+        amount: workflow.priceCredits,
+        workflowId: workflow._id,
+        metadata: { buyerOwnerId: owner._id }
+      });
+    }
+  }
 
   return res.status(201).json({
     purchased: true,

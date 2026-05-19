@@ -3,8 +3,10 @@ import { z } from "zod";
 import { requireIngestionAuth } from "../middleware/ingestionAuth";
 import { AuthenticatedRequest } from "../types";
 import { WorkflowDraft } from "../models/WorkflowDraft";
+import { Workflow } from "../models/Workflow";
 import { sendError } from "../utils/http";
 import { buildDraftSummary } from "../utils/draftSummary";
+import { slugify } from "../utils/slug";
 
 const router = Router();
 
@@ -61,8 +63,84 @@ const draftSchema = z.object({
 });
 
 const uploadSchema = z.object({
-  drafts: z.array(draftSchema).min(1)
+  drafts: z.array(draftSchema).min(1),
+  autoPublish: z.boolean().default(false),
+  publishThreshold: z.number().min(50).max(100).default(85),
+  maxAutoPublish: z.number().int().min(1).max(200).default(25)
 });
+
+function normText(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function draftFingerprint(draft: z.infer<typeof draftSchema>) {
+  const title = slugify(draft.title);
+  const category = normText(draft.category);
+  const problemHead = normText(draft.problem.description).slice(0, 140);
+  return `${title}|${category}|${problemHead}`;
+}
+
+function canAutoPublish(draft: z.infer<typeof draftSchema>, threshold: number): boolean {
+  if (draft.quality.publishReadinessScore < threshold) return false;
+  if (draft.privacy.riskLevel === "high") return false;
+  if ((draft.quality.missingFields || []).length > 1) return false;
+  if ((draft.solution.steps || []).length < 3) return false;
+  if ((draft.solution.verificationSteps || []).length < 2) return false;
+  return true;
+}
+
+async function publishDraftDocument(draft: any) {
+  const baseSlug = slugify(draft.title);
+  let slug = baseSlug;
+  let index = 1;
+  while (await Workflow.findOne({ slug })) {
+    slug = `${baseSlug}-${index}`;
+    index += 1;
+  }
+
+  const fullContent = {
+    title: draft.title,
+    category: draft.category,
+    summary: draft.summary,
+    problem: draft.problem,
+    solution: draft.solution,
+    compatibility: draft.compatibility,
+    estimates: draft.estimates,
+    privacy: draft.privacy,
+    quality: draft.quality,
+    source: draft.source
+  };
+
+  const previewContent = {
+    title: draft.title,
+    category: draft.category,
+    summary: draft.summary,
+    problemDescription: draft.problem.description,
+    compatibility: draft.compatibility,
+    estimates: draft.estimates,
+    qualityScore: draft.quality.publishReadinessScore,
+    riskLevel: draft.privacy.riskLevel
+  };
+
+  const workflow = await Workflow.create({
+    ownerId: draft.ownerId,
+    draftId: draft._id,
+    title: draft.title,
+    slug,
+    category: draft.category,
+    summary: draft.summary,
+    priceCredits: draft.estimates.suggestedPriceCredits,
+    fullContent,
+    previewContent,
+    compatibility: draft.compatibility,
+    status: "published"
+  });
+
+  draft.status = "published";
+  await draft.save();
+
+  return workflow;
+}
 
 router.post("/upload-drafts", requireIngestionAuth, async (req: AuthenticatedRequest, res) => {
   const parsed = uploadSchema.safeParse(req.body);
@@ -75,21 +153,103 @@ router.post("/upload-drafts", requireIngestionAuth, async (req: AuthenticatedReq
     return sendError(res, 401, "Unauthorized");
   }
 
-  const inserts = parsed.data.drafts.map((draft) => ({
-    ...draft,
-    ownerId,
-    source: {
-      ...draft.source,
-      scannedAt: draft.source.scannedAt ?? new Date()
-    },
-    status: "draft"
-  }));
+  const existingDrafts = await WorkflowDraft.find({ ownerId }).select(
+    "title category problem.description summary status quality.publishReadinessScore privacy.riskLevel"
+  );
+  const existingFingerprints = new Set(
+    existingDrafts.map((draft) =>
+      draftFingerprint({
+        source: { type: "agent_log", scannedAt: new Date() },
+        title: draft.title,
+        category: draft.category,
+        summary: draft.summary,
+        problem: { description: draft.problem?.description || "", symptoms: [] },
+        solution: {
+          overview: "",
+          steps: [],
+          doNotDo: [],
+          commonErrors: [],
+          verificationSteps: []
+        },
+        compatibility: {
+          agents: [],
+          os: [],
+          minRamGb: 8,
+          requiredTools: [],
+          requiredSoftware: {},
+          modelRequirement: "intermediate",
+          contextLength: 8000
+        },
+        estimates: {
+          timeSpentHours: 0,
+          tokenCostUsd: 0,
+          suggestedPriceCredits: 0,
+          potentialMonthlyRevenueLow: 0,
+          potentialMonthlyRevenueHigh: 0
+        },
+        privacy: {
+          sanitized: true,
+          removedItems: [],
+          riskLevel: draft.privacy?.riskLevel || "low"
+        },
+        quality: {
+          publishReadinessScore: draft.quality?.publishReadinessScore || 0,
+          missingFields: [],
+          reasonWhySellable: ""
+        },
+        status: "draft"
+      })
+    )
+  );
 
-  const saved = await WorkflowDraft.insertMany(inserts);
+  const incomingFingerprints = new Set<string>();
+  const inserts = parsed.data.drafts
+    .filter((draft) => {
+      const fp = draftFingerprint(draft);
+      if (existingFingerprints.has(fp)) {
+        return false;
+      }
+      if (incomingFingerprints.has(fp)) {
+        return false;
+      }
+      incomingFingerprints.add(fp);
+      return true;
+    })
+    .map((draft) => ({
+      ...draft,
+      ownerId,
+      source: {
+        ...draft.source,
+        scannedAt: draft.source.scannedAt ?? new Date()
+      },
+      status: "draft"
+    }));
+
+  const saved = inserts.length ? await WorkflowDraft.insertMany(inserts) : [];
+  const autoPublished: any[] = [];
+  if (parsed.data.autoPublish && saved.length) {
+    const threshold = parsed.data.publishThreshold;
+    const eligible = saved.filter((draft) => canAutoPublish(draft as any, threshold)).slice(0, parsed.data.maxAutoPublish);
+    for (const draft of eligible) {
+      const workflow = await publishDraftDocument(draft);
+      autoPublished.push(workflow);
+    }
+  }
+
   const allUserDrafts = await WorkflowDraft.find({ ownerId }).sort({ createdAt: -1 });
 
   return res.status(201).json({
     drafts: saved,
+    dedupe: {
+      submitted: parsed.data.drafts.length,
+      inserted: saved.length,
+      skippedDuplicates: parsed.data.drafts.length - saved.length
+    },
+    autoPublished: {
+      enabled: parsed.data.autoPublish,
+      count: autoPublished.length,
+      workflowIds: autoPublished.map((workflow) => workflow._id)
+    },
     summary: buildDraftSummary(allUserDrafts)
   });
 });

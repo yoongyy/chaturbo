@@ -12,6 +12,9 @@ interface ScanOptions {
   autoUpload?: boolean;
   nonInteractive?: boolean;
   localAgentCmd?: string;
+  autoPublish?: boolean;
+  publishThreshold?: number;
+  maxAutoPublish?: number;
 }
 
 function printDraftSummary(drafts: ReturnType<typeof extractWorkflowDrafts>) {
@@ -95,9 +98,22 @@ export async function scanOpenClawCommand(options: ScanOptions) {
     hasToken
       ? { token: config.token }
       : { ownerUid: config.ownerUid, agentSecret: config.agentSecret },
-    drafts
+    drafts,
+    {
+      autoPublish: options.autoPublish,
+      publishThreshold: options.publishThreshold,
+      maxAutoPublish: options.maxAutoPublish
+    }
   );
   console.log(`Uploaded ${result.drafts.length} draft(s).`);
+  if (result.dedupe) {
+    console.log("Dedupe summary:");
+    console.log(JSON.stringify(result.dedupe, null, 2));
+  }
+  if (result.autoPublished) {
+    console.log("Auto-publish summary:");
+    console.log(JSON.stringify(result.autoPublished, null, 2));
+  }
   console.log("Dashboard summary:");
   console.log(JSON.stringify(result.summary, null, 2));
 }

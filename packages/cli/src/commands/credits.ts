@@ -1,4 +1,5 @@
 import axios from "axios";
+import prompts from "prompts";
 import { loadCliConfig } from "../services/cliConfig";
 
 export async function creditBalanceCommand() {
@@ -29,12 +30,39 @@ export async function creditTopupCommand(credits: string) {
     process.exit(1);
   }
 
-  const res = await axios.post(
-    `${config.apiUrl}/credits/topup`,
-    { credits: amount, note: "manual_cli_topup" },
+  const createRes = await axios.post(
+    `${config.apiUrl}/credits/checkout-session`,
+    { credits: amount },
     { headers: { Authorization: `Bearer ${config.token}` } }
   );
 
-  console.log(`Top-up success: +${res.data.addedCredits} credits`);
-  console.log(`New balance: ${res.data.credits}`);
+  const checkoutUrl = createRes.data.url as string;
+  const sessionId = createRes.data.sessionId as string;
+  console.log("Open this URL to complete payment:");
+  console.log(checkoutUrl);
+
+  const answer = await prompts({
+    type: "confirm",
+    name: "paid",
+    message: "Payment completed in browser?",
+    initial: true
+  });
+
+  if (!answer.paid) {
+    console.log("Top-up not confirmed yet.");
+    return;
+  }
+
+  const confirmRes = await axios.post(
+    `${config.apiUrl}/credits/checkout-confirm`,
+    { sessionId },
+    { headers: { Authorization: `Bearer ${config.token}` } }
+  );
+
+  if (confirmRes.data.alreadyProcessed) {
+    console.log("Top-up already processed.");
+  } else {
+    console.log(`Top-up success: +${confirmRes.data.addedCredits} credits`);
+  }
+  console.log(`New balance: ${confirmRes.data.credits}`);
 }

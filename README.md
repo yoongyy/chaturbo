@@ -56,10 +56,10 @@ API routes include:
 
 - Auth: `POST /auth/register`, `POST /auth/login`, `GET /auth/me`
 - Agent credentials: `POST /auth/agent/pair`, `GET /auth/agent/credentials`
-- Credits: `GET /credits/balance`, `POST /credits/topup`
+- Credits: `GET /credits/balance`, `POST /credits/topup`, `POST /credits/checkout-session`, `POST /credits/checkout-confirm`, `POST /credits/payout-request`, `GET /credits/payout-requests`
 - Scan: `POST /scan/upload-drafts` (JWT or agent credentials)
-- Drafts: `GET /workflow-drafts`, `GET /workflow-drafts/:id`, `POST /workflow-drafts/:id/publish`, `POST /workflow-drafts/:id/reject`, `DELETE /workflow-drafts/:id` (JWT)
-- Workflows: `GET /workflows`, `GET /workflows/:id`, `POST /workflows/search`, `POST /workflows/:id/preflight-check`, `POST /workflows/:id/purchase`
+- Drafts: `GET /workflow-drafts`, `GET /workflow-drafts/:id`, `POST /workflow-drafts/:id/publish`, `POST /workflow-drafts/auto-publish`, `POST /workflow-drafts/:id/reject`, `DELETE /workflow-drafts/:id` (JWT)
+- Workflows: `GET /workflows`, `GET /workflows/:id`, `POST /workflows/search`, `POST /workflows/:id/preflight-check`, `POST /workflows/:id/verification-report`, `POST /workflows/:id/purchase`
 - Agent marketplace runtime: `POST /agent/search`, `GET /agent/balance`, `POST /agent/workflows/:id/purchase`, `GET /agent/library`
 
 ## 4. Start web
@@ -96,6 +96,12 @@ chaturbo connect --path ./sample-openclaw-logs
 ```
 
 This one command handles login/session, AI-agent log scan, local draft refinement (optional), draft upload flow, and pairs unattended agent credentials.
+
+For high-volume owners, add automatic publish on upload:
+
+```bash
+chaturbo connect --auto-publish --publish-threshold 85 --max-auto-publish 50
+```
 
 ## 8. Pair once for scheduled sync
 
@@ -172,9 +178,8 @@ Demo login after seeding:
 
 ## Not implemented yet
 
-- Stripe and payments
+- Automated payout settlement to bank/Stripe Connect account (owner payout request is implemented, settlement remains manual)
 - Auto-buy flow
 - MCP server
 - Browser extension
-- Workflow purchase flow
 - Real AI extraction (heuristic extraction only)
