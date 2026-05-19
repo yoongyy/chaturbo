@@ -22,6 +22,10 @@ const keywords = [
   "mt5",
   "ctrader",
   "openclaw",
+  "hermes",
+  "claude",
+  "gemini",
+  "google cli",
   "local llm",
   "ollama",
   "telegram",
@@ -69,7 +73,10 @@ function strongestTopic(text: string): string {
     { keyword: "railway", title: "Railway deployment troubleshooting workflow" },
     { keyword: "mongodb", title: "MongoDB connection reliability workflow" },
     { keyword: "webhook", title: "Webhook integration hardening workflow" },
-    { keyword: "openclaw", title: "OpenClaw agent workflow optimization" }
+    { keyword: "openclaw", title: "OpenClaw agent workflow optimization" },
+    { keyword: "hermes", title: "Hermes agent workflow optimization" },
+    { keyword: "claude", title: "Claude CLI agent workflow optimization" },
+    { keyword: "gemini", title: "Gemini CLI agent workflow optimization" }
   ];
 
   const lower = text.toLowerCase();
@@ -121,6 +128,9 @@ function buildCompatibility(text: string) {
   const requiredSoftware: Record<string, string> = {};
 
   if (lower.includes("openclaw")) agents.push("OpenClaw");
+  if (lower.includes("hermes")) agents.push("Hermes");
+  if (lower.includes("claude")) agents.push("Claude CLI");
+  if (lower.includes("gemini") || lower.includes("google cli")) agents.push("Gemini CLI");
   if (/package\.json|npm|node/.test(lower)) {
     requiredTools.add("node");
     requiredSoftware.node = ">=18";
@@ -137,7 +147,7 @@ function buildCompatibility(text: string) {
     : "intermediate";
 
   return {
-    agents: agents.length ? agents : ["OpenClaw"],
+    agents: agents.length ? agents : ["Any local AI agent"],
     os: ["macOS", "Linux", "Windows"],
     minRamGb: /local llm|ollama/.test(lower) ? 16 : 8,
     requiredTools: Array.from(requiredTools),
@@ -205,7 +215,7 @@ export function extractWorkflowDrafts(files: ScanFile[]): WorkflowDraftPayload[]
 
     drafts.push({
       source: {
-        type: "openclaw",
+        type: "agent_log",
         path: pathRedacted,
         sessionId: path.basename(file.path),
         scannedAt: new Date()
@@ -214,7 +224,7 @@ export function extractWorkflowDrafts(files: ScanFile[]): WorkflowDraftPayload[]
       category: mapCategory(sanitizedText),
       summary:
         summaryLines.join(" ") ||
-        "Sanitized troubleshooting flow extracted from OpenClaw logs with reusable steps.",
+        "Sanitized troubleshooting flow extracted from local AI agent logs with reusable steps.",
       problem: {
         description:
           symptoms[0] ||

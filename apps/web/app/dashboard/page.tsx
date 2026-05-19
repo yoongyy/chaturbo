@@ -38,6 +38,8 @@ export default function DashboardPage() {
   const [ownerUid, setOwnerUid] = useState("");
   const [agentSecret, setAgentSecret] = useState("");
   const [hasExistingCredential, setHasExistingCredential] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null);
+  const [toppingUp, setToppingUp] = useState(false);
   const [pairing, setPairing] = useState(false);
 
   async function loadDrafts() {
@@ -69,6 +71,10 @@ export default function DashboardPage() {
     apiRequest<{ credentials: Array<Record<string, unknown>> }>("/auth/agent/credentials", {}, true)
       .then((res) => setHasExistingCredential((res.credentials || []).length > 0))
       .catch(() => setHasExistingCredential(false));
+
+    apiRequest<{ credits: number }>("/credits/balance", {}, true)
+      .then((res) => setCredits(res.credits))
+      .catch(() => setCredits(null));
   }, []);
 
   const stats = useMemo(() => {
@@ -108,10 +114,10 @@ export default function DashboardPage() {
       <div className="card p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-mint">Connect OpenClaw</p>
-            <h2 className="mt-1 text-2xl font-semibold text-ink">How your AI agent connects to Chaturbo</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-mint">Connect Your AI Agent</p>
+            <h2 className="mt-1 text-2xl font-semibold text-ink">How your local AI agent connects to Chaturbo</h2>
             <p className="mt-2 max-w-3xl text-sm text-slate-600">
-              Chaturbo does not connect to your model directly. It reads local OpenClaw logs on your machine, sanitizes secrets
+              Chaturbo does not connect to your model directly. It reads local AI agent logs on your machine, sanitizes secrets
               locally, then uploads only approved workflow drafts.
             </p>
           </div>
@@ -128,9 +134,9 @@ export default function DashboardPage() {
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-sm font-semibold text-slate-800">First-time owner flow</p>
             <div className="mt-2 space-y-1 text-sm text-slate-700">
-              <p>1. Install OpenClaw and complete at least one task so logs exist.</p>
+              <p>1. Run your local AI agent (OpenClaw, Hermes, Claude CLI, Gemini CLI) and complete at least one task so logs exist.</p>
               <p>2. Generate machine credentials from this page (owner UID + secret).</p>
-              <p>3. Copy one command and run it on the OpenClaw machine.</p>
+              <p>3. Copy one command and run it on the machine where your local AI agent stores logs.</p>
               <p>4. Add hourly/daily scheduler using <span className="font-mono font-semibold">chaturbo sync</span>.</p>
             </div>
             <div className="mt-3 rounded-xl bg-white p-3 text-xs text-slate-600">
@@ -146,7 +152,7 @@ export default function DashboardPage() {
                   try {
                     const res = await apiRequest<{
                       credentials: { ownerUid: string; agentSecret: string };
-                    }>("/auth/agent/pair", { method: "POST", body: JSON.stringify({ name: "openclaw-agent" }) }, true);
+                    }>("/auth/agent/pair", { method: "POST", body: JSON.stringify({ name: "local-agent" }) }, true);
                     setOwnerUid(res.credentials.ownerUid);
                     setAgentSecret(res.credentials.agentSecret);
                     saveSecret(res.credentials.ownerUid, res.credentials.agentSecret);
@@ -231,10 +237,56 @@ export default function DashboardPage() {
         <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
           <p className="text-sm font-semibold text-amber-900">No logs found?</p>
           <div className="mt-1 space-y-1 text-sm text-amber-900/90">
-            <p>1. Make sure OpenClaw has run at least one conversation on this machine.</p>
-            <p>2. Re-run with explicit path: <span className="font-mono">chaturbo connect --path ~/.openclaw</span></p>
+            <p>1. Make sure your local AI agent has run at least one task on this machine.</p>
+            <p>2. Re-run with explicit path: <span className="font-mono">chaturbo connect --path ~/.openclaw</span> or your Hermes/Claude/Gemini log folder.</p>
             <p>3. Use local-only check first: <span className="font-mono">chaturbo connect --local-only</span></p>
           </div>
+        </div>
+      </div>
+
+      <div className="card p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold text-ink">Credits & Purchases</h2>
+            <p className="mt-1 text-sm text-slate-600">Top up credits here, then your local agent can buy and reuse workflows via CLI.</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs uppercase tracking-wide text-slate-500">Current balance</p>
+            <p className="text-2xl font-semibold text-ink">{credits ?? "-"} credits</p>
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            disabled={toppingUp}
+            onClick={async () => {
+              setToppingUp(true);
+              setError("");
+              try {
+                const res = await apiRequest<{ credits: number }>("/credits/topup", {
+                  method: "POST",
+                  body: JSON.stringify({ credits: 100, note: "manual_dashboard_topup" })
+                }, true);
+                setCredits(res.credits);
+                setCopyMessage("Top-up success: +100 credits");
+                setTimeout(() => setCopyMessage(""), 2200);
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Top-up failed");
+              } finally {
+                setToppingUp(false);
+              }
+            }}
+            className="rounded-lg bg-ink px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+          >
+            {toppingUp ? "Processing..." : "Top up +100 credits"}
+          </button>
+          <a href="/workflows" className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700">
+            Browse workflows to buy
+          </a>
+        </div>
+        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+          <p className="font-medium text-slate-700">Agent CLI buy flow</p>
+          <p className="mt-1 font-mono">chaturbo marketplace search --query "oauth"</p>
+          <p className="mt-1 font-mono">chaturbo marketplace buy --id &lt;workflow_id&gt;</p>
         </div>
       </div>
 

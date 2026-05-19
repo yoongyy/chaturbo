@@ -1,14 +1,15 @@
-# Chaturbo MVP
+# Chaturbo
 
-Chaturbo is an AI-agent workflow monetization MVP.
+Chaturbo is an AI-agent workflow monetization platform.
 
-## What this MVP does
+## What this platform does
 
-- Scan local OpenClaw conversation/log files with the CLI
+- Scan local AI agent conversation/log files with the CLI
 - Sanitize sensitive data locally before upload
 - Heuristically extract reusable workflow drafts (no AI API yet)
 - Upload only sanitized workflow drafts after user approval
 - Review drafts in dashboard and publish selected workflows
+- Let local AI agents search/buy workflows and reuse purchased workflows during tasks
 
 ## Stack
 
@@ -55,9 +56,11 @@ API routes include:
 
 - Auth: `POST /auth/register`, `POST /auth/login`, `GET /auth/me`
 - Agent credentials: `POST /auth/agent/pair`, `GET /auth/agent/credentials`
+- Credits: `GET /credits/balance`, `POST /credits/topup`
 - Scan: `POST /scan/upload-drafts` (JWT or agent credentials)
 - Drafts: `GET /workflow-drafts`, `GET /workflow-drafts/:id`, `POST /workflow-drafts/:id/publish`, `POST /workflow-drafts/:id/reject`, `DELETE /workflow-drafts/:id` (JWT)
-- Workflows: `GET /workflows`, `GET /workflows/:id`, `POST /workflows/search`, `POST /workflows/:id/preflight-check`
+- Workflows: `GET /workflows`, `GET /workflows/:id`, `POST /workflows/search`, `POST /workflows/:id/preflight-check`, `POST /workflows/:id/purchase`
+- Agent marketplace runtime: `POST /agent/search`, `GET /agent/balance`, `POST /agent/workflows/:id/purchase`, `GET /agent/library`
 
 ## 4. Start web
 
@@ -92,7 +95,7 @@ chaturbo login
 chaturbo connect --path ./sample-openclaw-logs
 ```
 
-This one command handles login/session, OpenClaw scan, draft upload flow, and pairs unattended agent credentials.
+This one command handles login/session, AI-agent log scan, local draft refinement (optional), draft upload flow, and pairs unattended agent credentials.
 
 ## 8. Pair once for scheduled sync
 
@@ -120,14 +123,14 @@ Example hourly cron (macOS/Linux):
 ## 10. Run scan command (manual mode)
 
 ```bash
-chaturbo scan openclaw --path ./sample-openclaw-logs
+chaturbo scan agent --path ./sample-openclaw-logs
 ```
 
 Optional modes:
 
 ```bash
-chaturbo scan openclaw --local-only
-chaturbo scan openclaw --path ./sample-openclaw-logs --local-only
+chaturbo scan agent --local-only
+chaturbo scan agent --path ./sample-openclaw-logs --local-only
 ```
 
 ## 11. Review drafts in dashboard
@@ -167,7 +170,7 @@ Demo login after seeding:
 - `npm run build`
 - `npm run lint`
 
-## Not implemented in this MVP
+## Not implemented yet
 
 - Stripe and payments
 - Auto-buy flow

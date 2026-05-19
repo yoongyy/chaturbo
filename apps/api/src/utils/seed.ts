@@ -37,7 +37,7 @@ async function run() {
   const draftDocs = await WorkflowDraft.insertMany(
     samples.map((title, index) => ({
       ownerId: user!._id,
-      source: { type: "openclaw", path: "sample-openclaw-logs", scannedAt: new Date() },
+      source: { type: "agent_log", path: "sample-agent-logs", scannedAt: new Date() },
       title,
       category: index % 2 === 0 ? "automation" : "deployment",
       summary: `${title} from sanitized execution logs and troubleshooting notes.`,
@@ -62,7 +62,7 @@ async function run() {
         ]
       },
       compatibility: {
-        agents: ["OpenClaw"],
+        agents: ["OpenClaw", "Hermes", "Claude CLI", "Gemini CLI"],
         os: ["macOS", "Linux"],
         minRamGb: 8,
         requiredTools: ["terminal", "node"],

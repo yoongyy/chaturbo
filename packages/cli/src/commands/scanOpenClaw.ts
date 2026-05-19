@@ -4,12 +4,14 @@ import { readCandidateFiles } from "../services/fileReader";
 import { extractWorkflowDrafts } from "../services/heuristicExtractor";
 import { loadCliConfig } from "../services/cliConfig";
 import { uploadDrafts } from "../services/draftUploader";
+import { refineDraftsWithLocalAgent } from "../services/localAgentRefiner";
 
 interface ScanOptions {
   path?: string;
   localOnly?: boolean;
   autoUpload?: boolean;
   nonInteractive?: boolean;
+  localAgentCmd?: string;
 }
 
 function printDraftSummary(drafts: ReturnType<typeof extractWorkflowDrafts>) {
@@ -31,7 +33,7 @@ export async function scanOpenClawCommand(options: ScanOptions) {
   const scanPaths = detectOpenClawPaths(options.path);
 
   if (!scanPaths.length) {
-    console.error("No OpenClaw paths found. Use --path <path>.");
+    console.error("No local AI agent log paths found. Use --path <path>.");
     process.exit(1);
   }
 
@@ -44,7 +46,12 @@ export async function scanOpenClawCommand(options: ScanOptions) {
     process.exit(1);
   }
 
-  const drafts = extractWorkflowDrafts(files);
+  let drafts = extractWorkflowDrafts(files);
+  const localAgentCommand = options.localAgentCmd || config.localAgentCommand;
+  if (localAgentCommand) {
+    console.log(`Refining extracted drafts locally via agent command: ${localAgentCommand}`);
+    drafts = refineDraftsWithLocalAgent(drafts, files, localAgentCommand);
+  }
   if (!drafts.length) {
     console.log("No sellable workflow drafts detected with current heuristics.");
     return;

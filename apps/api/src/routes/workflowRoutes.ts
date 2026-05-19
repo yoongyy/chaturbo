@@ -2,6 +2,10 @@ import { Router } from "express";
 import { z } from "zod";
 import { Workflow } from "../models/Workflow";
 import { sendError } from "../utils/http";
+import { requireAuth } from "../middleware/auth";
+import { AuthenticatedRequest } from "../types";
+import { User } from "../models/User";
+import { WorkflowPurchase } from "../models/WorkflowPurchase";
 
 const router = Router();
 const MAX_PAGE_SIZE = 50;
@@ -254,6 +258,66 @@ router.post("/:id/preflight-check", async (req, res) => {
     passed,
     warnings,
     blockers
+  });
+});
+
+router.post("/:id/purchase", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const owner = await User.findById(req.user?.userId);
+  if (!owner) {
+    return sendError(res, 404, "User not found");
+  }
+
+  const workflow = await Workflow.findOne({ _id: req.params.id, status: "published" });
+  if (!workflow) {
+    return sendError(res, 404, "Workflow not found");
+  }
+
+  const existingPurchase = await WorkflowPurchase.findOne({ ownerId: owner._id, workflowId: workflow._id });
+  if (existingPurchase) {
+    return res.json({
+      alreadyPurchased: true,
+      remainingCredits: owner.credits,
+      workflow: {
+        _id: workflow._id,
+        title: workflow.title,
+        category: workflow.category,
+        fullContent: workflow.fullContent,
+        compatibility: workflow.compatibility
+      }
+    });
+  }
+
+  if (owner.credits < workflow.priceCredits) {
+    return sendError(res, 402, "Insufficient credits");
+  }
+
+  owner.credits -= workflow.priceCredits;
+  await owner.save();
+
+  workflow.stats = {
+    ...workflow.stats,
+    purchases: (workflow.stats?.purchases ?? 0) + 1
+  };
+  await workflow.save();
+
+  await WorkflowPurchase.create({
+    ownerId: owner._id,
+    workflowId: workflow._id,
+    priceCredits: workflow.priceCredits,
+    source: "dashboard"
+  });
+
+  return res.status(201).json({
+    purchased: true,
+    spentCredits: workflow.priceCredits,
+    remainingCredits: owner.credits,
+    workflow: {
+      _id: workflow._id,
+      title: workflow.title,
+      category: workflow.category,
+      fullContent: workflow.fullContent,
+      compatibility: workflow.compatibility
+    }
   });
 });
 

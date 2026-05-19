@@ -223,7 +223,7 @@ router.get("/me", requireAuth, async (req: AuthenticatedRequest, res) => {
 });
 
 const pairAgentSchema = z.object({
-  name: z.string().min(1).max(80).default("openclaw-agent")
+  name: z.string().min(1).max(80).default("local-agent")
 });
 
 router.post("/agent/pair", requireAuth, async (req: AuthenticatedRequest, res) => {

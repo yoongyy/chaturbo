@@ -7,6 +7,8 @@ import authRoutes from "./routes/authRoutes";
 import scanRoutes from "./routes/scanRoutes";
 import workflowDraftRoutes from "./routes/workflowDraftRoutes";
 import workflowRoutes from "./routes/workflowRoutes";
+import creditsRoutes from "./routes/creditsRoutes";
+import agentRoutes from "./routes/agentRoutes";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -64,6 +66,8 @@ app.use("/auth", authRoutes);
 app.use("/scan", scanRoutes);
 app.use("/workflow-drafts", workflowDraftRoutes);
 app.use("/workflows", workflowRoutes);
+app.use("/credits", creditsRoutes);
+app.use("/agent", agentRoutes);
 
 app.use(errorHandler);
 

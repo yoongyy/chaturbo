@@ -16,9 +16,9 @@ export async function pairAgentCommand(name?: string) {
       type: "text",
       name: "name",
       message: "Agent credential name",
-      initial: "openclaw-agent"
+      initial: "local-agent"
     });
-    finalName = response.name || "openclaw-agent";
+    finalName = response.name || "local-agent";
   }
 
   try {

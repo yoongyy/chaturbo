@@ -2,6 +2,7 @@ import { scanOpenClawCommand } from "./scanOpenClaw";
 
 interface SyncOptions {
   path?: string;
+  localAgentCmd?: string;
 }
 
 export async function syncOpenClawCommand(options: SyncOptions) {
@@ -9,6 +10,7 @@ export async function syncOpenClawCommand(options: SyncOptions) {
     path: options.path,
     localOnly: false,
     autoUpload: true,
-    nonInteractive: true
+    nonInteractive: true,
+    localAgentCmd: options.localAgentCmd
   });
 }

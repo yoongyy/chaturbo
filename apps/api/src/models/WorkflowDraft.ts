@@ -68,7 +68,7 @@ const workflowDraftSchema = new Schema<IWorkflowDraft>(
       type: {
         type: String,
         required: true,
-        default: "openclaw"
+        default: "agent_log"
       },
       path: String,
       sessionId: String,

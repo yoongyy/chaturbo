@@ -45,13 +45,13 @@ export default function HomePage() {
         <div className="relative grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
           <div>
             <p className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Chaturbo for OpenClaw Owners
+              Chaturbo for AI Agent Owners
             </p>
             <h1 className="mt-4 text-4xl font-semibold leading-tight text-ink md:text-6xl">
               Stop burning tokens on repeated fixes. Convert solved AI workflows into assets.
             </h1>
             <p className="mt-4 max-w-2xl text-lg text-slate-600">
-              Chaturbo scans your local OpenClaw history, sanitizes secrets on your machine, and turns repeatable fixes into
+              Chaturbo scans your local AI agent history, sanitizes secrets on your machine, and turns repeatable fixes into
               publishable workflow drafts.
             </p>
 
@@ -98,7 +98,7 @@ export default function HomePage() {
             <p className="mt-2 font-mono">chaturbo connect</p>
           </div>
           <div className="mt-4 grid gap-2 text-sm text-slate-700">
-            <p>1. Detects OpenClaw logs automatically</p>
+            <p>1. Detects AI agent logs automatically</p>
             <p>2. Sanitizes locally before any upload</p>
             <p>3. Shows draft value estimates and uploads approved drafts</p>
           </div>

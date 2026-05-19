@@ -7,6 +7,7 @@ interface CliConfig {
   token?: string;
   ownerUid?: string;
   agentSecret?: string;
+  localAgentCommand?: string;
 }
 
 const defaultApiUrl = process.env.CHATURBO_API_URL || "http://localhost:4000";
@@ -33,12 +34,13 @@ export function loadCliConfig(): CliConfig {
 
   const raw = fs.readFileSync(configPath, "utf-8");
   const parsed = JSON.parse(raw) as CliConfig;
-  return {
-    apiUrl: process.env.CHATURBO_API_URL || parsed.apiUrl || defaultApiUrl,
-    token: parsed.token,
-    ownerUid: parsed.ownerUid,
-    agentSecret: parsed.agentSecret
-  };
+    return {
+      apiUrl: process.env.CHATURBO_API_URL || parsed.apiUrl || defaultApiUrl,
+      token: parsed.token,
+      ownerUid: parsed.ownerUid,
+      agentSecret: parsed.agentSecret,
+      localAgentCommand: parsed.localAgentCommand
+    };
 }
 
 export function saveCliConfig(config: CliConfig) {
@@ -62,5 +64,11 @@ export function saveAgentCredentials(ownerUid: string, agentSecret: string) {
 export function saveApiUrl(apiUrl: string) {
   const config = loadCliConfig();
   config.apiUrl = apiUrl;
+  saveCliConfig(config);
+}
+
+export function saveLocalAgentCommand(localAgentCommand: string) {
+  const config = loadCliConfig();
+  config.localAgentCommand = localAgentCommand;
   saveCliConfig(config);
 }

@@ -9,7 +9,7 @@ import { buildDraftSummary } from "../utils/draftSummary";
 const router = Router();
 
 const sourceSchema = z.object({
-  type: z.string().default("openclaw"),
+  type: z.string().default("agent_log"),
   path: z.string().optional(),
   sessionId: z.string().optional(),
   scannedAt: z.coerce.date().optional()

@@ -15,7 +15,7 @@ const agentCredentialSchema = new Schema<IAgentCredential>(
   {
     ownerId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     ownerUid: { type: String, required: true, index: true },
-    name: { type: String, required: true, default: "openclaw-agent" },
+    name: { type: String, required: true, default: "local-agent" },
     secretHash: { type: String, required: true },
     active: { type: Boolean, default: true },
     lastUsedAt: Date
