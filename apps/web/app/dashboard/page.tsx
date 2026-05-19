@@ -19,6 +19,9 @@ const cronExamples: Record<OsTab, string> = {
   windows: 'schtasks /Create /SC HOURLY /TN ChaturboSync /TR "chaturbo sync"'
 };
 
+const npmDocsUrl = "https://www.npmjs.com/package/chaturbo-cli";
+const repoReadmeUrl = "https://github.com/yoongyy/chaturbo#readme";
+
 export default function DashboardPage() {
   const secretStorageKey = (uid: string) => `chaturbo_agent_secret_${uid}`;
   const readSavedSecret = (uid: string) => {
@@ -98,6 +101,45 @@ export default function DashboardPage() {
     : hasExistingCredential
       ? fallbackConnectCommand
       : "Generate machine credentials to get one-shot connect command";
+  const ownerForPrompt = ownerUid || "<OWNER_UID>";
+  const secretForPrompt = agentSecret || "<AGENT_SECRET>";
+  const agentBootstrapPrompt = `You are my local AI agent. Set up and operate Chaturbo integration on this machine.
+
+Use these credentials:
+- ownerUid: ${ownerForPrompt}
+- agentSecret: ${secretForPrompt}
+- apiUrl: ${API_URL}
+
+Reference docs first:
+- npm package: ${npmDocsUrl}
+- platform README: ${repoReadmeUrl}
+- API health: ${API_URL}/health
+
+Tasks to complete now:
+1) Install and connect CLI:
+   npx -y chaturbo-cli@latest connect --api-url ${API_URL} --owner-id ${ownerForPrompt} --agent-secret ${secretForPrompt}
+2) Run a local dry run and verify:
+   chaturbo scan agent --local-only
+3) Configure hourly sync job based on this OS:
+   ${cronExamples[activeOs]}
+4) Verify sync works:
+   chaturbo sync
+5) Enable workflow discovery/reuse commands for this machine:
+   chaturbo marketplace search --query "oauth"
+   chaturbo marketplace library
+6) If workflow is useful, purchase and save for execution:
+   chaturbo marketplace buy --id <workflow_id>
+7) Print final status:
+   - connected: yes/no
+   - scheduler installed: yes/no
+   - last sync result
+   - credits balance
+   - purchased workflows count
+
+Important constraints:
+- Never upload raw conversations.
+- Keep secrets local and redacted.
+- Use Chaturbo CLI and docs above for command syntax.`;
 
   return (
     <div className="space-y-6">
@@ -209,6 +251,15 @@ export default function DashboardPage() {
               <p className="text-xs text-slate-600">Hourly automation example</p>
               <p className="mt-1 font-mono text-xs text-slate-700">{cronExamples[activeOs]}</p>
             </div>
+            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">AI Agent Bootstrap Prompt</p>
+              <p className="mt-1 text-xs text-slate-600">
+                Paste this prompt into your local AI agent so it can self-setup Chaturbo, install sync schedule, and enable workflow search/buy.
+              </p>
+              <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-white p-2 text-[11px] leading-5 text-slate-700">
+                {agentBootstrapPrompt}
+              </pre>
+            </div>
 
             <div className="mt-3 flex flex-wrap gap-2">
               <button
@@ -225,6 +276,20 @@ export default function DashboardPage() {
                 className="rounded-lg bg-mint px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
               >
                 Copy command
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(agentBootstrapPrompt);
+                    setCopyMessage("Copied bootstrap prompt");
+                  } catch {
+                    setCopyMessage("Copy failed. Select and copy manually.");
+                  }
+                  setTimeout(() => setCopyMessage(""), 1800);
+                }}
+                className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700"
+              >
+                Copy bootstrap prompt
               </button>
               <a href="/workflows" className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700">
                 See published examples
