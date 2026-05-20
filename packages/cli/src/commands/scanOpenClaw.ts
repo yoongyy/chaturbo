@@ -17,6 +17,8 @@ interface ScanOptions {
   maxAutoPublish?: number;
 }
 
+const MAX_UPLOAD_BATCH = 40;
+
 function printDraftSummary(drafts: ReturnType<typeof extractWorkflowDrafts>) {
   console.log(`\nDetected ${drafts.length} workflow draft(s):\n`);
   drafts.forEach((draft, index) => {
@@ -93,27 +95,71 @@ export async function scanOpenClawCommand(options: ScanOptions) {
     return;
   }
 
-  const result = await uploadDrafts(
-    config.apiUrl,
-    hasToken
-      ? { token: config.token }
-      : { ownerUid: config.ownerUid, agentSecret: config.agentSecret },
-    drafts,
-    {
+  const auth = hasToken
+    ? { token: config.token }
+    : { ownerUid: config.ownerUid, agentSecret: config.agentSecret };
+  const chunks: typeof drafts[] = [];
+  for (let i = 0; i < drafts.length; i += MAX_UPLOAD_BATCH) {
+    chunks.push(drafts.slice(i, i + MAX_UPLOAD_BATCH));
+  }
+
+  let uploadedTotal = 0;
+  let submittedTotal = 0;
+  let insertedTotal = 0;
+  let skippedDuplicatesTotal = 0;
+  let autoPublishedTotal = 0;
+  let lastSummary: Record<string, unknown> = {};
+
+  for (let index = 0; index < chunks.length; index += 1) {
+    const chunk = chunks[index];
+    const result = await uploadDrafts(config.apiUrl, auth, chunk, {
       autoPublish: options.autoPublish,
       publishThreshold: options.publishThreshold,
       maxAutoPublish: options.maxAutoPublish
-    }
+    });
+
+    uploadedTotal += result.drafts.length;
+    lastSummary = result.summary || lastSummary;
+
+    const dedupe = (result.dedupe || {}) as {
+      submitted?: number;
+      inserted?: number;
+      skippedDuplicates?: number;
+    };
+    submittedTotal += dedupe.submitted ?? chunk.length;
+    insertedTotal += dedupe.inserted ?? result.drafts.length;
+    skippedDuplicatesTotal += dedupe.skippedDuplicates ?? Math.max(0, chunk.length - result.drafts.length);
+
+    const autoPublished = (result.autoPublished || {}) as { count?: number };
+    autoPublishedTotal += autoPublished.count ?? 0;
+
+    console.log(`Uploaded batch ${index + 1}/${chunks.length} (${result.drafts.length}/${chunk.length} inserted).`);
+  }
+
+  console.log(`Uploaded ${uploadedTotal} draft(s) across ${chunks.length} batch(es).`);
+  console.log("Dedupe summary:");
+  console.log(
+    JSON.stringify(
+      {
+        submitted: submittedTotal,
+        inserted: insertedTotal,
+        skippedDuplicates: skippedDuplicatesTotal
+      },
+      null,
+      2
+    )
   );
-  console.log(`Uploaded ${result.drafts.length} draft(s).`);
-  if (result.dedupe) {
-    console.log("Dedupe summary:");
-    console.log(JSON.stringify(result.dedupe, null, 2));
-  }
-  if (result.autoPublished) {
-    console.log("Auto-publish summary:");
-    console.log(JSON.stringify(result.autoPublished, null, 2));
-  }
+  console.log("Auto-publish summary:");
+  console.log(
+    JSON.stringify(
+      {
+        enabled: Boolean(options.autoPublish),
+        count: autoPublishedTotal
+      },
+      null,
+      2
+    )
+  );
   console.log("Dashboard summary:");
-  console.log(JSON.stringify(result.summary, null, 2));
+  console.log(JSON.stringify(lastSummary, null, 2));
 }

@@ -141,6 +141,24 @@ function strongestTopic(text: string): string {
   return hit?.title ?? "Agent workflow troubleshooting playbook";
 }
 
+function titleQualifier(text: string): string {
+  const lower = text.toLowerCase();
+  if (/429|rate limit|too many requests/.test(lower)) return "rate-limit backoff";
+  if (/oauth|callback|redirect uri/.test(lower)) return "oauth callback fix";
+  if (/webhook|signature|hmac/.test(lower)) return "webhook verification";
+  if (/timeout|timed out/.test(lower)) return "timeout recovery";
+  if (/mongodb|connection string|db uri/.test(lower)) return "database connectivity";
+  if (/vercel|railway|deploy/.test(lower)) return "deployment stabilization";
+  if (/telegram|mt5|ctrader|order/.test(lower)) return "execution reliability";
+  if (/openrouter|model fallback/.test(lower)) return "provider fallback";
+  if (/ollama|local llm/.test(lower)) return "local model setup";
+  return "operational hardening";
+}
+
+function buildTitle(text: string): string {
+  return `${strongestTopic(text)} - ${titleQualifier(text)}`;
+}
+
 function pickLines(text: string, count = 3): string[] {
   return cleanLines(text).slice(0, count);
 }
@@ -148,7 +166,7 @@ function pickLines(text: string, count = 3): string[] {
 function detectSymptoms(text: string): string[] {
   const lines = cleanLines(text).filter((line) => /error|failed|timeout|retry|exception/i.test(line)).slice(0, 5);
 
-  return lines.length ? unique(lines) : ["Task fails intermittently", "Retries increase without stable completion"];
+  return lines.length ? unique(lines) : [];
 }
 
 function detectSteps(text: string): string[] {
@@ -248,7 +266,13 @@ export function extractWorkflowDrafts(files: ScanFile[]): WorkflowDraftPayload[]
     }
 
     const summaryLines = pickLines(sanitizedText, 3);
+    if (!summaryLines.length) {
+      continue;
+    }
     const symptoms = detectSymptoms(sanitizedText);
+    if (!symptoms.length && keywordCount < 4) {
+      continue;
+    }
     const steps = detectSteps(sanitizedText);
     const errorsDetected = symptoms.length;
     const estimates = estimateValues(sanitizedText, keywordCount, errorsDetected);
@@ -268,16 +292,14 @@ export function extractWorkflowDrafts(files: ScanFile[]): WorkflowDraftPayload[]
         sessionId: path.basename(file.path),
         scannedAt: new Date()
       },
-      title: strongestTopic(sanitizedText),
+      title: buildTitle(sanitizedText),
       category: mapCategory(sanitizedText),
       summary:
         summaryLines.join(" ") ||
         "Sanitized troubleshooting flow extracted from local AI agent logs with reusable steps.",
       problem: {
-        description:
-          symptoms[0] ||
-          "Recurring execution issues and integration instability identified in workflow logs.",
-        symptoms
+        description: symptoms[0] || summaryLines[0],
+        symptoms: symptoms.length ? symptoms : [summaryLines[0]]
       },
       solution: {
         overview:
