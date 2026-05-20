@@ -12,16 +12,43 @@ export default function PublicWorkflowDetailPage() {
   const params = useParams<{ id: string }>();
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [showFullProblem, setShowFullProblem] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    apiRequest<{ workflow: Workflow }>(`/workflows/${params.id}`).then((res) => setWorkflow(res.workflow));
+    if (!params?.id) {
+      setError("Missing workflow id.");
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    apiRequest<{ workflow: Workflow }>(`/workflows/${params.id}`)
+      .then((res) => setWorkflow(res.workflow))
+      .catch((err) => {
+        setWorkflow(null);
+        setError(err instanceof Error ? err.message : "Failed to load workflow.");
+      })
+      .finally(() => setLoading(false));
   }, [params.id]);
 
   useEffect(() => {
     setShowFullProblem(false);
   }, [workflow?._id]);
 
-  if (!workflow) return <main className="p-6">Loading workflow...</main>;
+  if (loading) return <main className="p-6">Loading workflow...</main>;
+  if (error) {
+    return (
+      <main className="mx-auto max-w-3xl space-y-3 px-4 py-8">
+        <Link href="/workflows" className="text-sm text-slate-600">
+          Back to workflows
+        </Link>
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</div>
+      </main>
+    );
+  }
+  if (!workflow) return <main className="p-6">Workflow not found.</main>;
 
   const preview = workflow.previewContent;
   const rawProblem = preview?.problemDescription || "Problem description available after publish validation.";
