@@ -155,8 +155,23 @@ function titleQualifier(text: string): string {
   return "operational hardening";
 }
 
-function buildTitle(text: string): string {
+function buildBaseTitle(text: string): string {
   return `${strongestTopic(text)} - ${titleQualifier(text)}`;
+}
+
+function buildTitle(text: string): string {
+  const base = buildBaseTitle(text);
+  const lines = cleanLines(text);
+  const candidate =
+    lines.find((line) => /error|failed|timeout|retry|oauth|webhook|429|rate limit|connection/i.test(line)) || lines[0] || "";
+
+  const normalized = normalizeSpace(candidate.toLowerCase().replace(/[^a-z0-9\s]/g, " "));
+  let hash = 0;
+  for (let i = 0; i < normalized.length; i += 1) {
+    hash = (hash * 31 + normalized.charCodeAt(i)) >>> 0;
+  }
+  const tag = hash.toString(36).slice(0, 4).toUpperCase().padStart(4, "0");
+  return `${base} - Case ${tag}`.slice(0, 120);
 }
 
 function pickLines(text: string, count = 3): string[] {
@@ -257,6 +272,7 @@ function qualityScore(summaryLines: string[], steps: string[], removedCount: num
 export function extractWorkflowDrafts(files: ScanFile[]): WorkflowDraftPayload[] {
   const drafts: WorkflowDraftPayload[] = [];
   const seenByTitle = new Map<string, WorkflowDraftPayload>();
+  const maxPerBaseTitle = 3;
 
   for (const file of files) {
     const { sanitizedText, removedItems } = sanitizeText(file.content);
@@ -412,5 +428,26 @@ export function extractWorkflowDrafts(files: ScanFile[]): WorkflowDraftPayload[]
     drafts.push(merged);
   }
 
-  return drafts;
+  const grouped = new Map<string, WorkflowDraftPayload[]>();
+  for (const draft of drafts) {
+    const base = draft.title.replace(/\s+-\s+Case\s+[A-Z0-9]{4}$/i, "").trim();
+    const list = grouped.get(base) || [];
+    list.push(draft);
+    grouped.set(base, list);
+  }
+
+  const filtered: WorkflowDraftPayload[] = [];
+  for (const group of grouped.values()) {
+    group.sort((a, b) => {
+      const scoreDiff = (b.quality.publishReadinessScore || 0) - (a.quality.publishReadinessScore || 0);
+      if (scoreDiff !== 0) return scoreDiff;
+      const riskRank = (risk: "low" | "medium" | "high") => (risk === "low" ? 3 : risk === "medium" ? 2 : 1);
+      const riskDiff = riskRank(b.privacy.riskLevel) - riskRank(a.privacy.riskLevel);
+      if (riskDiff !== 0) return riskDiff;
+      return (b.estimates.suggestedPriceCredits || 0) - (a.estimates.suggestedPriceCredits || 0);
+    });
+    filtered.push(...group.slice(0, maxPerBaseTitle));
+  }
+
+  return filtered;
 }
