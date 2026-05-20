@@ -6,14 +6,11 @@ import { WorkflowDraft } from "../models/WorkflowDraft";
 import { Workflow } from "../models/Workflow";
 import { sendError } from "../utils/http";
 import { slugify } from "../utils/slug";
+import { cleanDraftForStorage, normalizedTitleKey } from "../utils/workflowSanitizer";
 
 const router = Router();
 
 router.use(requireAuth);
-
-function escapeRegex(input: string): string {
-  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 function canAutoPublishDraft(draft: any, threshold: number) {
   if ((draft.quality?.publishReadinessScore ?? 0) < threshold) return false;
@@ -25,10 +22,16 @@ function canAutoPublishDraft(draft: any, threshold: number) {
 }
 
 async function publishDraftToWorkflow(draft: any) {
-  const existingSameTitle = await Workflow.findOne({
-    ownerId: draft.ownerId,
-    title: { $regex: `^${escapeRegex(draft.title)}$`, $options: "i" }
-  });
+  const cleanedDraft = cleanDraftForStorage(draft.toObject ? draft.toObject() : draft);
+  draft.title = cleanedDraft.title;
+  draft.category = cleanedDraft.category;
+  draft.summary = cleanedDraft.summary;
+  draft.problem = cleanedDraft.problem;
+  draft.solution = cleanedDraft.solution;
+
+  const titleKey = normalizedTitleKey(draft.title);
+  const ownerWorkflows = await Workflow.find({ ownerId: draft.ownerId }).select("title");
+  const existingSameTitle = ownerWorkflows.find((workflow) => normalizedTitleKey(workflow.title) === titleKey);
   if (existingSameTitle) {
     draft.status = "published";
     await draft.save();

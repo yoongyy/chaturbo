@@ -7,6 +7,7 @@ import { Workflow } from "../models/Workflow";
 import { sendError } from "../utils/http";
 import { buildDraftSummary } from "../utils/draftSummary";
 import { slugify } from "../utils/slug";
+import { cleanDraftForStorage, normalizedTitleKey } from "../utils/workflowSanitizer";
 
 const router = Router();
 
@@ -69,19 +70,10 @@ const uploadSchema = z.object({
   maxAutoPublish: z.number().int().min(1).max(200).default(25)
 });
 
-function normText(value: string): string {
-  return value.trim().toLowerCase().replace(/\s+/g, " ");
-}
-
-function escapeRegex(input: string): string {
-  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 function draftFingerprint(draft: z.infer<typeof draftSchema>) {
-  const title = slugify(draft.title);
-  const category = normText(draft.category);
-  const problemHead = normText(draft.problem.description).slice(0, 140);
-  return `${title}|${category}|${problemHead}`;
+  const title = normalizedTitleKey(draft.title);
+  const category = (draft.category || "").trim().toLowerCase();
+  return `${title}|${category}`;
 }
 
 function canAutoPublish(draft: z.infer<typeof draftSchema>, threshold: number): boolean {
@@ -94,10 +86,16 @@ function canAutoPublish(draft: z.infer<typeof draftSchema>, threshold: number): 
 }
 
 async function publishDraftDocument(draft: any) {
-  const existingSameTitle = await Workflow.findOne({
-    ownerId: draft.ownerId,
-    title: { $regex: `^${escapeRegex(draft.title)}$`, $options: "i" }
-  });
+  const cleanedDraft = cleanDraftForStorage(draft.toObject ? draft.toObject() : draft);
+  draft.title = cleanedDraft.title;
+  draft.category = cleanedDraft.category;
+  draft.summary = cleanedDraft.summary;
+  draft.problem = cleanedDraft.problem;
+  draft.solution = cleanedDraft.solution;
+
+  const titleKey = normalizedTitleKey(draft.title);
+  const ownerWorkflows = await Workflow.find({ ownerId: draft.ownerId }).select("title");
+  const existingSameTitle = ownerWorkflows.find((workflow) => normalizedTitleKey(workflow.title) === titleKey);
   if (existingSameTitle) {
     draft.status = "published";
     await draft.save();
@@ -264,6 +262,7 @@ router.post("/upload-drafts", requireIngestionAuth, async (req: AuthenticatedReq
 
   const incomingFingerprints = new Set<string>();
   const inserts = parsed.data.drafts
+    .map((draft) => cleanDraftForStorage(draft))
     .filter((draft) => {
       const fp = draftFingerprint(draft);
       if (existingFingerprints.has(fp)) {

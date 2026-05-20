@@ -46,6 +46,54 @@ const verificationDefaults = [
   "Confirm logs do not expose secrets"
 ];
 
+const noisePatterns = [
+  /<html|<head|<body|<!doctype|<script|challenge-error-text/i,
+  /"type"\s*:\s*"message"/i,
+  /"usage"\s*:/i,
+  /"cache(read|write)"/i
+];
+
+function normalizeSpace(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function looksNoisy(line: string): boolean {
+  if (!line) return true;
+  if (line.length < 20) return true;
+  if (line.length > 320) return true;
+  if (noisePatterns.some((pattern) => pattern.test(line))) return true;
+  if (/^[\[{].*[\]}]$/.test(line)) return true;
+  return false;
+}
+
+function cleanLines(text: string): string[] {
+  return text
+    .replace(/\\n/g, "\n")
+    .split(/\r?\n/)
+    .map((line) => normalizeSpace(line).replace(/^(?:[#>*-]|\d+[.)])\s*/g, "").replace(/^\[[^\]]+\]\s*/g, ""))
+    .filter((line) => !looksNoisy(line));
+}
+
+function unique(values: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const value of values) {
+    const key = value.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(value);
+  }
+  return result;
+}
+
+function titleKey(value: string): string {
+  return normalizeSpace(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function findKeywordCount(text: string): number {
   const lower = text.toLowerCase();
   return keywords.reduce((count, word) => count + (lower.includes(word) ? 1 : 0), 0);
@@ -85,27 +133,17 @@ function strongestTopic(text: string): string {
 }
 
 function pickLines(text: string, count = 3): string[] {
-  return text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 20 && !line.startsWith("{"))
-    .slice(0, count);
+  return cleanLines(text).slice(0, count);
 }
 
 function detectSymptoms(text: string): string[] {
-  const lines = text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => /error|failed|timeout|retry|exception/i.test(line))
-    .slice(0, 5);
+  const lines = cleanLines(text).filter((line) => /error|failed|timeout|retry|exception/i.test(line)).slice(0, 5);
 
-  return lines.length ? lines : ["Task fails intermittently", "Retries increase without stable completion"];
+  return lines.length ? unique(lines) : ["Task fails intermittently", "Retries increase without stable completion"];
 }
 
 function detectSteps(text: string): string[] {
-  const candidate = text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
+  const candidate = cleanLines(text)
     .filter((line) => /^[-*]\s+/.test(line) || /^\d+\.\s+/.test(line) || /npm |node |python |pip |curl |docker /i.test(line))
     .map((line) => line.replace(/^[-*]\s+/, ""))
     .slice(0, 6);
@@ -191,6 +229,7 @@ function qualityScore(summaryLines: string[], steps: string[], removedCount: num
 
 export function extractWorkflowDrafts(files: ScanFile[]): WorkflowDraftPayload[] {
   const drafts: WorkflowDraftPayload[] = [];
+  const seenByTitle = new Map<string, WorkflowDraftPayload>();
 
   for (const file of files) {
     const { sanitizedText, removedItems } = sanitizeText(file.content);
@@ -213,7 +252,7 @@ export function extractWorkflowDrafts(files: ScanFile[]): WorkflowDraftPayload[]
 
     const pathRedacted = file.path.replace(os.homedir(), "~");
 
-    drafts.push({
+    const builtDraft: WorkflowDraftPayload = {
       source: {
         type: "agent_log",
         path: pathRedacted,
@@ -259,7 +298,87 @@ export function extractWorkflowDrafts(files: ScanFile[]): WorkflowDraftPayload[]
           "Captures a resolved, repeatable workflow that can save troubleshooting time for other agent operators."
       },
       status: "draft"
+    };
+
+    const key = titleKey(`${builtDraft.title}|${builtDraft.category}`);
+    const existing = seenByTitle.get(key);
+    if (!existing) {
+      seenByTitle.set(key, builtDraft);
+      continue;
+    }
+
+    const mergedSymptoms = unique([...existing.problem.symptoms, ...builtDraft.problem.symptoms]).slice(0, 6);
+    const mergedSteps = unique([...existing.solution.steps, ...builtDraft.solution.steps]).slice(0, 8);
+    const mergedRemovedItems = unique([...existing.privacy.removedItems, ...builtDraft.privacy.removedItems]);
+    const mergedReadiness = Math.max(existing.quality.publishReadinessScore, builtDraft.quality.publishReadinessScore);
+
+    seenByTitle.set(key, {
+      ...existing,
+      summary: existing.summary.length >= builtDraft.summary.length ? existing.summary : builtDraft.summary,
+      problem: {
+        description:
+          existing.problem.description.length >= builtDraft.problem.description.length
+            ? existing.problem.description
+            : builtDraft.problem.description,
+        symptoms: mergedSymptoms
+      },
+      solution: {
+        ...existing.solution,
+        steps: mergedSteps,
+        commonErrors: unique(
+          [...existing.solution.commonErrors, ...builtDraft.solution.commonErrors].map((entry) => `${entry.error}|||${entry.fix}`)
+        )
+          .slice(0, 6)
+          .map((encoded) => {
+            const [error, fix] = encoded.split("|||");
+            return { error, fix };
+          })
+      },
+      compatibility: {
+        ...existing.compatibility,
+        agents: unique([...existing.compatibility.agents, ...builtDraft.compatibility.agents]),
+        requiredTools: unique([...existing.compatibility.requiredTools, ...builtDraft.compatibility.requiredTools]),
+        requiredSoftware: { ...existing.compatibility.requiredSoftware, ...builtDraft.compatibility.requiredSoftware },
+        minRamGb: Math.max(existing.compatibility.minRamGb, builtDraft.compatibility.minRamGb),
+        contextLength: Math.max(existing.compatibility.contextLength, builtDraft.compatibility.contextLength),
+        modelRequirement:
+          existing.compatibility.modelRequirement === "advanced_coding" ||
+          builtDraft.compatibility.modelRequirement === "advanced_coding"
+            ? "advanced_coding"
+            : "intermediate"
+      },
+      estimates: {
+        timeSpentHours: Math.max(existing.estimates.timeSpentHours, builtDraft.estimates.timeSpentHours),
+        tokenCostUsd: Number(
+          Math.max(existing.estimates.tokenCostUsd, builtDraft.estimates.tokenCostUsd).toFixed(2)
+        ),
+        suggestedPriceCredits: Math.max(
+          existing.estimates.suggestedPriceCredits,
+          builtDraft.estimates.suggestedPriceCredits
+        ),
+        potentialMonthlyRevenueLow: Math.max(
+          existing.estimates.potentialMonthlyRevenueLow,
+          builtDraft.estimates.potentialMonthlyRevenueLow
+        ),
+        potentialMonthlyRevenueHigh: Math.max(
+          existing.estimates.potentialMonthlyRevenueHigh,
+          builtDraft.estimates.potentialMonthlyRevenueHigh
+        )
+      },
+      privacy: {
+        sanitized: true,
+        removedItems: mergedRemovedItems,
+        riskLevel: riskLevel(mergedRemovedItems.length)
+      },
+      quality: {
+        ...existing.quality,
+        publishReadinessScore: mergedReadiness
+      }
     });
+  }
+
+  for (const merged of seenByTitle.values()) {
+    drafts.push(merged);
   }
 
   return drafts;
