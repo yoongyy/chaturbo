@@ -6,7 +6,7 @@ import { WorkflowDraft } from "../models/WorkflowDraft";
 import { Workflow } from "../models/Workflow";
 import { sendError } from "../utils/http";
 import { slugify } from "../utils/slug";
-import { cleanDraftForStorage, normalizedTitleKey } from "../utils/workflowSanitizer";
+import { cleanDraftForStorage, normalizedProblemKey, normalizedTitleKey } from "../utils/workflowSanitizer";
 
 const router = Router();
 
@@ -30,8 +30,13 @@ async function publishDraftToWorkflow(draft: any) {
   draft.solution = cleanedDraft.solution;
 
   const titleKey = normalizedTitleKey(draft.title);
-  const ownerWorkflows = await Workflow.find({ ownerId: draft.ownerId }).select("title");
-  const existingSameTitle = ownerWorkflows.find((workflow) => normalizedTitleKey(workflow.title) === titleKey);
+  const problemKey = normalizedProblemKey(draft.problem?.description || "");
+  const ownerWorkflows = await Workflow.find({ ownerId: draft.ownerId }).select("title previewContent.problemDescription");
+  const existingSameTitle = ownerWorkflows.find(
+    (workflow) =>
+      normalizedTitleKey(workflow.title) === titleKey &&
+      normalizedProblemKey((workflow as any).previewContent?.problemDescription || "") === problemKey
+  );
   if (existingSameTitle) {
     draft.status = "published";
     await draft.save();

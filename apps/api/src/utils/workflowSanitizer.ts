@@ -46,6 +46,15 @@ export function normalizedTitleKey(input: string): string {
     .trim();
 }
 
+export function normalizedProblemKey(input: string): string {
+  return normalizeSpace(input)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 140);
+}
+
 export function cleanParagraph(input: string, fallback: string, maxLength = 320): string {
   const lines = cleanLines(input);
   const paragraph = normalizeSpace(lines.slice(0, 3).join(" "));

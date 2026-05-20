@@ -7,7 +7,7 @@ import { Workflow } from "../models/Workflow";
 import { sendError } from "../utils/http";
 import { buildDraftSummary } from "../utils/draftSummary";
 import { slugify } from "../utils/slug";
-import { cleanDraftForStorage, normalizedTitleKey } from "../utils/workflowSanitizer";
+import { cleanDraftForStorage, normalizedProblemKey, normalizedTitleKey } from "../utils/workflowSanitizer";
 
 const router = Router();
 
@@ -73,7 +73,8 @@ const uploadSchema = z.object({
 function draftFingerprint(draft: z.infer<typeof draftSchema>) {
   const title = normalizedTitleKey(draft.title);
   const category = (draft.category || "").trim().toLowerCase();
-  return `${title}|${category}`;
+  const problem = normalizedProblemKey(draft.problem?.description || "");
+  return `${title}|${category}|${problem}`;
 }
 
 function canAutoPublish(draft: z.infer<typeof draftSchema>, threshold: number): boolean {
@@ -94,8 +95,13 @@ async function publishDraftDocument(draft: any) {
   draft.solution = cleanedDraft.solution;
 
   const titleKey = normalizedTitleKey(draft.title);
-  const ownerWorkflows = await Workflow.find({ ownerId: draft.ownerId }).select("title");
-  const existingSameTitle = ownerWorkflows.find((workflow) => normalizedTitleKey(workflow.title) === titleKey);
+  const problemKey = normalizedProblemKey(draft.problem?.description || "");
+  const ownerWorkflowDocs = await Workflow.find({ ownerId: draft.ownerId }).select("title previewContent.problemDescription");
+  const existingSameTitle = ownerWorkflowDocs.find(
+    (workflow) =>
+      normalizedTitleKey(workflow.title) === titleKey &&
+      normalizedProblemKey((workflow as any).previewContent?.problemDescription || "") === problemKey
+  );
   if (existingSameTitle) {
     draft.status = "published";
     await draft.save();

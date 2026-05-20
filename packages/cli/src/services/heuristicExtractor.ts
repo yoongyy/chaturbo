@@ -94,6 +94,15 @@ function titleKey(value: string): string {
     .trim();
 }
 
+function problemKey(value: string): string {
+  return normalizeSpace(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120);
+}
+
 function findKeywordCount(text: string): number {
   const lower = text.toLowerCase();
   return keywords.reduce((count, word) => count + (lower.includes(word) ? 1 : 0), 0);
@@ -300,7 +309,7 @@ export function extractWorkflowDrafts(files: ScanFile[]): WorkflowDraftPayload[]
       status: "draft"
     };
 
-    const key = titleKey(`${builtDraft.title}|${builtDraft.category}`);
+    const key = `${titleKey(`${builtDraft.title}|${builtDraft.category}`)}|${problemKey(builtDraft.problem.description)}`;
     const existing = seenByTitle.get(key);
     if (!existing) {
       seenByTitle.set(key, builtDraft);

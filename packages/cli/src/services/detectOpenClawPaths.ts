@@ -28,7 +28,12 @@ export function detectOpenClawPaths(customPath?: string): string[] {
     path.resolve("gemini"),
     path.join(os.homedir(), ".google-cli"),
     path.join(os.homedir(), ".config", "google-cli"),
-    path.resolve(".google-cli")
+    path.resolve(".google-cli"),
+    path.join(os.homedir(), ".cursor"),
+    path.join(os.homedir(), ".config", "Cursor"),
+    path.join(os.homedir(), "AppData", "Roaming", "Cursor"),
+    path.resolve(".cursor"),
+    path.resolve("cursor")
   ];
 
   return [...new Set(candidates)].filter((p) => fs.existsSync(p));
