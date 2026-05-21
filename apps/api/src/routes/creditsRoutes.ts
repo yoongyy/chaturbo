@@ -22,6 +22,16 @@ function getStripeClient() {
   return new Stripe(env.STRIPE_SECRET_KEY);
 }
 
+function extractStripeErrorMessage(error: unknown): string {
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim().length > 0) {
+      return message;
+    }
+  }
+  return "Unknown Stripe error";
+}
+
 router.get("/balance", async (req: AuthenticatedRequest, res) => {
   const owner = await User.findById(req.user?.userId).select("credits creditsPurchased creditsEarned ownerUid email");
   if (!owner) {
@@ -34,6 +44,14 @@ router.get("/balance", async (req: AuthenticatedRequest, res) => {
     credits: owner.credits,
     creditsPurchased: owner.creditsPurchased,
     creditsEarned: owner.creditsEarned
+  });
+});
+
+router.get("/config", (_req: AuthenticatedRequest, res) => {
+  const stripe = getStripeClient();
+  return res.json({
+    stripeEnabled: Boolean(stripe),
+    usdPerCredit: USD_PER_CREDIT
   });
 });
 
@@ -103,30 +121,40 @@ router.post("/checkout-session", async (req: AuthenticatedRequest, res) => {
   const cancelUrl = parsed.data.cancelUrl || `${appBaseUrl}/dashboard?topup=cancelled`;
   const amountUsd = Number((parsed.data.credits * USD_PER_CREDIT).toFixed(2));
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    success_url: successUrl,
-    cancel_url: cancelUrl,
-    line_items: [
-      {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: `Chaturbo Credits (${parsed.data.credits})`,
-            description: "Top up credits for workflow purchases"
+  let session: Stripe.Checkout.Session;
+  try {
+    session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: `Chaturbo Credits (${parsed.data.credits})`,
+              description: "Top up credits for workflow purchases"
+            },
+            unit_amount: Math.round(amountUsd * 100)
           },
-          unit_amount: Math.round(amountUsd * 100)
-        },
-        quantity: 1
-      }
-    ],
-    metadata: {
-      userId: String(owner._id),
-      ownerUid: owner.ownerUid,
-      credits: String(parsed.data.credits)
-    },
-    customer_email: owner.email
-  });
+          quantity: 1
+        }
+      ],
+      metadata: {
+        userId: String(owner._id),
+        ownerUid: owner.ownerUid,
+        credits: String(parsed.data.credits)
+      },
+      customer_email: owner.email
+    });
+  } catch (error) {
+    console.error("Stripe checkout session creation failed", error);
+    return sendError(res, 500, `Stripe checkout failed: ${extractStripeErrorMessage(error)}`);
+  }
+
+  if (!session.url) {
+    return sendError(res, 500, "Stripe checkout URL was not returned");
+  }
 
   return res.status(201).json({
     sessionId: session.id,

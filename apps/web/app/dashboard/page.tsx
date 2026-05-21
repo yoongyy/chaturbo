@@ -48,6 +48,7 @@ export default function DashboardPage() {
   const [requestingPayout, setRequestingPayout] = useState(false);
   const [autoPublishing, setAutoPublishing] = useState(false);
   const [pairing, setPairing] = useState(false);
+  const [stripeEnabled, setStripeEnabled] = useState<boolean | null>(null);
 
   async function loadDrafts() {
     setLoadingDrafts(true);
@@ -91,6 +92,10 @@ export default function DashboardPage() {
         setCreditsEarned(null);
       });
 
+    apiRequest<{ stripeEnabled: boolean }>("/credits/config", {}, true)
+      .then((res) => setStripeEnabled(Boolean(res.stripeEnabled)))
+      .catch(() => setStripeEnabled(false));
+
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const topupState = params.get("topup");
@@ -122,6 +127,12 @@ export default function DashboardPage() {
             }
           })
           .catch((err) => setError(err instanceof Error ? err.message : "Failed to confirm top-up"));
+      } else if (topupState === "cancelled") {
+        setCopyMessage("Top-up cancelled.");
+      }
+
+      if (topupState) {
+        window.history.replaceState({}, "", "/dashboard");
       }
     }
   }, []);
@@ -213,25 +224,26 @@ Important constraints:
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           <button
-            disabled={toppingUp}
+            disabled={toppingUp || stripeEnabled === false}
             onClick={async () => {
               setToppingUp(true);
               setError("");
               try {
-                const origin = typeof window !== "undefined" ? window.location.origin : "";
                 const res = await apiRequest<{ url: string }>("/credits/checkout-session", {
                   method: "POST",
-                  body: JSON.stringify({
-                    credits: 100,
-                    successUrl: `${origin}/dashboard?topup=success&session_id={CHECKOUT_SESSION_ID}`,
-                    cancelUrl: `${origin}/dashboard?topup=cancelled`
-                  })
+                  body: JSON.stringify({ credits: 100 })
                 }, true);
+
+                if (!res.url) {
+                  throw new Error("Checkout URL not returned from API");
+                }
+
                 if (typeof window !== "undefined") {
-                  window.location.href = res.url;
+                  window.location.assign(res.url);
                 }
               } catch (err) {
                 setError(err instanceof Error ? err.message : "Top-up failed");
+              } finally {
                 setToppingUp(false);
               }
             }}
@@ -278,6 +290,9 @@ Important constraints:
             {requestingPayout ? "Requesting payout..." : "Request payout (up to 100 earned credits)"}
           </button>
         </div>
+        {stripeEnabled === false ? (
+          <p className="mt-2 text-xs text-rose-600">Stripe is not configured on the API project. Set `STRIPE_SECRET_KEY` in API env.</p>
+        ) : null}
         <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
           <p className="font-medium text-slate-700">Agent CLI buy flow</p>
           <p className="mt-1 font-mono">chaturbo marketplace search --query "oauth"</p>
