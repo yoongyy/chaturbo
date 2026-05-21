@@ -119,63 +119,135 @@ function mapCategory(text: string): string {
 }
 
 function strongestTopic(text: string): string {
-  const topicRules: Array<{ keyword: string; title: string }> = [
-    { keyword: "openrouter", title: "OpenRouter API reliability workflow" },
-    { keyword: "shopify", title: "Shopify integration stabilization workflow" },
-    { keyword: "telegram", title: "Telegram automation recovery workflow" },
-    { keyword: "mt5", title: "MT5 execution bridge workflow" },
-    { keyword: "ctrader", title: "cTrader integration workflow" },
-    { keyword: "ollama", title: "Local LLM Ollama setup workflow" },
-    { keyword: "vercel", title: "Vercel deployment troubleshooting workflow" },
-    { keyword: "railway", title: "Railway deployment troubleshooting workflow" },
-    { keyword: "mongodb", title: "MongoDB connection reliability workflow" },
-    { keyword: "webhook", title: "Webhook integration hardening workflow" },
-    { keyword: "openclaw", title: "OpenClaw agent workflow optimization" },
-    { keyword: "hermes", title: "Hermes agent workflow optimization" },
-    { keyword: "claude", title: "Claude CLI agent workflow optimization" },
-    { keyword: "gemini", title: "Gemini CLI agent workflow optimization" }
-  ];
-
   const lower = text.toLowerCase();
-  const hit = topicRules.find((t) => lower.includes(t.keyword));
-  return hit?.title ?? "Agent workflow troubleshooting playbook";
+  if (lower.includes("openrouter")) return "OpenRouter";
+  if (lower.includes("shopify")) return "Shopify";
+  if (/\boauth\b|redirect uri|callback/.test(lower)) return "OAuth";
+  if (lower.includes("telegram")) return "Telegram";
+  if (lower.includes("whatsapp")) return "WhatsApp";
+  if (lower.includes("mt5")) return "MT5";
+  if (lower.includes("ctrader")) return "cTrader";
+  if (lower.includes("ollama") || lower.includes("local llm")) return "Ollama";
+  if (lower.includes("vercel")) return "Vercel";
+  if (lower.includes("railway")) return "Railway";
+  if (lower.includes("mongodb") || lower.includes("mongo")) return "MongoDB";
+  if (lower.includes("webhook")) return "Webhook";
+  if (lower.includes("openclaw")) return "OpenClaw";
+  if (lower.includes("hermes")) return "Hermes";
+  if (lower.includes("claude")) return "Claude CLI";
+  if (lower.includes("gemini") || lower.includes("google cli")) return "Gemini CLI";
+  return "Local AI agent";
 }
 
 function titleQualifier(text: string): string {
   const lower = text.toLowerCase();
-  if (/429|rate limit|too many requests/.test(lower)) return "rate-limit backoff";
-  if (/oauth|callback|redirect uri/.test(lower)) return "oauth callback fix";
+  if (/redirect_uri_mismatch|redirect uri|oauth/.test(lower)) return "OAuth callback";
+  if (/429|rate limit|too many requests/.test(lower)) return "rate limit";
   if (/webhook|signature|hmac/.test(lower)) return "webhook verification";
-  if (/timeout|timed out/.test(lower)) return "timeout recovery";
-  if (/mongodb|connection string|db uri/.test(lower)) return "database connectivity";
-  if (/vercel|railway|deploy/.test(lower)) return "deployment stabilization";
-  if (/telegram|mt5|ctrader|order/.test(lower)) return "execution reliability";
+  if (/timeout|timed out|etimedout/.test(lower)) return "timeout";
+  if (/unauthorized|forbidden|401|403/.test(lower)) return "auth failure";
+  if (/mongodb|connection string|db uri|econnrefused/.test(lower)) return "db connectivity";
+  if (/vercel|railway|deploy|build failed/.test(lower)) return "deployment";
+  if (/telegram|whatsapp|mt5|ctrader|order/.test(lower)) return "automation reliability";
   if (/openrouter|model fallback/.test(lower)) return "provider fallback";
   if (/ollama|local llm/.test(lower)) return "local model setup";
-  return "operational hardening";
+  return "troubleshooting";
 }
 
 function buildBaseTitle(text: string): string {
-  return `${strongestTopic(text)} - ${titleQualifier(text)}`;
+  const topic = strongestTopic(text);
+  const qualifier = titleQualifier(text);
+  if (!topic) return qualifier;
+  return `${topic}: ${qualifier}`;
+}
+
+function shortHash(input: string): string {
+  let hash = 0;
+  for (let i = 0; i < input.length; i += 1) {
+    hash = (hash * 31 + input.charCodeAt(i)) >>> 0;
+  }
+  return hash.toString(36).slice(0, 4).toUpperCase().padStart(4, "0");
+}
+
+function stripMarkers(line: string): string {
+  return normalizeSpace(
+    line
+      .replace(/\[REDACTED_[A-Z_]+\]/g, "")
+      .replace(/`+/g, "")
+      .replace(/https?:\/\/\S+/g, "URL")
+      .replace(/(^|[\s:])([A-Za-z]:\\[^ ]+|\/[^ ]+)/g, "$1PATH")
+  );
+}
+
+function scoreTitleLine(line: string): number {
+  const lower = line.toLowerCase();
+  let score = 0;
+  if (/error|failed|exception|traceback|timeout|rate limit|429|oauth|redirect|webhook|unauthorized|forbidden/.test(lower)) score += 6;
+  if (/fixed|solved|resolved|workaround|mitigation|fallback|retry|backoff/.test(lower)) score += 3;
+  if (/\[redacted_/.test(lower)) score -= 2;
+  if (/challenge-error-text|<!doctype|<html|<head|<body/.test(lower)) score -= 10;
+  if (/^\{|\}$/.test(line.trim())) score -= 4;
+  const len = line.length;
+  if (len >= 35 && len <= 140) score += 4;
+  if (len < 25) score -= 3;
+  if (len > 180) score -= 3;
+  return score;
+}
+
+function bestLine(lines: string[], pattern?: RegExp): string {
+  const candidates = pattern ? lines.filter((l) => pattern.test(l)) : lines;
+  let best = "";
+  let bestScore = -Infinity;
+  for (const line of candidates) {
+    const cleaned = stripMarkers(line);
+    if (!cleaned) continue;
+    const score = scoreTitleLine(cleaned);
+    if (score > bestScore) {
+      bestScore = score;
+      best = cleaned;
+    }
+  }
+  return best;
 }
 
 function buildTitle(text: string): string {
-  const base = buildBaseTitle(text);
   const lines = cleanLines(text);
-  const candidate =
-    lines.find((line) => /error|failed|timeout|retry|oauth|webhook|429|rate limit|connection/i.test(line)) || lines[0] || "";
+  const issue = bestLine(lines, /(error|failed|exception|traceback|timeout|rate limit|429|oauth|redirect|webhook|unauthorized|forbidden|econnrefused|enotfound)/i)
+    || bestLine(lines);
+  const topic = strongestTopic(text);
+  const qualifier = titleQualifier(text);
 
-  const normalized = normalizeSpace(candidate.toLowerCase().replace(/[^a-z0-9\s]/g, " "));
-  let hash = 0;
-  for (let i = 0; i < normalized.length; i += 1) {
-    hash = (hash * 31 + normalized.charCodeAt(i)) >>> 0;
+  const compactIssue = normalizeSpace(issue)
+    .replace(/\s*-\s*/g, " - ")
+    .replace(/^error[:\s-]*/i, "")
+    .replace(/^failed[:\s-]*/i, "")
+    .slice(0, 96);
+
+  const base = compactIssue ? `${topic}: ${compactIssue}` : buildBaseTitle(text);
+  const tag = shortHash(`${topic}|${qualifier}|${compactIssue}`.toLowerCase());
+  const titled = base.length > 110 ? base.slice(0, 110) : base;
+  // Only append a tag when the title is very generic, otherwise keep it clean.
+  if (/^(local ai agent|openclaw|hermes|claude cli|gemini cli):\s*(troubleshooting|operational hardening|deployment|timeout|auth failure)$/i.test(titled)) {
+    return `${titled} (${tag})`.slice(0, 120);
   }
-  const tag = hash.toString(36).slice(0, 4).toUpperCase().padStart(4, "0");
-  return `${base} - Case ${tag}`.slice(0, 120);
+  return titled.slice(0, 120);
 }
 
 function pickLines(text: string, count = 3): string[] {
-  return cleanLines(text).slice(0, count);
+  const lines = cleanLines(text);
+  const issue = bestLine(lines, /(error|failed|exception|traceback|timeout|rate limit|429|oauth|redirect|webhook|unauthorized|forbidden|econnrefused|enotfound)/i);
+  const fix = bestLine(lines, /(fixed|solved|resolved|workaround|mitigation|fallback|backoff|retry)/i);
+  const picked: string[] = [];
+  if (issue) picked.push(issue);
+  if (fix && fix.toLowerCase() !== issue.toLowerCase()) picked.push(fix);
+  for (const line of lines) {
+    if (picked.length >= count) break;
+    const cleaned = stripMarkers(line);
+    if (!cleaned) continue;
+    if (picked.some((p) => p.toLowerCase() === cleaned.toLowerCase())) continue;
+    picked.push(cleaned);
+  }
+  return picked.slice(0, count);
 }
 
 function detectSymptoms(text: string): string[] {
