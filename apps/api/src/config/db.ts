@@ -1,15 +1,25 @@
 import mongoose from "mongoose";
-import { getEnv } from "./env";
 
 let connected = false;
+let connectionAttempted = false;
 
 export async function connectDb(): Promise<void> {
   if (connected) {
     return;
   }
 
-  const env = getEnv();
-  await mongoose.connect(env.MONGODB_URI);
+  const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+  if (!mongoUri) {
+    return;
+  }
+
+  if (connectionAttempted) {
+    return;
+  }
+
+  connectionAttempted = true;
+
+  await mongoose.connect(mongoUri);
   connected = true;
   console.log("MongoDB connected");
 }

@@ -1,72 +1,50 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { clearToken, getToken } from "../lib/api";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 interface NavItem {
   href: string;
   label: string;
 }
 
-const publicNav: NavItem[] = [
+const navItems: NavItem[] = [
   { href: "/", label: "Home" },
-  { href: "/workflows", label: "Workflows" }
-];
-
-const authedNav: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/dashboard/workflow-drafts", label: "Drafts" },
-  { href: "/dashboard/workflows", label: "Published" },
-  { href: "/workflows", label: "Marketplace" }
+  { href: "/demo", label: "Demo" },
+  { href: "/apply", label: "Apply" },
+  { href: "/contact", label: "Contact" }
 ];
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
-  return pathname.startsWith(href);
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export default function AppHeader() {
   const pathname = usePathname();
-  const router = useRouter();
-  const [ready, setReady] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [authed, setAuthed] = useState(false);
-
-  useEffect(() => {
-    setAuthed(Boolean(getToken()));
-    setMenuOpen(false);
-    setReady(true);
-  }, [pathname]);
-
-  const nav = useMemo(() => (authed ? authedNav : publicNav), [authed]);
-
-  function logout() {
-    clearToken();
-    setAuthed(false);
-    setMenuOpen(false);
-    router.push("/login");
-  }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/92 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-black/5 bg-white/80 backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-ink text-sm font-bold text-white">C</span>
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-ink text-sm font-bold text-white shadow-lg shadow-ink/15">
+            C
+          </span>
           <div className="leading-tight">
-            <p className="text-sm font-semibold text-ink">Chaturbo</p>
-            <p className="text-[11px] text-slate-500">AI Workflow Monetization</p>
+            <p className="font-display text-sm font-semibold text-ink">Chaturbo</p>
+            <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">AI agents for SMEs</p>
           </div>
         </Link>
 
         <nav className="hidden items-center gap-2 md:flex">
-          {nav.map((item) => (
+          {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`rounded-full px-3 py-1.5 text-sm font-medium ${
-                isActive(pathname, item.href) ? "bg-ink text-white" : "text-slate-700 hover:bg-slate-100"
+              className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                isActive(pathname, item.href) ? "bg-ink text-white shadow-sm" : "text-slate-700 hover:bg-black/5"
               }`}
             >
               {item.label}
@@ -75,25 +53,17 @@ export default function AppHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          {!ready ? null : authed ? (
-            <button onClick={logout} className="rounded-xl bg-coral px-4 py-2 text-sm font-semibold text-white">
-              Logout
-            </button>
-          ) : (
-            <>
-              <Link href="/login" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">
-                Login
-              </Link>
-              <Link href="/register" className="rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-white">
-                Register
-              </Link>
-            </>
-          )}
+          <Link href="/dashboard" className="rounded-xl border border-black/10 px-4 py-2 text-sm font-semibold text-slate-700">
+            Portal
+          </Link>
+          <Link href="/apply" className="rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-ink/15">
+            Free Setup
+          </Link>
         </div>
 
         <button
           type="button"
-          className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 md:hidden"
+          className="rounded-lg border border-black/10 px-3 py-2 text-xs font-semibold text-slate-700 md:hidden"
           onClick={() => setMenuOpen((value) => !value)}
         >
           {menuOpen ? "Close" : "Menu"}
@@ -101,9 +71,9 @@ export default function AppHeader() {
       </div>
 
       {menuOpen ? (
-        <div className="border-t border-slate-200 bg-white px-4 py-3 md:hidden">
+        <div className="border-t border-black/5 bg-white px-4 py-3 md:hidden">
           <div className="flex flex-col gap-2">
-            {nav.map((item) => (
+            {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -115,31 +85,30 @@ export default function AppHeader() {
                 {item.label}
               </Link>
             ))}
+            <Link
+              href="/dashboard"
+              className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700"
+              onClick={() => setMenuOpen(false)}
+            >
+              Portal
+            </Link>
           </div>
 
           <div className="mt-3 flex gap-2">
-            {authed ? (
-              <button onClick={logout} className="w-full rounded-lg bg-coral px-3 py-2 text-sm font-semibold text-white">
-                Logout
-              </button>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-center text-sm font-semibold text-slate-700"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/register"
-                  className="w-full rounded-lg bg-ink px-3 py-2 text-center text-sm font-semibold text-white"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Register
-                </Link>
-              </>
-            )}
+            <Link
+              href="/apply"
+              className="w-full rounded-lg bg-ink px-3 py-2 text-center text-sm font-semibold text-white"
+              onClick={() => setMenuOpen(false)}
+            >
+              Free Setup
+            </Link>
+            <Link
+              href="/contact"
+              className="w-full rounded-lg border border-black/10 px-3 py-2 text-center text-sm font-semibold text-slate-700"
+              onClick={() => setMenuOpen(false)}
+            >
+              Contact
+            </Link>
           </div>
         </div>
       ) : null}

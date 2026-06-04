@@ -1,23 +1,33 @@
 # Chaturbo
 
-Chaturbo is an AI-agent workflow monetization platform.
+Chaturbo is a done-for-you AI agent agency for Malaysian SMEs, especially KL and Selangor businesses.
 
-## What this platform does
+## What the live MVP does
 
-- Scan local AI agent conversation/log files with the CLI
-- Sanitize sensitive data locally before upload
-- Heuristically extract reusable workflow drafts (no AI API yet)
-- Upload only sanitized workflow drafts after user approval
-- Review drafts in dashboard and publish selected workflows
-- Let local AI agents search/buy workflows and reuse purchased workflows during tasks
+- Presents a conversion-focused public site for the new service model
+- Captures applications for free AI agent setup
+- Stores leads in MongoDB when configured
+- Falls back to a local JSON file in development when MongoDB is unavailable
+- Keeps the existing portal routes available for the legacy workflow product
+
+## Public pages
+
+- `/` Home
+- `/apply` Lead application form
+- `/demo` Demo flows
+- `/contact` Contact details and CTA
+
+## Lead API
+
+- `POST /api/leads`
+- Validates the application payload
+- Saves `createdAt`, `status: "new"`, and `source: "website_apply_form"`
 
 ## Stack
 
 - Monorepo with npm workspaces
 - `apps/web`: Next.js App Router + TypeScript + Tailwind
-- `apps/api`: Express + TypeScript + MongoDB Atlas (Mongoose)
-- `packages/cli`: TypeScript CLI (`chaturbo`, npm package: `chaturbo-cli`)
-- JWT auth with email/password
+- `apps/api`: Express + TypeScript + MongoDB Atlas via Mongoose
 
 ## 1. Install dependencies
 
@@ -25,44 +35,46 @@ Chaturbo is an AI-agent workflow monetization platform.
 npm install
 ```
 
-## 2. Configure MongoDB
+## 2. Configure environment variables
 
-Copy env examples and update values:
+### API: `apps/api/.env`
 
 ```bash
-cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.example apps/web/.env.local
-cp packages/cli/.env.example packages/cli/.env
+PORT=4000
+CORS_ORIGIN=http://localhost:3000
+MONGODB_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/chaturbo
+JWT_SECRET=change_me
+APP_BASE_URL=http://localhost:3000
+STRIPE_SECRET_KEY=sk_test_xxx
+GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+FACEBOOK_APP_ID=your_facebook_app_id
+FACEBOOK_APP_SECRET=your_facebook_app_secret
 ```
 
-Required API env vars:
+Notes:
 
-- `PORT`
-- `MONGODB_URI`
-- `JWT_SECRET`
-- `CORS_ORIGIN`
+- `MONGODB_URI` is optional for the new public lead flow.
+- If `MONGODB_URI` is missing, `POST /api/leads` uses `apps/api/data/leads.json` in development.
+- Legacy auth and portal routes still expect the database and JWT secret.
 
-Optional CLI override:
+### Web: `apps/web/.env.local`
 
-- `CHATURBO_API_URL` (default `http://localhost:4000`)
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:4000
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+NEXT_PUBLIC_FACEBOOK_APP_ID=your_facebook_app_id
+```
 
-## 3. Start API
+## 3. Start the app
+
+Start the API:
 
 ```bash
 npm run dev:api
 ```
 
-API routes include:
-
-- Auth: `POST /auth/register`, `POST /auth/login`, `GET /auth/me`
-- Agent credentials: `POST /auth/agent/pair`, `GET /auth/agent/credentials`
-- Credits: `GET /credits/balance`, `POST /credits/topup`, `POST /credits/checkout-session`, `POST /credits/checkout-confirm`, `POST /credits/payout-request`, `GET /credits/payout-requests`
-- Scan: `POST /scan/upload-drafts` (JWT or agent credentials)
-- Drafts: `GET /workflow-drafts`, `GET /workflow-drafts/:id`, `POST /workflow-drafts/:id/publish`, `POST /workflow-drafts/auto-publish`, `POST /workflow-drafts/:id/reject`, `DELETE /workflow-drafts/:id` (JWT)
-- Workflows: `GET /workflows`, `GET /workflows/:id`, `POST /workflows/search`, `POST /workflows/:id/preflight-check`, `POST /workflows/:id/verification-report`, `POST /workflows/:id/purchase`
-- Agent marketplace runtime: `POST /agent/search`, `GET /agent/balance`, `POST /agent/workflows/:id/purchase`, `GET /agent/library`
-
-## 4. Start web
+Start the web app:
 
 ```bash
 npm run dev:web
@@ -70,116 +82,42 @@ npm run dev:web
 
 Open `http://localhost:3000`.
 
-## 5. Build CLI
+## 4. Optional legacy portal
 
-```bash
-npm run build --workspace chaturbo-cli
-npm link --workspace chaturbo-cli
-```
-
-Owner quickstart (without cloning this repo):
-
-```bash
-npx -y chaturbo-cli@latest connect --api-url https://api.chaturbo.com --owner-id <owner_uid> --agent-secret <agent_secret>
-```
-
-## 6. Login with CLI
-
-```bash
-chaturbo login
-```
-
-## 7. Fast connect (recommended)
-
-```bash
-chaturbo connect --path ./sample-openclaw-logs
-```
-
-This one command handles login/session, AI-agent log scan, local draft refinement (optional), draft upload flow, and pairs unattended agent credentials.
-
-For high-volume owners, add automatic publish on upload:
-
-```bash
-chaturbo connect --auto-publish --publish-threshold 85 --max-auto-publish 50
-```
-
-## 8. Pair once for scheduled sync
-
-```bash
-chaturbo pair
-```
-
-This stores:
-
-- `ownerUid` (unique owner/account identifier)
-- `agentSecret` (shared secret for non-interactive sync)
-
-## 9. Run unattended sync (cron/task scheduler)
-
-```bash
-chaturbo sync
-```
-
-Example hourly cron (macOS/Linux):
-
-```bash
-0 * * * * /bin/zsh -lc "chaturbo sync"
-```
-
-## 10. Run scan command (manual mode)
-
-```bash
-chaturbo scan agent --path ./sample-openclaw-logs
-```
-
-Optional modes:
-
-```bash
-chaturbo scan agent --local-only
-chaturbo scan agent --path ./sample-openclaw-logs --local-only
-```
-
-## 11. Review drafts in dashboard
-
-Visit:
+The older workflow marketplace and owner portal still exist in the repo under routes like:
 
 - `/dashboard`
-- `/dashboard/workflow-drafts`
-- `/dashboard/workflow-drafts/[id]`
-- `/dashboard/workflows`
 - `/workflows`
+- `/register`
+- `/login`
 
-## Seed data (optional)
+## 5. Build and lint
 
 ```bash
-npm run seed
+npm run build
+npm run lint
 ```
 
-Seed includes:
+## New business model
 
-- Fix OpenRouter rate limit fallback
-- Shopify OAuth callback on Vercel
-- Telegram signal to MT5 bridge
-- Local LLM Ollama setup
-- Vercel + Railway + MongoDB SaaS deploy
+Chaturbo now sells AI employee setup and maintenance for SMEs instead of workflow marketplace access.
 
-Demo login after seeding:
+Core offer:
 
-- Email: `demo@chaturbo.dev`
-- Password: `password123`
+- Free pilot for the first 10 KL/Selangor SMEs
+- Monthly maintenance starting from RM399/month
+- Custom builds from RM1,500 setup plus monthly maintenance
 
-## Root scripts
+## Lead fields collected
 
-- `npm run dev:web`
-- `npm run dev:api`
-- `npm run dev:cli`
-- `npm run build`
-- `npm run lint`
-
-## Not implemented yet
-
-- Automated payout settlement to bank/Stripe Connect account (owner payout request is implemented, settlement remains manual)
-- Auto-buy flow
-- MCP server
-- Browser extension
-- Real AI extraction (heuristic extraction only)
+- Full name
+- Company name
+- Phone / WhatsApp number
+- Email
+- Industry
+- Business location
+- Website / Facebook / Instagram
+- Task to automate
+- Customer message sources
+- Urgency
+- Consent to be contacted

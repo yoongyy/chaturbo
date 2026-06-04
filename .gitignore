@@ -10,5 +10,7 @@ apps/web/.next
 apps/web/out
 packages/cli/.chaturbo
 .run-logs/
+.playwright-mcp/
+apps/api/data/*.json
 
 apps/web/tsconfig.tsbuildinfo
