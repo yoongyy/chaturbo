@@ -42,7 +42,7 @@ npm install
 ```bash
 PORT=4000
 CORS_ORIGIN=http://localhost:3000
-MONGODB_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/chaturbo
+MONGODB_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/chaturbo_ai_sme
 JWT_SECRET=change_me
 APP_BASE_URL=http://localhost:3000
 STRIPE_SECRET_KEY=sk_test_xxx
