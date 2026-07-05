@@ -1,31 +1,83 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { createApplicationLead } from "../../../lib/demoDataStore";
 
-const leadSchema = z
-  .object({
-    fullName: z.string().trim().min(2).max(120),
-    companyName: z.string().trim().min(2).max(160),
-    phone: z.string().trim().min(5).max(40),
-    email: z.string().trim().email().max(160),
-    industry: z.string().trim().min(2).max(120),
-    businessLocation: z.string().trim().min(2).max(120),
-    websiteOrSocial: z.string().trim().min(2).max(300),
-    taskToAutomate: z.string().trim().min(10).max(2000),
-    customerMessageSources: z.array(z.string().trim().min(1)).min(1),
-    customerMessageSourceOther: z.string().trim().max(120).optional(),
-    urgency: z.enum(["This week", "This month", "Just exploring"]),
-    consent: z.literal(true)
-  })
-  .superRefine((value, ctx) => {
-    if (value.customerMessageSources.includes("Other") && !value.customerMessageSourceOther) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Please describe the other message source.",
-        path: ["customerMessageSourceOther"]
-      });
-    }
-  });
+type LeadPayload = {
+  fullName: string;
+  companyName: string;
+  phone: string;
+  email: string;
+  industry: string;
+  businessLocation: string;
+  websiteOrSocial: string;
+  taskToAutomate: string;
+  customerMessageSources: string[];
+  customerMessageSourceOther?: string;
+  urgency: "This week" | "This month" | "Just exploring";
+  consent: true;
+};
+
+function asString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function parseLeadPayload(body: unknown): LeadPayload | null {
+  const payload = body as Record<string, unknown>;
+  const fullName = asString(payload.fullName);
+  const companyName = asString(payload.companyName);
+  const phone = asString(payload.phone);
+  const email = asString(payload.email);
+  const industry = asString(payload.industry);
+  const businessLocation = asString(payload.businessLocation);
+  const websiteOrSocial = asString(payload.websiteOrSocial);
+  const taskToAutomate = asString(payload.taskToAutomate);
+  const customerMessageSourceOther = asString(payload.customerMessageSourceOther);
+  const customerMessageSources = Array.isArray(payload.customerMessageSources)
+    ? payload.customerMessageSources.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    : [];
+  const urgency = payload.urgency;
+  const consent = payload.consent === true;
+
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const urgencyOk = urgency === "This week" || urgency === "This month" || urgency === "Just exploring";
+  const hasRequiredFields =
+    fullName.length >= 2 &&
+    companyName.length >= 2 &&
+    phone.length >= 5 &&
+    emailOk &&
+    industry.length >= 2 &&
+    businessLocation.length >= 2 &&
+    websiteOrSocial.length >= 2 &&
+    taskToAutomate.length >= 10 &&
+    customerMessageSources.length > 0 &&
+    consent;
+
+  if (!hasRequiredFields) {
+    return null;
+  }
+
+  if (customerMessageSources.includes("Other") && !customerMessageSourceOther) {
+    return null;
+  }
+
+  if (!urgencyOk) {
+    return null;
+  }
+
+  return {
+    fullName,
+    companyName,
+    phone,
+    email,
+    industry,
+    businessLocation,
+    websiteOrSocial,
+    taskToAutomate,
+    customerMessageSources,
+    customerMessageSourceOther: customerMessageSourceOther || undefined,
+    urgency,
+    consent: true
+  };
+}
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -36,12 +88,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const parsed = leadSchema.safeParse(body);
-  if (!parsed.success) {
+  const payload = parseLeadPayload(body);
+  if (!payload) {
     return NextResponse.json({ error: "Please complete the lead form with valid details." }, { status: 400 });
   }
 
-  const lead = createApplicationLead(parsed.data);
+  const lead = createApplicationLead(payload);
 
   return NextResponse.json(
     {
