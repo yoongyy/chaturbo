@@ -11,7 +11,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: "/", label: "Home" },
-  { href: "/dashboard", label: "Dashboard" },
+  { href: "/audit/alpha-roofing-dallas-audit", label: "Example Audit" },
   { href: "/login", label: "Login" }
 ];
 
@@ -62,8 +62,8 @@ export default function AppHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <Link href="/dashboard" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100">
-            Dashboard
+          <Link href="/audit/alpha-roofing-dallas-audit" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100">
+            Example audit
           </Link>
           <Link href="/login" className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-black/10 hover:bg-black">
             Log in

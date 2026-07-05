@@ -16,7 +16,7 @@ const displayFont = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: "Chaturbo Lead Rescue",
-  description: "Missed-call recovery and AI lead qualification for US roofing, HVAC, plumbing, and other local service businesses.",
+  description: "Missed-call rescue for US contractors. Text back leads in seconds, qualify jobs, and book more work from roofing, HVAC, plumbing, and other local service businesses.",
   icons: {
     icon: "/favicon.svg"
   }

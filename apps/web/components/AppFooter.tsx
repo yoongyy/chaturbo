@@ -22,7 +22,7 @@ export default function AppFooter() {
         <div>
           <p className="font-display text-lg font-semibold text-slate-900">Chaturbo Lead Rescue</p>
           <p className="mt-2 max-w-xl text-sm text-slate-600">
-            Missed-call recovery and AI lead qualification for US local service businesses.
+            Missed-call recovery and lead follow-up for US contractors.
           </p>
           <p className="mt-3 inline-flex rounded-full bg-coral px-3 py-1 text-xs font-semibold text-white">
             Built to help contractors book more jobs
@@ -34,8 +34,11 @@ export default function AppFooter() {
           <Link href="/" className="block text-slate-600 hover:text-slate-900">
             Home
           </Link>
-          <Link href="/dashboard" className="block text-slate-600 hover:text-slate-900">
-            Dashboard
+          <Link href="/audit/alpha-roofing-dallas-audit" className="block text-slate-600 hover:text-slate-900">
+            Example audit
+          </Link>
+          <Link href="/login" className="block text-slate-600 hover:text-slate-900">
+            Login
           </Link>
         </div>
 
@@ -46,7 +49,7 @@ export default function AppFooter() {
               hello@chaturbo.com
             </a>
             <p className="text-slate-600">Remote, US contractor market</p>
-            <p className="text-slate-600">Demo line: Kenny</p>
+            <p className="text-slate-600">Missed-call demo and setup help</p>
           </div>
         </div>
       </div>
