@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import AuthShell from "../../../components/AuthShell";
+import { AppButton } from "../../../components/AppButton";
 import { apiRequest, normalizeAppRole, setSession } from "../../../lib/api";
 
 export default function AdminLoginPage() {
@@ -58,28 +59,28 @@ export default function AdminLoginPage() {
         "Use only for internal management."
       ]}
     >
-      <form onSubmit={onSubmit} className="rounded-[30px] border border-orange-200 bg-white p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+      <form onSubmit={onSubmit} className="rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,_rgba(15,23,42,0.96)_0%,_rgba(7,12,20,0.96)_100%)] p-8 shadow-[0_24px_80px_rgba(2,6,23,0.35)]">
         <p className="text-xs font-black uppercase tracking-[0.24em] text-orange-500">Admin sign in</p>
-        <h2 className="mt-3 text-2xl font-semibold text-ink">Internal portal access</h2>
-        <p className="mt-2 text-sm text-slate-600">Use the internal admin account to manage the platform.</p>
+        <h2 className="mt-3 text-2xl font-semibold text-white">Internal portal access</h2>
+        <p className="mt-2 text-sm text-slate-300">Use the internal admin account to manage the platform.</p>
         <div className="mt-6 space-y-4">
           <label className="block">
-            <span className="text-sm font-medium text-slate-700">Email</span>
-            <input name="email" type="email" required className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-orange-400" />
+            <span className="text-sm font-medium text-slate-200">Email</span>
+            <input name="email" type="email" required className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-orange-400" />
           </label>
           <label className="block">
-            <span className="text-sm font-medium text-slate-700">Password</span>
-            <input name="password" type="password" required className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-orange-400" />
+            <span className="text-sm font-medium text-slate-200">Password</span>
+            <input name="password" type="password" required className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-orange-400" />
           </label>
         </div>
-        {status ? <p className="mt-4 text-sm text-slate-600">{status}</p> : null}
-        {error ? <p className="mt-4 text-sm text-rose-600">{error}</p> : null}
-        <button disabled={loading} className="mt-6 w-full rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">
+        {status ? <p className="mt-4 text-sm text-slate-300">{status}</p> : null}
+        {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
+        <AppButton disabled={loading} className="mt-6 w-full" variant="primary">
           {loading ? "Signing in..." : "Log in as admin"}
-        </button>
-        <p className="mt-4 text-sm text-slate-500">
+        </AppButton>
+        <p className="mt-4 text-sm text-slate-400">
           Customer or owner login?{" "}
-          <Link href="/login" className="font-semibold text-orange-600">
+          <Link href="/login" className="font-semibold text-orange-400">
             Use the owner portal
           </Link>
         </p>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import AuthShell from "../../components/AuthShell";
+import { AppButton } from "../../components/AppButton";
 import { apiRequest, normalizeAppRole, setSession } from "../../lib/api";
 
 export default function RegisterPage() {
@@ -54,21 +55,21 @@ export default function RegisterPage() {
         "Start with the Pro workflow."
       ]}
     >
-      <div className="rounded-[30px] border border-orange-200 bg-white p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+      <div className="rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,_rgba(15,23,42,0.96)_0%,_rgba(7,12,20,0.96)_100%)] p-8 shadow-[0_24px_80px_rgba(2,6,23,0.35)]">
         <p className="text-xs font-black uppercase tracking-[0.24em] text-orange-500">Create account</p>
-        <h1 className="mt-3 text-3xl font-semibold text-ink">Set up your portal access</h1>
-        <p className="mt-2 text-sm text-slate-600">Create a dashboard login for your team.</p>
+        <h1 className="mt-3 text-3xl font-semibold text-white">Set up your portal access</h1>
+        <p className="mt-2 text-sm text-slate-300">Create a dashboard login for your team.</p>
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          <input name="name" placeholder="Name" className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm" required />
-          <input name="email" type="email" placeholder="Email" className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm" required />
-          <input name="password" type="password" placeholder="Password" minLength={8} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm" required />
-          {error ? <p className="text-sm text-rose-600">{error}</p> : null}
-          <button disabled={loading} className="w-full rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">
+          <input name="name" placeholder="Name" className="w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-500" required />
+          <input name="email" type="email" placeholder="Email" className="w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-500" required />
+          <input name="password" type="password" placeholder="Password" minLength={8} className="w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-500" required />
+          {error ? <p className="text-sm text-rose-300">{error}</p> : null}
+          <AppButton disabled={loading} className="w-full" variant="primary">
             {loading ? "Creating..." : "Create account"}
-          </button>
+          </AppButton>
         </form>
-        <p className="mt-4 text-sm text-slate-500">
-          <Link href="/login" className="font-semibold text-orange-600">
+        <p className="mt-4 text-sm text-slate-400">
+          <Link href="/login" className="font-semibold text-orange-400">
             Back to login
           </Link>
         </p>

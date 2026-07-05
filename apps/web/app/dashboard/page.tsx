@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { AppLinkButton } from "../../components/AppButton";
 import LeadRescueShell from "../../components/LeadRescueShell";
 import StatCard from "../../components/StatCard";
 import { apiRequest } from "../../lib/api";
@@ -128,15 +129,15 @@ export default function DashboardPage() {
             <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
               <h2 className="text-xl font-semibold text-ink">Quick actions</h2>
               <div className="mt-4 flex flex-col gap-3">
-                <Link href="/dashboard/businesses/new" className="rounded-2xl bg-ink px-4 py-3 text-center text-sm font-semibold text-white">
+                <AppLinkButton href="/dashboard/businesses/new" className="w-full" variant="primary">
                   Add a business
-                </Link>
-                <Link href="/dashboard/leads" className="rounded-2xl border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700">
+                </AppLinkButton>
+                <AppLinkButton href="/dashboard/leads" className="w-full" variant="subtle">
                   Open lead inbox
-                </Link>
-                <Link href="/dashboard/help" className="rounded-2xl border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700">
+                </AppLinkButton>
+                <AppLinkButton href="/dashboard/help" className="w-full" variant="subtle">
                   Get help
-                </Link>
+                </AppLinkButton>
               </div>
             </div>
 
