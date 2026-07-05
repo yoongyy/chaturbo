@@ -170,6 +170,7 @@ const integrationTags = ["Housecall Pro", "Jobber", "Calendly", "ServiceTitan", 
 const defaultAuditForm = {
   companyName: "",
   ownerName: "",
+  email: "",
   trade: "Roofing",
   phone: "",
   website: ""
@@ -190,6 +191,7 @@ export default function HomePage() {
   const [auditStep, setAuditStep] = useState<"idle" | "scanning" | "success">("idle");
   const [auditProgress, setAuditProgress] = useState(0);
   const [scanMessage, setScanMessage] = useState("");
+  const [auditError, setAuditError] = useState("");
   const [formData, setFormData] = useState(defaultAuditForm);
 
   useEffect(() => {
@@ -261,11 +263,32 @@ export default function HomePage() {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  function handleAuditSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleAuditSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setAuditError("");
     setAuditStep("scanning");
     setAuditProgress(0);
     setScanMessage("Starting audit...");
+
+    try {
+      const response = await fetch("/api/audit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      if (!response.ok) {
+        throw new Error(result?.error || "We could not send your audit request right now.");
+      }
+    } catch (error) {
+      setAuditStep("idle");
+      setAuditProgress(0);
+      setScanMessage("");
+      setAuditError(error instanceof Error ? error.message : "We could not send your audit request right now.");
+    }
   }
 
   return (
@@ -917,12 +940,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="mt-8 text-center">
-            <Link href="/pricing" className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:border-orange-500/60 hover:bg-slate-950">
-              View the full pricing page
-              <span>→</span>
-            </Link>
-          </div>
         </div>
       </section>
 
@@ -1020,6 +1037,19 @@ export default function HomePage() {
                 </div>
 
                 <div>
+                  <label className="mb-2 ml-1 block text-xs font-mono font-bold uppercase tracking-widest text-slate-400">Email Address</label>
+                  <input
+                    required
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="you@company.com"
+                    className="w-full rounded-2xl border border-slate-800 bg-slate-950 px-4 py-4 text-sm text-white placeholder:text-slate-600 focus:border-orange-500 focus:outline-none"
+                  />
+                  <span className="ml-1 mt-1.5 block text-[11px] text-slate-500">We will email the audit recap and next steps here.</span>
+                </div>
+
+                <div>
                   <label className="mb-2 ml-1 block text-xs font-mono font-bold uppercase tracking-widest text-slate-400">Business Phone Number</label>
                   <input
                     required
@@ -1045,6 +1075,11 @@ export default function HomePage() {
                 </div>
 
                 <div className="pt-5">
+                  {auditError ? (
+                    <p className="mb-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300" role="alert">
+                      {auditError}
+                    </p>
+                  ) : null}
                   <button className="flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-4 text-sm font-black tracking-wide text-slate-950 transition-all hover:bg-orange-600 hover:shadow-[0_0_20px_rgba(249,115,22,0.3)] active:scale-95 sm:text-base">
                     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
                       <path d="M17 9V7a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1Zm-8 0V7a3 3 0 1 1 6 0v2H9Z" />
@@ -1078,6 +1113,7 @@ export default function HomePage() {
               <div className="w-full max-w-sm space-y-1.5 rounded-xl border border-slate-850 bg-slate-950 p-4 text-left font-mono text-xs text-slate-300 shadow-inner">
                 <div className="text-slate-500">&gt; Initializing Chaturbo engine v2.6</div>
                 <div className="text-emerald-400">&gt; Target Phone: {formData.phone}</div>
+                <div className="text-emerald-400">&gt; Target Email: {formData.email}</div>
                 <div className="text-emerald-400">&gt; Target URL: {formData.website}</div>
                 <div className="animate-pulse text-orange-400">&gt; {scanMessage}</div>
               </div>
@@ -1107,7 +1143,8 @@ export default function HomePage() {
                   {formData.trade} category in your territory.
                 </p>
                 <p className="text-xs text-slate-400 sm:text-sm">
-                  Our lead engineer is compiling your custom missed-call revenue audit and competitive speed analysis. We will text a private Loom walkthrough link directly to{" "}
+                  Our lead engineer is compiling your custom missed-call revenue audit and competitive speed analysis. We will email the audit recap to{" "}
+                  <strong className="font-mono text-slate-200">{formData.email}</strong> and text a private Loom walkthrough link directly to{" "}
                   <strong className="font-mono text-slate-200">{formData.phone}</strong> within 24 hours.
                 </p>
               </div>
