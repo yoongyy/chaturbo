@@ -10,8 +10,13 @@ export default function BrandMark({ compact = false, inverse = false, className 
 
   return (
     <div className={`flex items-center gap-3 ${className}`.trim()}>
-      <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 text-lg font-black text-slate-950 shadow-[0_0_18px_rgba(249,115,22,0.35)]">
-        ⚡
+      <span className="inline-flex h-11 w-11 items-center justify-center rounded-[14px] bg-gradient-to-br from-orange-500 via-orange-500 to-amber-400 shadow-[0_0_18px_rgba(249,115,22,0.35)]">
+        <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden="true">
+          <path
+            d="M14.5 2.5L5.5 13h5.2L9.5 21.5 18.5 11h-5.2L14.5 2.5Z"
+            fill="#0b0f16"
+          />
+        </svg>
       </span>
       <div className="leading-tight">
         <p className={`font-display font-black uppercase tracking-tighter ${compact ? "text-sm" : "text-base"} ${titleClassName}`}>
