@@ -11,11 +11,11 @@ export default function AppFooter() {
   }
 
   return (
-    <footer className="mt-12 border-t border-white/10 bg-slate-950 text-slate-300">
+    <footer className="mt-12 border-t border-slate-200 bg-white text-slate-800">
       <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 md:grid-cols-[1.3fr_0.7fr_0.8fr] md:px-6">
         <div>
-          <p className="font-display text-lg font-semibold text-white">Chaturbo Lead Rescue</p>
-          <p className="mt-2 max-w-xl text-sm text-slate-400">
+          <p className="font-display text-lg font-semibold text-slate-900">Chaturbo Lead Rescue</p>
+          <p className="mt-2 max-w-xl text-sm text-slate-600">
             Missed-call recovery and AI lead qualification for US local service businesses.
           </p>
           <p className="mt-3 inline-flex rounded-full bg-coral px-3 py-1 text-xs font-semibold text-white">
@@ -24,30 +24,30 @@ export default function AppFooter() {
         </div>
 
         <div className="space-y-2 text-sm">
-          <p className="font-semibold text-white">Pages</p>
-          <Link href="/" className="block text-slate-400 hover:text-white">
+          <p className="font-semibold text-slate-900">Pages</p>
+          <Link href="/" className="block text-slate-600 hover:text-slate-900">
             Home
           </Link>
-          <Link href="/dashboard" className="block text-slate-400 hover:text-white">
+          <Link href="/dashboard" className="block text-slate-600 hover:text-slate-900">
             Dashboard
           </Link>
-          <Link href="/dashboard/audits/new" className="block text-slate-400 hover:text-white">
+          <Link href="/dashboard/audits/new" className="block text-slate-600 hover:text-slate-900">
             New audit
           </Link>
         </div>
 
         <div className="grid grid-cols-1 gap-4 text-sm">
           <div className="space-y-2">
-            <p className="font-semibold text-white">Contact</p>
-            <a href="mailto:hello@chaturbo.com" className="block text-slate-400 hover:text-white">
+            <p className="font-semibold text-slate-900">Contact</p>
+            <a href="mailto:hello@chaturbo.com" className="block text-slate-600 hover:text-slate-900">
               hello@chaturbo.com
             </a>
-            <p className="text-slate-400">Remote, US contractor market</p>
-            <p className="text-slate-400">Demo line: Kenny</p>
+            <p className="text-slate-600">Remote, US contractor market</p>
+            <p className="text-slate-600">Demo line: Kenny</p>
           </div>
         </div>
       </div>
-      <div className="border-t border-white/10 py-3 text-center text-xs text-slate-500">
+      <div className="border-t border-slate-200 py-3 text-center text-xs text-slate-500">
         © {new Date().getFullYear()} Chaturbo Lead Rescue.
       </div>
     </footer>
