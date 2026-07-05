@@ -5,13 +5,13 @@ function normalizeBaseUrl(value: string): string {
 }
 
 export function resolveApiBaseUrl(requestOrigin?: string): string {
+  if (requestOrigin) {
+    return normalizeBaseUrl(requestOrigin);
+  }
+
   const configured = process.env.NEXT_PUBLIC_API_URL?.trim();
   if (configured) {
     return normalizeBaseUrl(configured);
-  }
-
-  if (requestOrigin) {
-    return normalizeBaseUrl(requestOrigin);
   }
 
   if (typeof window !== "undefined") {

@@ -3,6 +3,18 @@ import { resolveApiBaseUrl } from "./apiBaseUrl";
 const API_URL = resolveApiBaseUrl();
 const REQUEST_TIMEOUT_MS = 15000;
 
+function getHostedAppRequestPath(path: string): string | null {
+  if (path.startsWith("/api/")) {
+    return path;
+  }
+
+  if (path.startsWith("/auth/")) {
+    return `/api${path}`;
+  }
+
+  return null;
+}
+
 export function getToken() {
   if (typeof window === "undefined") return "";
   return localStorage.getItem("chaturbo_token") || "";
@@ -22,8 +34,8 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}, aut
   const apiUrl = resolveApiBaseUrl();
   const isBrowser = typeof window !== "undefined";
   const isLocalHost = isBrowser && ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
-  const useSameOriginRoute = isBrowser && !isLocalHost && (path === "/auth/login" || path === "/api/rescue/overview");
-  const requestPath = path === "/auth/login" && useSameOriginRoute ? "/api/auth/login" : path;
+  const hostedAppPath = isBrowser && !isLocalHost ? getHostedAppRequestPath(path) : null;
+  const requestPath = hostedAppPath || path;
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "application/json");
 
@@ -39,7 +51,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}, aut
 
   let response: Response;
   try {
-    response = await fetch(`${useSameOriginRoute ? "" : apiUrl}${requestPath}`, {
+    response = await fetch(`${hostedAppPath ? "" : apiUrl}${requestPath}`, {
       ...options,
       headers,
       cache: "no-store",

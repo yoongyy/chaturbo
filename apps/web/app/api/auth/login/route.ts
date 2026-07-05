@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { findDemoUser } from "../../../../lib/demoDataStore";
 import { signJwt } from "../../../../lib/jwt";
 
 const DEFAULT_EMAIL = "demo@chaturbo.local";
@@ -24,13 +25,15 @@ export async function POST(request: Request) {
 
   const allowedEmail = (process.env.ADMIN_EMAIL || DEFAULT_EMAIL).trim().toLowerCase();
   const allowedPassword = process.env.ADMIN_PASSWORD || DEFAULT_PASSWORD;
+  const demoUser = findDemoUser(email, password);
 
-  if (email !== allowedEmail || password !== allowedPassword) {
+  if (!demoUser && (email !== allowedEmail || password !== allowedPassword)) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
   const secret = process.env.JWT_SECRET || DEFAULT_SECRET;
-  const userId = `web_${email.replace(/[^a-z0-9]+/g, "_")}`;
+  const userId = demoUser?.id || `web_${email.replace(/[^a-z0-9]+/g, "_")}`;
+  const userName = demoUser?.name || process.env.ADMIN_NAME || DEFAULT_NAME;
 
   const token = signJwt({ userId, email }, secret);
   return NextResponse.json({
@@ -38,7 +41,7 @@ export async function POST(request: Request) {
     user: {
       id: userId,
       email,
-      name: process.env.ADMIN_NAME || DEFAULT_NAME,
+      name: userName,
       credits: 0,
       creditsPurchased: 0,
       creditsEarned: 0,
