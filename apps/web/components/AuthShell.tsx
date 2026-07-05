@@ -10,7 +10,7 @@ interface Props extends PropsWithChildren {
 
 export default function AuthShell({ eyebrow, title, description, bullets, children }: Props) {
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(229,106,65,0.12),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(29,122,107,0.1),_transparent_26%),linear-gradient(180deg,_#08111a_0%,_#0d1724_42%,_#f6f1e7_42%,_#f6f1e7_100%)] px-4 py-6">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(229,106,65,0.12),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(29,122,107,0.1),_transparent_26%),radial-gradient(circle_at_bottom,_rgba(249,115,22,0.08),_transparent_34%),linear-gradient(180deg,_#08111a_0%,_#0d1724_100%)] px-4 py-6">
       <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <section className="rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,_rgba(15,23,42,0.98)_0%,_rgba(7,12,20,0.96)_100%)] px-8 py-10 text-white shadow-[0_24px_90px_rgba(2,6,23,0.45)]">
           <BrandMark inverse />
