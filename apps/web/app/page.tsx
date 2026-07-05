@@ -58,10 +58,10 @@ export default function HomePage() {
                 </div>
               ))}
 
-              <div className="rounded-[28px] border border-coral/30 bg-coral/15 p-5 text-sm text-slate-100 shadow-[0_18px_60px_rgba(233,106,65,0.12)]">
+              <div className="rounded-[28px] border border-coral/30 bg-ink/95 p-5 text-sm text-white shadow-[0_18px_60px_rgba(233,106,65,0.12)]">
                 <p className="text-xs uppercase tracking-[0.22em] text-coral">Sales demo</p>
                 <p className="mt-2 text-lg font-semibold text-white">Call the number, miss the call, get the text-back.</p>
-                <p className="mt-2">Then reply by SMS and watch the lead summary land in the dashboard.</p>
+                <p className="mt-2 text-slate-300">Then reply by SMS and watch the lead summary land in the dashboard.</p>
               </div>
             </div>
           </div>
