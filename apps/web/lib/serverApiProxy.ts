@@ -47,6 +47,7 @@ export async function proxyToExternalApi(request: Request, path: string): Promis
     return null;
   }
 
+  const proxiedRequest = request.clone();
   const headers = new Headers(request.headers);
   headers.delete("host");
   headers.delete("content-length");
@@ -59,7 +60,7 @@ export async function proxyToExternalApi(request: Request, path: string): Promis
   };
 
   if (requestHasBody(request.method)) {
-    init.body = await request.text();
+    init.body = await proxiedRequest.text();
   }
 
   try {
