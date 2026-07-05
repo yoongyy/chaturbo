@@ -28,7 +28,7 @@ export default function LoginPage() {
       });
       const role = normalizeAppRole(data.user.role);
       if (role !== "owner") {
-        throw new Error("Use the admin login for internal accounts.");
+        throw new Error("This account belongs in the internal portal.");
       }
       setSession({
         token: data.token,
@@ -55,11 +55,6 @@ export default function LoginPage() {
           <p className="mt-4 max-w-xl text-sm leading-7 text-slate-300">
             Use the dashboard to manage businesses, review missed-call leads, and follow up with customers quickly.
           </p>
-          <div className="mt-8 rounded-[28px] border border-white/10 bg-white/5 p-5 text-sm text-slate-300">
-            <p className="font-semibold text-white">Seeded owner login</p>
-            <p className="mt-2">Email: demo@chaturbo.local</p>
-            <p>Password: password123</p>
-          </div>
         </section>
 
         <form onSubmit={onSubmit} className="rounded-[34px] border border-slate-200 bg-white p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
@@ -80,13 +75,6 @@ export default function LoginPage() {
           <button disabled={loading} className="mt-6 w-full rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">
             {loading ? "Signing in..." : "Login"}
           </button>
-          <p className="mt-4 text-sm text-slate-500">
-            Admin team?
-            {" "}
-            <Link href="/admin/login" className="font-semibold text-mint">
-              Use the admin login
-            </Link>
-          </p>
           <p className="mt-2 text-sm text-slate-500">
             <Link href="/" className="font-semibold text-mint">
               Back home

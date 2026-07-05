@@ -55,11 +55,6 @@ export default function AdminLoginPage() {
           <p className="mt-4 max-w-xl text-sm leading-7 text-slate-300">
             This login is for your internal team, not the contractor customer. Use it to manage admin-only tools and setup.
           </p>
-          <div className="mt-8 rounded-[28px] border border-white/10 bg-white/5 p-5 text-sm text-slate-300">
-            <p className="font-semibold text-white">Seeded admin login</p>
-            <p className="mt-2">Email: admin@chaturbo.local</p>
-            <p>Password: password123</p>
-          </div>
         </section>
 
         <form onSubmit={onSubmit} className="rounded-[34px] border border-slate-200 bg-white p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
