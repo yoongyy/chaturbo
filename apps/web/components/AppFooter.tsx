@@ -22,7 +22,7 @@ export default function AppFooter() {
     <footer className="mt-12 border-t border-slate-800 bg-slate-950 text-slate-200">
       <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 md:grid-cols-[1.3fr_0.7fr_0.8fr] md:px-6">
         <div>
-          <BrandMark inverse />
+          <BrandMark inverse compact />
           <p className="mt-2 max-w-xl text-sm text-slate-400">
             The high-converting missed call lead rescue engine for US trade contractors.
           </p>
