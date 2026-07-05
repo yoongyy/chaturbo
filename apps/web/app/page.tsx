@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import BrandMark from "../components/BrandMark";
 import { foundingOffer, pricingPlans, setupFeeHighlights } from "../lib/pricing";
 
 type TradeId = "roofing" | "hvac" | "plumbing" | "electrical";
@@ -288,18 +289,7 @@ export default function HomePage() {
       <nav className="fixed top-0 z-50 w-full border-b border-slate-900 bg-slate-950/80 backdrop-blur-md">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 p-2 shadow-[0_0_15px_rgba(249,115,22,0.4)]">
-              <span className="block text-sm font-black text-slate-950">⚡</span>
-            </div>
-            <div className="leading-tight">
-              <p className="flex items-center gap-2 text-xl font-display font-black uppercase tracking-tighter text-white">
-                CHATURBO
-                <span className="rounded-md border border-orange-500/20 bg-orange-500/10 px-1.5 py-0.5 text-[9px] uppercase tracking-normal text-orange-400">
-                  AI
-                </span>
-              </p>
-              <p className="text-[10px] uppercase tracking-wider text-slate-500">Lead Rescue Engine</p>
-            </div>
+            <BrandMark inverse compact />
           </Link>
 
           <div className="hidden items-center gap-10 text-sm font-semibold tracking-wide text-slate-300 md:flex">
@@ -1117,12 +1107,7 @@ export default function HomePage() {
         <div className="mx-auto mb-12 max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-8 md:grid-cols-12">
             <div className="space-y-4 md:col-span-5">
-              <div className="flex items-center gap-2">
-                <div className="rounded-lg bg-orange-500 p-1.5 shadow-[0_0_12px_rgba(249,115,22,0.4)]">
-                  <span className="block text-slate-950">⚡</span>
-                </div>
-                <span className="text-xl font-black uppercase tracking-tighter text-white">Chaturbo</span>
-              </div>
+              <BrandMark inverse compact />
               <p className="max-w-sm text-xs leading-relaxed text-slate-400 sm:text-sm">
                 The high-converting missed call lead rescue engine for US trade contractors. Do not let marketing dollars slip to local rivals.
               </p>
