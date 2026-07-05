@@ -36,6 +36,9 @@ export default function HomePage() {
                 <Link href="/login" className="rounded-2xl bg-coral px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-coral/20 hover:brightness-110">
                   Open owner portal
                 </Link>
+                <Link href="/register" className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15">
+                  Create account
+                </Link>
                 <Link href="/demo" className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15">
                   See live demo
                 </Link>
@@ -93,6 +96,9 @@ export default function HomePage() {
             <div className="flex gap-3">
               <Link href="/login" className="rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white">
                 Owner login
+              </Link>
+              <Link href="/register" className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700">
+                Create account
               </Link>
               <Link href="/audit/alpha-roofing-dallas-audit" className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700">
                 Public audit example

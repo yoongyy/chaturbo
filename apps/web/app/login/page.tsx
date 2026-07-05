@@ -75,6 +75,12 @@ export default function LoginPage() {
           <button disabled={loading} className="mt-6 w-full rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">
             {loading ? "Signing in..." : "Login"}
           </button>
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            New here?{" "}
+            <Link href="/register" className="font-semibold text-mint">
+              Create an owner account
+            </Link>
+          </div>
           <p className="mt-2 text-sm text-slate-500">
             <Link href="/" className="font-semibold text-mint">
               Back home
