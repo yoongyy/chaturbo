@@ -62,5 +62,9 @@ export async function proxyToExternalApi(request: Request, path: string): Promis
     init.body = await request.text();
   }
 
-  return fetch(`${baseUrl}${path}`, init);
+  try {
+    return await fetch(`${baseUrl}${path}`, init);
+  } catch {
+    return null;
+  }
 }
