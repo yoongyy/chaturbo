@@ -11,6 +11,10 @@ function requestHasBody(method: string): boolean {
   return method !== "GET" && method !== "HEAD";
 }
 
+function isLoopbackHost(hostname: string): boolean {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+}
+
 export function getExternalApiBaseUrl(request: Request): string | null {
   const configured = getConfiguredApiBaseUrl();
   if (!configured) {
@@ -20,7 +24,14 @@ export function getExternalApiBaseUrl(request: Request): string | null {
   const requestOrigin = new URL(request.url).origin;
 
   try {
-    if (new URL(configured).origin === requestOrigin) {
+    const configuredUrl = new URL(configured);
+    const requestUrl = new URL(requestOrigin);
+
+    if (configuredUrl.origin === requestOrigin) {
+      return null;
+    }
+
+    if (isLoopbackHost(configuredUrl.hostname) && !isLoopbackHost(requestUrl.hostname)) {
       return null;
     }
   } catch {
