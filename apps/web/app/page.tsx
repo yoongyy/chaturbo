@@ -952,90 +952,109 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(249,115,22,0.06),_transparent_28%)] pointer-events-none" />
         <div className="relative mx-auto max-w-xl px-4">
           {auditStep === "idle" ? (
-            <div className="rounded-3xl border border-slate-850 bg-slate-900 p-6 shadow-2xl sm:p-10">
+            <div className="rounded-[30px] border border-slate-200/90 bg-slate-900 p-6 shadow-2xl sm:p-10">
               <div className="mb-8 text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10 text-orange-500">
-                  ✦
+                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-500/25 bg-orange-500/10 text-orange-500">
+                  <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden="true">
+                    <path
+                      d="M12 3l1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3Z"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path d="M18.5 4.5v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                    <path d="M16.5 6.5h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                    <circle cx="6.5" cy="18" r="1.5" fill="currentColor" />
+                  </svg>
                 </div>
-                <h2 className="mb-2 text-2xl font-black text-white sm:text-3xl">Get Your Free Missed-Call Audit</h2>
-                <p className="text-xs text-slate-400 sm:text-sm">
-                  We will analyze your response speed, local visibility, and calculate your exact monthly leaked revenue.
+                <h2 className="mb-3 text-2xl font-black text-white sm:text-[3.1rem] sm:leading-none">Get Your Free Missed-Call Audit</h2>
+                <p className="mx-auto max-w-lg text-sm leading-relaxed text-slate-400 sm:text-base">
+                  We will analyze your business number response speed, local SEO rank, and calculate your exact monthly leaked revenue.
                 </p>
               </div>
 
               <form onSubmit={handleAuditSubmit} className="space-y-4">
                 <div>
-                  <label className="mb-1.5 ml-1 block text-xs font-black uppercase text-slate-400">Company Name</label>
+                  <label className="mb-2 ml-1 block text-xs font-mono font-bold uppercase tracking-widest text-slate-400">Company Name</label>
                   <input
                     required
                     type="text"
                     value={formData.companyName}
                     onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                     placeholder="e.g. Apex Plumbing & HVAC"
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3.5 text-sm text-white placeholder:text-slate-600 focus:border-orange-500 focus:outline-none"
+                    className="w-full rounded-2xl border border-slate-800 bg-slate-950 px-4 py-4 text-sm text-white placeholder:text-slate-600 focus:border-orange-500 focus:outline-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1.5 ml-1 block text-xs font-black uppercase text-slate-400">Owner Name</label>
+                    <label className="mb-2 ml-1 block text-xs font-mono font-bold uppercase tracking-widest text-slate-400">Owner Name</label>
                     <input
                       required
                       type="text"
                       value={formData.ownerName}
                       onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
                       placeholder="John Doe"
-                      className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3.5 text-sm text-white placeholder:text-slate-600 focus:border-orange-500 focus:outline-none"
+                      className="w-full rounded-2xl border border-slate-800 bg-slate-950 px-4 py-4 text-sm text-white placeholder:text-slate-600 focus:border-orange-500 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="mb-1.5 ml-1 block text-xs font-black uppercase text-slate-400">Trade Category</label>
-                    <select
-                      value={formData.trade}
-                      onChange={(e) => setFormData({ ...formData, trade: e.target.value })}
-                      className="w-full cursor-pointer appearance-none rounded-xl border border-slate-800 bg-slate-950 px-4 py-3.5 text-sm text-white focus:border-orange-500 focus:outline-none"
-                    >
-                      <option>Roofing</option>
-                      <option>HVAC</option>
-                      <option>Plumbing</option>
-                      <option>Electrical</option>
-                      <option>Other Services</option>
-                    </select>
+                    <label className="mb-2 ml-1 block text-xs font-mono font-bold uppercase tracking-widest text-slate-400">Trade Category</label>
+                    <div className="relative">
+                      <select
+                        value={formData.trade}
+                        onChange={(e) => setFormData({ ...formData, trade: e.target.value })}
+                        className="w-full cursor-pointer appearance-none rounded-2xl border border-slate-800 bg-slate-950 px-4 py-4 pr-12 text-sm text-white focus:border-orange-500 focus:outline-none"
+                      >
+                        <option>Roofing</option>
+                        <option>HVAC</option>
+                        <option>Plumbing</option>
+                        <option>Electrical</option>
+                        <option>Other Services</option>
+                      </select>
+                      <svg viewBox="0 0 20 20" className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" aria-hidden="true">
+                        <path d="m5 7 5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
 
                 <div>
-                  <label className="mb-1.5 ml-1 block text-xs font-black uppercase text-slate-400">Business Phone Number</label>
+                  <label className="mb-2 ml-1 block text-xs font-mono font-bold uppercase tracking-widest text-slate-400">Business Phone Number</label>
                   <input
                     required
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="(555) 000-0000"
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3.5 text-sm text-white placeholder:text-slate-600 focus:border-orange-500 focus:outline-none"
+                    className="w-full rounded-2xl border border-slate-800 bg-slate-950 px-4 py-4 text-sm text-white placeholder:text-slate-600 focus:border-orange-500 focus:outline-none"
                   />
-                  <span className="ml-1 mt-1 block text-[10px] text-slate-500">Where we should text your custom video audit.</span>
+                  <span className="ml-1 mt-1.5 block text-[11px] text-slate-500">Where we should text your custom video audit.</span>
                 </div>
 
                 <div>
-                  <label className="mb-1.5 ml-1 block text-xs font-black uppercase text-slate-400">Website URL</label>
+                  <label className="mb-2 ml-1 block text-xs font-mono font-bold uppercase tracking-widest text-slate-400">Website URL</label>
                   <input
                     required
                     type="url"
                     value={formData.website}
                     onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                     placeholder="https://www.apexplumbing.com"
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3.5 text-sm text-white placeholder:text-slate-600 focus:border-orange-500 focus:outline-none"
+                    className="w-full rounded-2xl border border-slate-800 bg-slate-950 px-4 py-4 text-sm text-white placeholder:text-slate-600 focus:border-orange-500 focus:outline-none"
                   />
                 </div>
 
-                <div className="pt-4">
-                  <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-4 font-bold text-slate-950 transition-all hover:bg-orange-600 active:scale-95">
+                <div className="pt-5">
+                  <button className="flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-4 text-sm font-black tracking-wide text-slate-950 transition-all hover:bg-orange-600 hover:shadow-[0_0_20px_rgba(249,115,22,0.3)] active:scale-95 sm:text-base">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+                      <path d="M17 9V7a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1Zm-8 0V7a3 3 0 1 1 6 0v2H9Z" />
+                    </svg>
                     <span>SECURE MY TERRITORY & AUDIT</span>
-                    <span>→</span>
                   </button>
-                  <span className="mt-3 block text-center text-[10px] font-mono text-slate-500">
-                    Your data is encrypted. We never share phone list data.
+                  <span className="mt-3 block text-center text-[10px] font-mono text-slate-500 sm:text-[11px]">
+                    <span className="mr-1 text-yellow-300">🔒</span>
+                    Your data is fully encrypted. We never share phone list data.
                   </span>
                 </div>
               </form>
