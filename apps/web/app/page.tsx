@@ -95,46 +95,34 @@ const topMetrics = [
   { value: "24/7", label: "Digital dispatcher", tone: "orange" as const }
 ];
 
-const painCards = [
-  {
-    title: "A missed call is leaked revenue",
-    text: "When you’re up on a roof, in traffic, or finishing a job, you cannot answer every ring. Homeowners do not wait."
-  },
-  {
-    title: "The next contractor wins by speed",
-    text: "People calling for a repair or an estimate have zero patience. If you do not answer immediately, they call the next company."
-  },
-  {
-    title: "Your marketing budget needs a rescue layer",
-    text: "If you are paying for ads and SEO but missing calls, you are leaking cash at the exact moment intent is highest."
-  }
-];
-
 const featureCards = [
   {
-    icon: "call" as const,
-    title: "The 24/7 Instant Text-Back",
-    text: "The moment a call is missed, the system texts the homeowner so they know somebody is responding."
+    icon: "clock" as const,
+    title: "The 3-Second Text-Back",
+    text: "The millisecond an incoming call hits voicemail, Chaturbo sends a highly customized, ultra-personalized text back to keep the prospect engaged on the line. No more lost leads.",
+    cta: "Speed matters"
   },
   {
     icon: "message" as const,
-    title: "The Live SMS Dispatcher",
-    text: "One question at a time: what job, where, and how urgent. Then the lead is qualified without admin overhead."
+    title: "Smart Job Qualification",
+    text: "Our tailored AI instantly interprets response intent. It blocks spammers, detects homeowner urgency, and gathers crucial details like zip code, specific trade issue, and client budget.",
+    cta: "Intelligent filtration"
   },
   {
-    icon: "summary" as const,
-    title: "The Owner Summary",
-    text: "Every lead lands as a clean summary with the job, city, urgency, and next step. Nothing feels like software training."
+    icon: "calendar" as const,
+    title: "Automated Calendar Dispatch",
+    text: "Once qualified, Chaturbo seamlessly hands off the booking. It links directly to your digital scheduler to lock down the estimate appointment immediately.",
+    cta: "Secure the calendar"
   }
 ];
 
-function FeatureGlyph({ kind }: { kind: "call" | "message" | "summary" }) {
+function FeatureGlyph({ kind }: { kind: "clock" | "message" | "calendar" }) {
   return (
     <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 text-orange-500 transition-transform group-hover:scale-110">
-      {kind === "call" ? (
+      {kind === "clock" ? (
         <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M22 16.92v2a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.1 4.18 2 2 0 0 1 5.08 2h2a2 2 0 0 1 2 1.72c.12.9.37 1.78.74 2.61a2 2 0 0 1-.45 2.12L8.1 9.93a16 16 0 0 0 6 6l1.48-1.27a2 2 0 0 1 2.12-.45c.83.37 1.71.62 2.61.74A2 2 0 0 1 22 16.92Z" />
-          <path d="M16 2h6v6" />
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
         </svg>
       ) : kind === "message" ? (
         <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -144,10 +132,10 @@ function FeatureGlyph({ kind }: { kind: "call" | "message" | "summary" }) {
         </svg>
       ) : (
         <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 3h6l2 2v16H7V5z" />
-          <path d="M9 9h6" />
-          <path d="M9 13h6" />
-          <path d="M9 17h4" />
+          <path d="M8 5v4" />
+          <path d="M16 5v4" />
+          <rect x="3" y="7" width="18" height="14" rx="2" />
+          <path d="M3 11h18" />
         </svg>
       )}
     </div>
@@ -541,8 +529,12 @@ export default function HomePage() {
 
       <section className="border-y border-slate-900 bg-slate-900/40 py-24">
         <div className="mx-auto max-w-4xl px-4 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-red-500 font-mono">
-            <span>⚠</span>
+          <div className="mb-4 inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-red-500">
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+              <path d="M12 9v4" />
+              <path d="M12 17h.01" />
+            </svg>
             <span>The Leaky Bucket Problem</span>
           </div>
 
@@ -552,10 +544,10 @@ export default function HomePage() {
 
           <div className="mx-auto max-w-3xl space-y-6 text-lg leading-relaxed text-slate-300 md:text-xl">
             <p>
-              Whether you are up on a roof, driving between job sites, or sleeping after a long shift, you cannot pick up every single call. But a missed call is a dead lead.
+              Whether you are up on a roof, driving between job sites, or sleeping after a grueling 12-hour shift, <strong className="text-white">you cannot pick up every single call.</strong> But in 2026, a missed call is a dead lead.
             </p>
             <p className="text-slate-400">
-              Homeowners calling for emergency repairs, AC failures, or high-ticket estimates have zero patience. If you do not answer immediately, they hang up and hand the job to your fastest competitor.
+              Homeowners calling for emergency plumbing repairs, AC failures, or high-ticket roof replacements have zero patience. If you do not answer immediately, they simply hang up, click back to Google, and hand that valuable contract straight to your fastest competitor.
             </p>
           </div>
 
@@ -571,7 +563,7 @@ export default function HomePage() {
               <p className="text-xs text-slate-400">Before a frustrated prospect clicks the next local trade listing on their search page.</p>
             </div>
             <div className="rounded-xl border border-slate-850 bg-slate-950/80 p-5">
-              <div className="mb-1 text-lg font-black text-orange-500 font-mono">$4,000+</div>
+              <div className="mb-1 font-mono text-lg font-black text-red-500">$4,000+</div>
               <div className="mb-1 text-xs font-bold text-slate-300">Leaked Per Week</div>
               <p className="text-xs text-slate-400">In squandered, high-intent leads that went to competitors who picked up first.</p>
             </div>
@@ -589,7 +581,7 @@ export default function HomePage() {
               Turn your missed calls into booked jobs on autopilot.
             </h2>
             <p className="mx-auto max-w-2xl text-sm text-slate-400 sm:text-base">
-              Chaturbo acts as your 24/7 digital dispatcher. It plugs into your existing line and goes to work the exact millisecond you miss a call.
+              Chaturbo acts as your 24/7 digital dispatcher. It plugs seamlessly into your existing business phone line and goes to work the exact millisecond you miss a call.
             </p>
           </div>
 
@@ -603,7 +595,7 @@ export default function HomePage() {
                 <h3 className="mb-3 text-xl font-black text-white">{card.title}</h3>
                 <p className="mb-4 text-sm leading-relaxed text-slate-400">{card.text}</p>
                 <div className="mt-auto flex items-center gap-1.5 text-xs font-bold text-orange-400 transition-transform group-hover:translate-x-1.5">
-                  <span>Speed matters</span>
+                  <span>{card.cta}</span>
                   <span>→</span>
                 </div>
               </div>
@@ -634,14 +626,18 @@ export default function HomePage() {
               The Cost of Waiting vs. The Speed of Chaturbo
             </h2>
             <p className="mx-auto max-w-2xl text-sm text-slate-400">
-              Calculate monthly leaked revenue and see how fast Chaturbo turns missed opportunities into booked jobs.
+              Calculate your exact monthly leaked revenue and witness how fast Chaturbo turns those missed opportunities into profit.
             </p>
           </div>
 
           <div className="mb-16 grid items-stretch gap-10 lg:grid-cols-12">
             <div className="rounded-3xl border border-slate-850 bg-slate-900 p-6 shadow-xl lg:col-span-6 sm:p-8">
               <div className="mb-6 flex items-center gap-2">
-                <span className="text-orange-500">≡</span>
+                <svg viewBox="0 0 24 24" className="h-5 w-5 text-orange-500" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <line x1="4" y1="7" x2="20" y2="7" />
+                  <line x1="8" y1="12" x2="20" y2="12" />
+                  <line x1="12" y1="17" x2="20" y2="17" />
+                </svg>
                 <h3 className="text-lg font-black text-white">Adjust Your Business Numbers</h3>
               </div>
 
@@ -707,15 +703,17 @@ export default function HomePage() {
                     className="h-2 w-full cursor-pointer rounded-lg bg-slate-950 accent-orange-500"
                   />
                   <div className="mt-1 flex justify-between font-mono text-[10px] text-slate-500">
-                    <span>15%</span>
-                    <span>35%</span>
-                    <span>65%</span>
+                    <span>15% (Ultra-conservative)</span>
+                    <span>35% (Avg)</span>
+                    <span>65% (High intent)</span>
                   </div>
                 </div>
               </div>
 
               <div className="mt-8 flex items-center gap-3 border-t border-slate-800 pt-6 text-xs text-slate-400">
-                <span className="text-orange-500">✦</span>
+                <svg viewBox="0 0 24 24" className="h-4 w-4 text-orange-500" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 3l1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3Z" />
+                </svg>
                 <span>ROI calculations assume typical contractor metrics based on local service standards.</span>
               </div>
             </div>
@@ -724,18 +722,18 @@ export default function HomePage() {
               <div className="relative overflow-hidden rounded-3xl border border-red-500/20 bg-red-500/5 p-6 shadow-lg sm:p-8">
                 <div className="absolute right-4 top-4 select-none font-mono text-6xl font-black text-red-500/20">LOSS</div>
                 <div>
-                  <span className="text-xs font-mono font-bold uppercase tracking-wider text-red-400">Your Business Today</span>
+                  <span className="text-xs font-mono font-bold uppercase tracking-wider text-red-400">Your Business Today (Voicemail Leak)</span>
                   <h4 className="mt-2 text-3xl font-black text-red-500 sm:text-4xl">
                     ${monthlyLeakedRevMin.toLocaleString()} – ${monthlyLeakedRevMax.toLocaleString()}
                   </h4>
                   <p className="mt-1 max-w-md text-xs leading-normal text-slate-400">
-                    Lost monthly cash because homeowners hung up and called the competitor who answered first.
+                    Lost monthly cash because homeowners hung up and immediately selected your competitor. 62% of calls hitting voicemail never call back.
                   </p>
                 </div>
 
                 <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-red-400">
                   <span>✕</span>
-                  <span>Unsecured leads from Google Ads and Local SEO going to waste.</span>
+                  <span>Unsecured leads from Google Ads & Local SEO going directly to waste.</span>
                 </div>
               </div>
 
@@ -747,7 +745,7 @@ export default function HomePage() {
                     +${recoveredRevenue.toLocaleString()} <span className="text-xs font-normal text-slate-400">/ month</span>
                   </h4>
                   <p className="mt-1 max-w-md text-xs leading-normal text-slate-300">
-                    Recovered gross revenue by locking in <strong className="font-black text-white">{savedJobs} additional estimate appointments</strong> on autopilot.
+                    Recovered gross revenue by instantly locking in <strong className="font-mono font-black text-white">{savedJobs} additional estimate appointments</strong> on autopilot.
                   </p>
                 </div>
 
@@ -758,8 +756,9 @@ export default function HomePage() {
                       Net Profit Boost: <strong className="font-mono text-emerald-400">${netProfitWithChaturbo.toLocaleString()}/mo</strong>
                     </span>
                   </div>
-                  <button onClick={() => scrollToSection("audit-form")} className="text-xs font-bold text-white hover:underline">
-                    Lock this in now →
+                  <button onClick={() => scrollToSection("audit-form")} className="inline-flex items-center gap-1 text-xs font-bold text-white hover:underline">
+                    <span>Lock this in now</span>
+                    <span className="text-orange-500">→</span>
                   </button>
                 </div>
               </div>
@@ -794,7 +793,7 @@ export default function HomePage() {
                   <tr>
                     <td className="p-5 font-semibold text-slate-300">Prospect Action</td>
                     <td className="p-5 text-slate-400">Hangs up, returns to search, calls next contractor</td>
-                    <td className="p-5 text-slate-200">Stays highly engaged on SMS thread and books directly</td>
+                    <td className="p-5 text-slate-200">Stays highly engaged on SMS thread & books directly</td>
                   </tr>
                   <tr className="bg-orange-500/[0.02]">
                     <td className="p-5 font-black text-white">Monthly Leaked Revenue</td>
@@ -1128,7 +1127,7 @@ export default function HomePage() {
             <div className="space-y-4 md:col-span-5">
               <BrandMark inverse compact />
               <p className="max-w-sm text-xs leading-relaxed text-slate-400 sm:text-sm">
-                The high-converting missed call lead rescue engine for US trade contractors. Do not let marketing dollars slip to local rivals.
+                The high-converting, lightning-fast missed call lead rescue engine designed exclusively for US trade contractors. Don't let marketing dollars slip to local rivals.
               </p>
             </div>
 
