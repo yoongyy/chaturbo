@@ -21,9 +21,14 @@ export default function AppFooter() {
     <footer className="mt-12 border-t border-slate-200 bg-white text-slate-800">
       <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 md:grid-cols-[1.3fr_0.7fr_0.8fr] md:px-6">
         <div>
-          <p className="font-display text-lg font-semibold text-slate-900">Chaturbo Lead Rescue</p>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 p-2 text-sm text-slate-950 shadow-[0_0_12px_rgba(249,115,22,0.35)]">
+              ⚡
+            </span>
+            <p className="font-display text-xl font-black uppercase tracking-tighter text-slate-900">CHATURBO</p>
+          </div>
           <p className="mt-2 max-w-xl text-sm text-slate-600">
-            Missed-call recovery and lead follow-up for US contractors.
+            The high-converting missed call lead rescue engine for US trade contractors.
           </p>
           <p className="mt-3 inline-flex rounded-full bg-coral px-3 py-1 text-xs font-semibold text-white">
             Built to help contractors book more jobs

@@ -40,12 +40,17 @@ export default function AppHeader() {
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 text-slate-900 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-coral text-sm font-bold text-white shadow-lg shadow-coral/20">
-            CR
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 p-2 text-slate-950 shadow-[0_0_15px_rgba(249,115,22,0.4)]">
+            ⚡
           </span>
           <div className="leading-tight">
-            <p className="font-display text-sm font-semibold text-slate-900">Chaturbo Lead Rescue</p>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Recover missed calls</p>
+            <p className="flex items-center gap-1.5 font-display text-sm font-black uppercase tracking-tighter text-slate-900">
+              CHATURBO
+              <span className="rounded-md border border-orange-500/20 bg-orange-500/10 px-1.5 py-0.5 text-[9px] uppercase tracking-normal text-orange-400">
+                AI
+              </span>
+            </p>
+            <p className="text-[10px] uppercase tracking-wider text-slate-500">Lead Rescue Engine</p>
           </div>
         </Link>
 

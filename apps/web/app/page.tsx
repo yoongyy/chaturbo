@@ -26,9 +26,9 @@ const TRADE_SCENARIOS: Record<TradeId, TradeScenario> = {
     id: "roofing",
     name: "Roofing",
     icon: "🏠",
-    heroHeadline: "Stop letting missed roofing calls go to your competitors.",
+    heroHeadline: "Stop Letting Missed Roofing Calls Go To Your Competitors.",
     subheadline:
-      "When a homeowner calls about a leak, hail damage, or a replacement estimate, Chaturbo texts them back in 3 seconds, qualifies the job, and locks the lead into your calendar before they click the next roofer.",
+      "62% of inbound contractor calls go to voicemail and homeowners won’t wait. If you don’t answer, they instantly click the next roofing listing on Google. Chaturbo automatically texts them back in 3 seconds, answers their questions, and locks them into your calendar before they hang up.",
     businessName: "Apex Roofing",
     senderName: "Mike",
     homeownerInitialMsg: "Hey, looking for an emergency roofing quote in Dallas. Tree branch hit my garage roof.",
@@ -42,9 +42,9 @@ const TRADE_SCENARIOS: Record<TradeId, TradeScenario> = {
     id: "hvac",
     name: "HVAC",
     icon: "❄️",
-    heroHeadline: "Stop letting missed AC repair calls go to your competitors.",
+    heroHeadline: "Stop Letting Missed AC Repair Calls Go To Your Competitors.",
     subheadline:
-      "In peak summer and winter, an unanswered HVAC call is a lost emergency. Chaturbo texts back in 3 seconds, qualifies the issue, and books the next available visit before the homeowner calls the next shop.",
+      "62% of inbound HVAC calls go to voicemail during peak summer and winter and homeowners won’t wait in the heat. Chaturbo automatically texts them back in 3 seconds, qualifies their equipment issue, and books an emergency diagnostic dispatch before they call the next service.",
     businessName: "Comfort Air HVAC",
     senderName: "Steve",
     homeownerInitialMsg: "My AC just blew out and it is 100 degrees inside. Can you send someone?",
@@ -58,9 +58,9 @@ const TRADE_SCENARIOS: Record<TradeId, TradeScenario> = {
     id: "plumbing",
     name: "Plumbing",
     icon: "💧",
-    heroHeadline: "Stop letting missed plumbing calls go to your competitors.",
+    heroHeadline: "Stop Letting Missed Drain & Water Calls Go To Your Competitors.",
     subheadline:
-      "A burst pipe or clogged drain does not wait. Chaturbo sends an instant text-back, identifies the urgency, and secures the booking before water damage gets worse.",
+      "A leaking pipe or backed-up sewer won’t wait. If you don’t answer immediately, they move to the next emergency plumber. Chaturbo automatically responds in 3 seconds, identifies the leak severity, and secures the booking before water ruins their drywall.",
     businessName: "ProFlow Plumbing",
     senderName: "Dave",
     homeownerInitialMsg: "Urgent: I have a burst water pipe in my garage. Water is starting to pool.",
@@ -74,9 +74,9 @@ const TRADE_SCENARIOS: Record<TradeId, TradeScenario> = {
     id: "electrical",
     name: "Electrical",
     icon: "⚡",
-    heroHeadline: "Stop letting missed electrical calls go to your competitors.",
+    heroHeadline: "Stop Letting Missed Electrical Calls Go To Your Competitors.",
     subheadline:
-      "Hot panels, dead outlets, and EV charger installs need fast replies. Chaturbo texts homeowners back in 3 seconds flat, confirms the issue, and secures the visit while the lead is still warm.",
+      "Electrical hazards demand instant attention. Don’t let hot panels or dead outlets go to local rivals. Chaturbo texts homeowners back in 3 seconds flat, confirms safety precautions, and secures a service call right on your schedule.",
     businessName: "Sparky Electric",
     senderName: "Gary",
     homeownerInitialMsg: "Looking to get an EV charger installed in my garage, and my panel might need upgrading.",
@@ -126,16 +126,24 @@ const featureCards = [
 
 const faqs = [
   {
-    q: "Do I need to learn a dashboard?",
-    a: "No. The owner only needs a simple lead inbox. The technical setup stays behind the scenes."
+    q: "Does this require me to get a brand new phone number?",
+    a: "No! Chaturbo works with your existing business line. When you miss an incoming call, the call automatically triggers our cloud infrastructure to text that caller back from a verified local track-line formatted with your name, ensuring a seamless experience for the customer."
   },
   {
-    q: "Is this for contractors only?",
-    a: "Yes. The page is written for roofers, HVAC, plumbing, electrical, and similar local service businesses."
+    q: "Will Chaturbo work with my specific CRM or scheduler?",
+    a: "Yes. Chaturbo integrates directly with standard trade software (like Housecall Pro, Jobber, ServiceTitan) or simpler platforms (Calendly, Google Calendar). The AI delivers your direct booking URL dynamically during the SMS conversation to lock prospects in."
   },
   {
-    q: "What happens after a missed call?",
-    a: "The system texts the lead back, qualifies the request, and pushes a clean summary to the owner."
+    q: "What if a homeowner texts back asking an extremely complex question?",
+    a: "Chaturbo is pre-programmed to handle core FAQs (services, areas, timing). If a prospect asks an highly custom question, the AI acts gracefully—it acknowledges the question, lets them know a human lead tech is looking, and triggers an urgent SMS alert straight to your personal cell phone."
+  },
+  {
+    q: "How does Chaturbo avoid sounding like an annoying robot?",
+    a: "We explicitly train your AI voice to sound like a busy trade dispatcher stuck on a job site (e.g., 'Hey, sorry I missed you, up on a roof!'). By keeping texts human, humble, and prompt, homeowners are incredibly receptive and stay engaged."
+  },
+  {
+    q: "What does 'Territory Exclusivity' mean?",
+    a: "We believe in true B2B leverage. To avoid conflicts of interest, we license our Lead Rescue Engine to only ONE roofer, plumber, HVAC tech, or electrician in any given local market. Once you lock in your territory, we refuse service to all local competitors."
   }
 ];
 
@@ -252,11 +260,11 @@ export default function HomePage() {
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 p-2 shadow-[0_0_15px_rgba(249,115,22,0.4)]">
-              <span className="block text-sm font-black text-slate-950">CR</span>
+              <span className="block text-sm font-black text-slate-950">⚡</span>
             </div>
             <div className="leading-tight">
-              <p className="flex items-center gap-2 text-xl font-black uppercase tracking-tighter text-white">
-                Chaturbo
+              <p className="flex items-center gap-2 text-xl font-display font-black uppercase tracking-tighter text-white">
+                CHATURBO
                 <span className="rounded-md border border-orange-500/20 bg-orange-500/10 px-1.5 py-0.5 text-[9px] uppercase tracking-normal text-orange-400">
                   AI
                 </span>
@@ -335,8 +343,17 @@ export default function HomePage() {
                 <span>Instant {scenario.name} Dispatch</span>
               </div>
 
-              <h1 className="mb-6 text-4xl font-black leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl">
-                {scenario.heroHeadline}
+              <h1 className="mb-6 text-4xl font-display font-black leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl">
+                {scenario.heroHeadline.split(" ").map((word, index, words) => {
+                  const normalized = word.toLowerCase().replace(/[^a-z]/g, "");
+                  const highlighted = normalized.includes("missed") || normalized.includes("competitor");
+                  return (
+                    <span key={`${word}-${index}`} className={highlighted ? "text-orange-500" : ""}>
+                      {word}
+                      {index < words.length - 1 ? " " : ""}
+                    </span>
+                  );
+                })}
               </h1>
 
               <p className="mb-8 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg">

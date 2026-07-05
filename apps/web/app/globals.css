@@ -18,7 +18,7 @@ html {
 body {
   margin: 0;
   color: var(--text);
-  font-family: var(--font-body), "Avenir Next", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans), "Avenir Next", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
   background:
     radial-gradient(circle at 15% 12%, rgba(220, 243, 235, 0.9) 0%, transparent 28%),
     radial-gradient(circle at 82% 8%, rgba(255, 226, 208, 0.9) 0%, transparent 24%),
@@ -32,6 +32,10 @@ h3,
 .font-display {
   font-family: var(--font-display), "Space Grotesk", "Avenir Next", sans-serif;
   letter-spacing: -0.03em;
+}
+
+.font-mono {
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
 }
 
 a {

@@ -1,17 +1,22 @@
 import type { Metadata } from "next";
-import { Manrope, Space_Grotesk } from "next/font/google";
+import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import AppHeader from "../components/AppHeader";
 import AppFooter from "../components/AppFooter";
 
-const bodyFont = Manrope({
+const bodyFont = Inter({
   subsets: ["latin"],
-  variable: "--font-body"
+  variable: "--font-sans"
 });
 
 const displayFont = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-display"
+});
+
+const monoFont = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono"
 });
 
 export const metadata: Metadata = {
@@ -24,7 +29,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${bodyFont.variable} ${displayFont.variable}`}>
+    <html lang="en" className={`${bodyFont.variable} ${displayFont.variable} ${monoFont.variable}`}>
       <body className="min-h-screen bg-sand pb-24 text-ink antialiased md:pb-0">
         <AppHeader />
         <div className="min-h-[calc(100vh-64px)]">{children}</div>
