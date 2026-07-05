@@ -37,8 +37,8 @@ export default function BusinessesPage() {
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Total businesses" value={String(businesses.length)} helper="Contractor clients in the system." />
           <StatCard label="Active" value={String(businesses.filter((business) => business.status === "active").length)} helper="Live businesses taking calls." />
-          <StatCard label="Demo mode" value={String(businesses.filter((business) => business.demoMode).length)} helper="Businesses configured for sales demos." />
-          <StatCard label="Draft" value={String(businesses.filter((business) => business.status === "draft").length)} helper="Setup in progress." />
+          <StatCard label="Needs setup" value={String(businesses.filter((business) => business.status === "draft").length)} helper="Businesses that still need their phone flow connected." />
+          <StatCard label="Demo businesses" value={String(businesses.filter((business) => business.demoMode).length)} helper="Records used for training or sales demos." />
         </section>
 
         <section className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">

@@ -29,13 +29,9 @@ export default function BusinessDetailPage({ params }: { params: { id: string } 
     city: "",
     state: "",
     serviceArea: "",
-    aiTone: "",
-    notificationMethod: "both" as Business["notificationMethod"],
-    status: "draft" as Business["status"],
-    plan: "setup" as Business["plan"],
-    billingStatus: "manual" as Business["billingStatus"]
+    status: "draft" as Business["status"]
   });
-  const [phoneForm, setPhoneForm] = useState({ phoneNumber: "", twilioSid: "", status: "active" as "active" | "inactive" | "pending" });
+  const [phoneForm, setPhoneForm] = useState({ phoneNumber: "", status: "active" as "active" | "inactive" | "pending" });
 
   useEffect(() => {
     apiRequest<Payload>(`/api/rescue/businesses/${params.id}`, {}, true)
@@ -50,11 +46,7 @@ export default function BusinessDetailPage({ params }: { params: { id: string } 
           city: res.business.city || "",
           state: res.business.state || "",
           serviceArea: res.business.serviceArea || "",
-          aiTone: res.business.aiTone || "",
-          notificationMethod: res.business.notificationMethod,
-          status: res.business.status,
-          plan: res.business.plan,
-          billingStatus: res.business.billingStatus
+          status: res.business.status
         });
         setPhoneForm((current) => ({ ...current, phoneNumber: res.business.twilioPhoneNumber || "" }));
       })
@@ -139,8 +131,7 @@ export default function BusinessDetailPage({ params }: { params: { id: string } 
                 ["websiteUrl", "Website URL"],
                 ["city", "City"],
                 ["state", "State"],
-                ["serviceArea", "Service area"],
-                ["aiTone", "AI tone"]
+                ["serviceArea", "Service area"]
               ].map(([key, label]) => (
                 <label key={key} className="block">
                   <span className="text-sm font-medium text-slate-700">{label}</span>
@@ -153,20 +144,7 @@ export default function BusinessDetailPage({ params }: { params: { id: string } 
               ))}
 
               <label className="block">
-                <span className="text-sm font-medium text-slate-700">Notification method</span>
-                <select
-                  value={form.notificationMethod}
-                  onChange={(event) => setForm((current) => ({ ...current, notificationMethod: event.target.value as Business["notificationMethod"] }))}
-                  className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
-                >
-                  <option value="sms">SMS</option>
-                  <option value="email">Email</option>
-                  <option value="both">Both</option>
-                </select>
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-medium text-slate-700">Status</span>
+                <span className="text-sm font-medium text-slate-700">Business status</span>
                 <select
                   value={form.status}
                   onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as Business["status"] }))}
@@ -179,35 +157,7 @@ export default function BusinessDetailPage({ params }: { params: { id: string } 
               </label>
 
               <label className="block">
-                <span className="text-sm font-medium text-slate-700">Plan</span>
-                <select
-                  value={form.plan}
-                  onChange={(event) => setForm((current) => ({ ...current, plan: event.target.value as Business["plan"] }))}
-                  className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
-                >
-                  <option value="setup">Setup</option>
-                  <option value="monthly">Monthly</option>
-                  <option value="agency">Agency</option>
-                </select>
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-medium text-slate-700">Billing status</span>
-                <select
-                  value={form.billingStatus}
-                  onChange={(event) => setForm((current) => ({ ...current, billingStatus: event.target.value as Business["billingStatus"] }))}
-                  className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
-                >
-                  <option value="manual">Manual</option>
-                  <option value="trial">Trial</option>
-                  <option value="active">Active</option>
-                  <option value="unpaid">Unpaid</option>
-                  <option value="past_due">Past due</option>
-                </select>
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-medium text-slate-700">Twilio number on record</span>
+                <span className="text-sm font-medium text-slate-700">Business line on record</span>
                 <input
                   value={form.twilioPhoneNumber}
                   onChange={(event) => setForm((current) => ({ ...current, twilioPhoneNumber: event.target.value }))}
@@ -228,10 +178,10 @@ export default function BusinessDetailPage({ params }: { params: { id: string } 
 
           <div className="space-y-6">
             <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-              <h2 className="text-xl font-semibold text-ink">Phone setup</h2>
+              <h2 className="text-xl font-semibold text-ink">Business line</h2>
               <div className="mt-4 space-y-3">
                 <label className="block">
-                  <span className="text-sm font-medium text-slate-700">Twilio phone number</span>
+                  <span className="text-sm font-medium text-slate-700">Phone number</span>
                   <input
                     value={phoneForm.phoneNumber}
                     onChange={(event) => setPhoneForm((current) => ({ ...current, phoneNumber: event.target.value }))}
@@ -239,15 +189,7 @@ export default function BusinessDetailPage({ params }: { params: { id: string } 
                   />
                 </label>
                 <label className="block">
-                  <span className="text-sm font-medium text-slate-700">Twilio SID</span>
-                  <input
-                    value={phoneForm.twilioSid}
-                    onChange={(event) => setPhoneForm((current) => ({ ...current, twilioSid: event.target.value }))}
-                    className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-medium text-slate-700">Status</span>
+                  <span className="text-sm font-medium text-slate-700">Connection status</span>
                   <select
                     value={phoneForm.status}
                     onChange={(event) => setPhoneForm((current) => ({ ...current, status: event.target.value as "active" | "inactive" | "pending" }))}
@@ -264,21 +206,21 @@ export default function BusinessDetailPage({ params }: { params: { id: string } 
                   disabled={assigning}
                   className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 disabled:opacity-50"
                 >
-                  {assigning ? "Assigning..." : "Assign number"}
+                  {assigning ? "Saving..." : "Save phone number"}
                 </button>
               </div>
             </div>
 
             <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-              <h2 className="text-xl font-semibold text-ink">Test/demo instructions</h2>
+              <h2 className="text-xl font-semibold text-ink">How to test it</h2>
               <ol className="mt-4 space-y-2 text-sm text-slate-600">
-                <li>1. Call the Twilio number assigned to this business.</li>
+                <li>1. Call the business line.</li>
                 <li>2. Do not answer the forwarded call on the owner phone.</li>
                 <li>3. Wait for the missed-call text-back.</li>
                 <li>4. Reply with a job request and watch the inbox update.</li>
               </ol>
               <div className="mt-4">
-                <CopyButton text={data.business.twilioPhoneNumber || ""} label="Copy Twilio number" />
+                <CopyButton text={data.business.twilioPhoneNumber || ""} label="Copy phone number" />
               </div>
             </div>
           </div>

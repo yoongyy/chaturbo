@@ -4,9 +4,16 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import LeadRescueShell from "../../../../components/LeadRescueShell";
 import { apiRequest } from "../../../../lib/api";
-import type { BusinessIndustry, BusinessNotificationMethod, BusinessPlan, BillingStatus } from "../../../../lib/leadRescue";
+import type { BusinessIndustry } from "../../../../lib/leadRescue";
 
 const industries: BusinessIndustry[] = ["roofing", "hvac", "plumbing", "electrical", "landscaping", "cleaning", "other"];
+
+function splitLines(value: string): string[] {
+  return value
+    .split(/\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
 
 export default function NewBusinessPage() {
   const router = useRouter();
@@ -22,20 +29,10 @@ export default function NewBusinessPage() {
     city: "Dallas",
     state: "TX",
     serviceArea: "Dallas-Fort Worth",
-    servicesJson: JSON.stringify(["roof repair", "roof replacement", "emergency leak repair"], null, 2),
-    businessHoursJson: JSON.stringify({ monday: "8am-5pm", tuesday: "8am-5pm" }, null, 2),
+    servicesText: "Roof repair\nRoof replacement\nEmergency leak repair",
+    hoursText: "Mon-Fri 8am-5pm",
     emergencyService: true,
-    googleReviewUrl: "https://google.com",
-    calendarUrl: "",
-    twilioPhoneNumber: "",
-    aiTone: "professional, concise, helpful",
-    notificationMethod: "both" as BusinessNotificationMethod,
-    status: "draft" as "draft" | "active" | "paused",
-    plan: "setup" as BusinessPlan,
-    billingStatus: "manual" as BillingStatus,
-    setupFeePaid: false,
-    monthlyPrice: 149,
-    demoMode: true
+    demoMode: false
   });
 
   async function submit() {
@@ -43,13 +40,29 @@ export default function NewBusinessPage() {
     setError("");
     try {
       const payload = {
-        ...form,
+        name: form.name,
+        industry: form.industry,
+        ownerName: form.ownerName,
+        ownerMobile: form.ownerMobile,
         ownerEmail: form.ownerEmail || "",
         websiteUrl: form.websiteUrl || "",
-        googleReviewUrl: form.googleReviewUrl || "",
-        calendarUrl: form.calendarUrl || "",
-        servicesJson: JSON.parse(form.servicesJson),
-        businessHoursJson: JSON.parse(form.businessHoursJson)
+        city: form.city,
+        state: form.state,
+        serviceArea: form.serviceArea,
+        servicesJson: splitLines(form.servicesText),
+        businessHoursJson: form.hoursText.trim() ? { notes: form.hoursText.trim() } : {},
+        emergencyService: form.emergencyService,
+        googleReviewUrl: "",
+        calendarUrl: "",
+        twilioPhoneNumber: "",
+        aiTone: "friendly, clear, helpful",
+        notificationMethod: "both",
+        status: "draft",
+        plan: "setup",
+        billingStatus: "manual",
+        setupFeePaid: false,
+        monthlyPrice: 149,
+        demoMode: form.demoMode
       };
       const res = await apiRequest<{ business: { id: string } }>("/api/rescue/businesses", {
         method: "POST",
@@ -67,7 +80,7 @@ export default function NewBusinessPage() {
     <LeadRescueShell>
       <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
         <h1 className="text-3xl font-semibold text-ink">New Business</h1>
-        <p className="mt-2 text-sm text-slate-500">Create a contractor client and configure missed-call recovery.</p>
+        <p className="mt-2 text-sm text-slate-500">Add the basic business details. Keep it simple and readable for the owner.</p>
         {error ? <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
 
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
@@ -79,9 +92,7 @@ export default function NewBusinessPage() {
             ["websiteUrl", "Website URL"],
             ["city", "City"],
             ["state", "State"],
-            ["serviceArea", "Service area"],
-            ["googleReviewUrl", "Google review link"],
-            ["calendarUrl", "Calendar link"]
+            ["serviceArea", "Service area"]
           ].map(([key, label]) => (
             <label key={key} className="block">
               <span className="text-sm font-medium text-slate-700">{label}</span>
@@ -108,70 +119,6 @@ export default function NewBusinessPage() {
             </select>
           </label>
 
-          <label className="block">
-            <span className="text-sm font-medium text-slate-700">Notification method</span>
-            <select
-              value={form.notificationMethod}
-              onChange={(event) => setForm((current) => ({ ...current, notificationMethod: event.target.value as BusinessNotificationMethod }))}
-              className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
-            >
-              <option value="sms">SMS</option>
-              <option value="email">Email</option>
-              <option value="both">Both</option>
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="text-sm font-medium text-slate-700">Status</span>
-            <select
-              value={form.status}
-              onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as "draft" | "active" | "paused" }))}
-              className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
-            >
-              <option value="draft">Draft</option>
-              <option value="active">Active</option>
-              <option value="paused">Paused</option>
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="text-sm font-medium text-slate-700">Plan</span>
-            <select
-              value={form.plan}
-              onChange={(event) => setForm((current) => ({ ...current, plan: event.target.value as BusinessPlan }))}
-              className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
-            >
-              <option value="setup">Setup</option>
-              <option value="monthly">Monthly</option>
-              <option value="agency">Agency</option>
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="text-sm font-medium text-slate-700">Billing status</span>
-            <select
-              value={form.billingStatus}
-              onChange={(event) => setForm((current) => ({ ...current, billingStatus: event.target.value as BillingStatus }))}
-              className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
-            >
-              <option value="manual">Manual</option>
-              <option value="trial">Trial</option>
-              <option value="unpaid">Unpaid</option>
-              <option value="active">Active</option>
-              <option value="past_due">Past due</option>
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="text-sm font-medium text-slate-700">Monthly price</span>
-            <input
-              type="number"
-              value={form.monthlyPrice}
-              onChange={(event) => setForm((current) => ({ ...current, monthlyPrice: Number(event.target.value) }))}
-              className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
-            />
-          </label>
-
           <label className="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3">
             <input
               type="checkbox"
@@ -184,30 +131,34 @@ export default function NewBusinessPage() {
           <label className="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3">
             <input
               type="checkbox"
-              checked={form.setupFeePaid}
-              onChange={(event) => setForm((current) => ({ ...current, setupFeePaid: event.target.checked }))}
+              checked={form.demoMode}
+              onChange={(event) => setForm((current) => ({ ...current, demoMode: event.target.checked }))}
             />
-            <span className="text-sm font-medium text-slate-700">Setup fee paid</span>
+            <span className="text-sm font-medium text-slate-700">Use this as a demo business</span>
           </label>
 
           <label className="block lg:col-span-2">
-            <span className="text-sm font-medium text-slate-700">Services offered JSON</span>
+            <span className="text-sm font-medium text-slate-700">Main services offered</span>
             <textarea
-              value={form.servicesJson}
-              onChange={(event) => setForm((current) => ({ ...current, servicesJson: event.target.value }))}
+              value={form.servicesText}
+              onChange={(event) => setForm((current) => ({ ...current, servicesText: event.target.value }))}
               rows={4}
+              placeholder={"Roof repair\nRoof replacement\nEmergency leak repair"}
               className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
             />
+            <p className="mt-2 text-xs text-slate-500">Use one line per service, or separate them with commas.</p>
           </label>
 
           <label className="block lg:col-span-2">
-            <span className="text-sm font-medium text-slate-700">Business hours JSON</span>
+            <span className="text-sm font-medium text-slate-700">Business hours</span>
             <textarea
-              value={form.businessHoursJson}
-              onChange={(event) => setForm((current) => ({ ...current, businessHoursJson: event.target.value }))}
-              rows={4}
+              value={form.hoursText}
+              onChange={(event) => setForm((current) => ({ ...current, hoursText: event.target.value }))}
+              rows={3}
+              placeholder="Mon-Fri 8am-5pm, Sat 9am-1pm"
               className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
             />
+            <p className="mt-2 text-xs text-slate-500">Plain English is fine. No special format is needed.</p>
           </label>
         </div>
 

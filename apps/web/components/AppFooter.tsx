@@ -31,9 +31,6 @@ export default function AppFooter() {
           <Link href="/dashboard" className="block text-slate-600 hover:text-slate-900">
             Dashboard
           </Link>
-          <Link href="/dashboard/audits/new" className="block text-slate-600 hover:text-slate-900">
-            New audit
-          </Link>
         </div>
 
         <div className="grid grid-cols-1 gap-4 text-sm">

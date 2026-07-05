@@ -1,5 +1,6 @@
 import type { PropsWithChildren } from "react";
 import LeadRescueSidebar from "./LeadRescueSidebar";
+import LogoutButton from "./LogoutButton";
 
 export default function LeadRescueShell({ children }: PropsWithChildren) {
   return (
@@ -13,8 +14,13 @@ export default function LeadRescueShell({ children }: PropsWithChildren) {
 
         <main className="min-w-0 flex-1 pb-10 pt-1">
           <div className="mb-4 rounded-[28px] border border-white/10 bg-slate-950 px-5 py-4 text-white shadow-[0_24px_80px_rgba(2,6,23,0.45)] lg:hidden">
-            <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Chaturbo Lead Rescue</p>
-            <p className="mt-1 text-lg font-semibold">Recover missed calls before competitors do</p>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Chaturbo Lead Rescue</p>
+                <p className="mt-1 text-lg font-semibold">Simple missed-call follow-up</p>
+              </div>
+              <LogoutButton className="rounded-2xl border border-white/12 bg-white/8 px-3 py-2 text-sm font-semibold text-white" />
+            </div>
           </div>
           {children}
         </main>

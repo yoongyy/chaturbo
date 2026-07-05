@@ -1,59 +1,47 @@
 "use client";
 
 import LeadRescueShell from "../../../components/LeadRescueShell";
-import CopyButton from "../../../components/CopyButton";
-import { resolveApiBaseUrl } from "../../../lib/apiBaseUrl";
-
-const webhookPaths = [
-  "/api/twilio/voice/incoming",
-  "/api/twilio/voice/status",
-  "/api/twilio/sms/incoming"
-];
 
 export default function SettingsPage() {
-  const appUrl = resolveApiBaseUrl();
-
   return (
     <LeadRescueShell>
       <div className="space-y-6">
         <section className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-          <h1 className="text-3xl font-semibold text-ink">Settings</h1>
-          <p className="mt-2 text-sm text-slate-500">Demo instructions, webhook URLs, and billing placeholders.</p>
+          <h1 className="text-3xl font-semibold text-ink">Help</h1>
+          <p className="mt-2 text-sm text-slate-500">Simple instructions for using the dashboard without touching technical setup.</p>
         </section>
 
         <section className="grid gap-6 xl:grid-cols-2">
           <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-            <h2 className="text-xl font-semibold text-ink">Demo instructions</h2>
+            <h2 className="text-xl font-semibold text-ink">Daily workflow</h2>
             <ol className="mt-4 space-y-2 text-sm text-slate-600">
-              <li>1. Create or open the Demo Roofing Company.</li>
-              <li>2. Assign a Twilio number to the business.</li>
-              <li>3. Set ngrok or your public URL as the webhook destination.</li>
-              <li>4. Call the number and let the owner miss the forwarded call.</li>
-              <li>5. Reply to the text and watch the lead appear in the inbox.</li>
+              <li>1. Add the business name, owner contact, and service area.</li>
+              <li>2. Connect the business phone line.</li>
+              <li>3. When a call is missed, check the Lead Inbox.</li>
+              <li>4. Open the lead, review the summary, and call or text the customer back.</li>
+              <li>5. Mark the lead as contacted or booked when the job moves forward.</li>
             </ol>
           </div>
 
           <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-            <h2 className="text-xl font-semibold text-ink">Webhook URLs</h2>
+            <h2 className="text-xl font-semibold text-ink">What users should see</h2>
             <div className="mt-4 space-y-3 text-sm text-slate-600">
-              {webhookPaths.map((path) => (
-                <div key={path} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 px-4 py-3">
-                  <span className="font-mono text-xs text-slate-700">{`${appUrl}${path}`}</span>
-                  <CopyButton text={`${appUrl}${path}`} />
-                </div>
-              ))}
+              <p>Business name, owner contact, phone line, service area, and lead status.</p>
+              <p>Plain-English service descriptions like &quot;Roof repair&quot; or &quot;AC replacement&quot;.</p>
+              <p>A short lead summary the owner can understand in seconds.</p>
+              <p>Simple buttons like Add Business, Open Lead Inbox, and Log Out.</p>
             </div>
           </div>
         </section>
 
         <section className="grid gap-6 xl:grid-cols-2">
           <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-            <h2 className="text-xl font-semibold text-ink">Billing placeholders</h2>
+            <h2 className="text-xl font-semibold text-ink">What users should not see</h2>
             <div className="mt-4 space-y-3 text-sm text-slate-600">
-              <p>Setup: $500-$997 one-time</p>
-              <p>Monthly: $149/month</p>
-              <p>Agency wholesale: $49/month per business</p>
-              <p>Manual billing is fine for MVP; mark payment status in each business record.</p>
+              <p>Webhook URLs.</p>
+              <p>API hosts and environment variables.</p>
+              <p>JSON fields for services or opening hours.</p>
+              <p>Technical vendor IDs unless an internal admin truly needs them.</p>
             </div>
           </div>
 
@@ -61,9 +49,9 @@ export default function SettingsPage() {
             <h2 className="text-xl font-semibold text-ink">Compliance reminders</h2>
             <div className="mt-4 space-y-3 text-sm text-slate-600">
               <p>Only text people who called or messaged the business.</p>
-              <p>Include STOP/UNSTOP handling in the first message.</p>
+              <p>Give the customer a clear way to stop messages.</p>
               <p>Do not use cold SMS blasting.</p>
-              <p>Use truthful messaging and applicable email rules for outreach.</p>
+              <p>Keep the message honest, short, and helpful.</p>
             </div>
           </div>
         </section>

@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import LogoutButton from "./LogoutButton";
 
 const items = [
   { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/businesses", label: "Businesses" },
   { href: "/dashboard/leads", label: "Lead Inbox" },
-  { href: "/dashboard/audits", label: "Audits" },
-  { href: "/dashboard/settings", label: "Settings" }
+  { href: "/dashboard/settings", label: "Help" }
 ];
 
 function isActive(pathname: string, href: string) {
@@ -46,11 +46,14 @@ export default function LeadRescueSidebar() {
         ))}
       </nav>
 
-      <div className="mt-auto rounded-3xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
-        <p className="font-semibold text-white">Sales mode</p>
-        <p className="mt-2">
-          Use the dashboard to create a demo business, assign a Twilio number, and show missed-call recovery live.
-        </p>
+      <div className="mt-auto space-y-4">
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
+          <p className="font-semibold text-white">Simple setup</p>
+          <p className="mt-2">
+            Add the business, connect the phone number, and start catching missed calls. Technical setup should stay out of the owner&apos;s way.
+          </p>
+        </div>
+        <LogoutButton className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/12" />
       </div>
     </aside>
   );

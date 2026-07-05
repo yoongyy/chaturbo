@@ -44,7 +44,7 @@ export default function LoginPage() {
           <p className="text-xs uppercase tracking-[0.28em] text-slate-400">Chaturbo Lead Rescue</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">Log in to the lead rescue dashboard</h1>
           <p className="mt-4 max-w-xl text-sm leading-7 text-slate-300">
-            Use the dashboard to manage contractor clients, review leads, generate audits, and run the demo flow live.
+            Use the dashboard to manage businesses, review missed-call leads, and follow up with customers quickly.
           </p>
           <div className="mt-8 rounded-[28px] border border-white/10 bg-white/5 p-5 text-sm text-slate-300">
             <p className="font-semibold text-white">Seeded demo login</p>
