@@ -1,498 +1,223 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { API_URL, apiRequest } from "../../lib/api";
-import { Draft } from "../../lib/types";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import LeadRescueShell from "../../components/LeadRescueShell";
 import StatCard from "../../components/StatCard";
+import { apiRequest } from "../../lib/api";
+import type { OverviewResponse } from "../../lib/leadRescue";
 
-type OsTab = "macos" | "linux" | "windows";
-
-const connectCommands: Record<OsTab, string> = {
-  macos: "chaturbo connect",
-  linux: "chaturbo connect",
-  windows: "chaturbo connect"
-};
-
-const cronExamples: Record<OsTab, string> = {
-  macos: '0 * * * * /bin/zsh -lc "chaturbo sync"',
-  linux: '0 * * * * /bin/bash -lc "chaturbo sync"',
-  windows: 'schtasks /Create /SC HOURLY /TN ChaturboSync /TR "chaturbo sync"'
-};
-
-const npmDocsUrl = "https://www.npmjs.com/package/chaturbo-cli";
-const repoReadmeUrl = "https://github.com/yoongyy/chaturbo#readme";
+const demoSteps = [
+  "Create or open Demo Roofing Company.",
+  "Assign a Twilio number in the business record.",
+  "Call the number and let the forwarded call miss.",
+  "Wait for the automated SMS and reply with a job request.",
+  "Watch the lead summary appear in the inbox."
+];
 
 export default function DashboardPage() {
-  const secretStorageKey = (uid: string) => `chaturbo_agent_secret_${uid}`;
-  const readSavedSecret = (uid: string) => {
-    if (typeof window === "undefined" || !uid) return "";
-    return localStorage.getItem(secretStorageKey(uid)) || "";
-  };
-  const saveSecret = (uid: string, secret: string) => {
-    if (typeof window === "undefined" || !uid || !secret) return;
-    localStorage.setItem(secretStorageKey(uid), secret);
-  };
-
-  const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [data, setData] = useState<OverviewResponse | null>(null);
   const [error, setError] = useState("");
-  const [loadingDrafts, setLoadingDrafts] = useState(false);
-  const [activeOs, setActiveOs] = useState<OsTab>("macos");
-  const [copyMessage, setCopyMessage] = useState("");
-  const [ownerUid, setOwnerUid] = useState("");
-  const [agentSecret, setAgentSecret] = useState("");
-  const [hasExistingCredential, setHasExistingCredential] = useState(false);
-  const [credits, setCredits] = useState<number | null>(null);
-  const [creditsPurchased, setCreditsPurchased] = useState<number | null>(null);
-  const [creditsEarned, setCreditsEarned] = useState<number | null>(null);
-  const [toppingUp, setToppingUp] = useState(false);
-  const [requestingPayout, setRequestingPayout] = useState(false);
-  const [autoPublishing, setAutoPublishing] = useState(false);
-  const [pairing, setPairing] = useState(false);
-  const [stripeEnabled, setStripeEnabled] = useState<boolean | null>(null);
-
-  async function loadDrafts() {
-    setLoadingDrafts(true);
-    setError("");
-    try {
-      const res = await apiRequest<{ drafts: Draft[] }>("/workflow-drafts", {}, true);
-      setDrafts(res.drafts);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load drafts");
-    } finally {
-      setLoadingDrafts(false);
-    }
-  }
 
   useEffect(() => {
-    loadDrafts();
-    apiRequest<{ user: { ownerUid?: string } }>("/auth/me", {}, true)
-      .then((res) => {
-        const uid = res.user.ownerUid || "";
-        setOwnerUid(uid);
-        const savedSecret = readSavedSecret(uid);
-        if (savedSecret) {
-          setAgentSecret(savedSecret);
-        }
-      })
-      .catch(() => {});
-
-    apiRequest<{ credentials: Array<Record<string, unknown>> }>("/auth/agent/credentials", {}, true)
-      .then((res) => setHasExistingCredential((res.credentials || []).length > 0))
-      .catch(() => setHasExistingCredential(false));
-
-    apiRequest<{ credits: number; creditsPurchased?: number; creditsEarned?: number }>("/credits/balance", {}, true)
-      .then((res) => {
-        setCredits(res.credits);
-        setCreditsPurchased(res.creditsPurchased ?? null);
-        setCreditsEarned(res.creditsEarned ?? null);
-      })
-      .catch(() => {
-        setCredits(null);
-        setCreditsPurchased(null);
-        setCreditsEarned(null);
-      });
-
-    apiRequest<{ stripeEnabled: boolean }>("/credits/config", {}, true)
-      .then((res) => setStripeEnabled(Boolean(res.stripeEnabled)))
-      .catch(() => setStripeEnabled(false));
-
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const topupState = params.get("topup");
-      const sessionId = params.get("session_id");
-      if (topupState === "success" && sessionId) {
-        apiRequest<{
-          processed?: boolean;
-          alreadyProcessed?: boolean;
-          addedCredits?: number;
-          credits: number;
-          creditsPurchased?: number;
-          creditsEarned?: number;
-        }>(
-          "/credits/checkout-confirm",
-          {
-            method: "POST",
-            body: JSON.stringify({ sessionId })
-          },
-          true
-        )
-          .then((res) => {
-            setCredits(res.credits);
-            if (typeof res.creditsPurchased === "number") setCreditsPurchased(res.creditsPurchased);
-            if (typeof res.creditsEarned === "number") setCreditsEarned(res.creditsEarned);
-            if (res.alreadyProcessed) {
-              setCopyMessage("Top-up already processed.");
-            } else {
-              setCopyMessage(`Top-up success: +${res.addedCredits ?? 0} credits`);
-            }
-          })
-          .catch((err) => setError(err instanceof Error ? err.message : "Failed to confirm top-up"));
-      } else if (topupState === "cancelled") {
-        setCopyMessage("Top-up cancelled.");
-      }
-
-      if (topupState) {
-        window.history.replaceState({}, "", "/dashboard");
-      }
-    }
+    apiRequest<OverviewResponse>("/api/rescue/overview", {}, true)
+      .then(setData)
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load dashboard"));
   }, []);
 
-  const stats = useMemo(() => {
-    const detected = drafts.length;
-    const ready = drafts.filter((d) => d.quality.publishReadinessScore >= 70).length;
-    const cleanup = drafts.filter((d) => d.privacy.riskLevel !== "low").length;
-    const revenueLow = drafts.reduce((s, d) => s + d.estimates.potentialMonthlyRevenueLow, 0);
-    const revenueHigh = drafts.reduce((s, d) => s + d.estimates.potentialMonthlyRevenueHigh, 0);
-    const tokenCost = drafts.reduce((s, d) => s + d.estimates.tokenCostUsd, 0);
-    const hours = drafts.reduce((s, d) => s + d.estimates.timeSpentHours, 0);
-    return { detected, ready, cleanup, revenueLow, revenueHigh, tokenCost, hours };
-  }, [drafts]);
-
-  const quickConnectCommand = ownerUid && agentSecret
-    ? `npx -y chaturbo-cli@latest connect --api-url ${API_URL} --owner-id ${ownerUid} --agent-secret ${agentSecret}`
-    : "";
-  const fallbackConnectCommand = `npx -y chaturbo-cli@latest connect --api-url ${API_URL}`;
-  const commandToCopy = quickConnectCommand || fallbackConnectCommand;
-  const commandText = quickConnectCommand
-    ? quickConnectCommand
-    : hasExistingCredential
-      ? fallbackConnectCommand
-      : "Generate machine credentials to get one-shot connect command";
-  const ownerForPrompt = ownerUid || "<OWNER_UID>";
-  const secretForPrompt = agentSecret || "<AGENT_SECRET>";
-  const agentBootstrapPrompt = `You are my local AI agent. Set up and operate Chaturbo integration on this machine.
-
-Use these credentials:
-- ownerUid: ${ownerForPrompt}
-- agentSecret: ${secretForPrompt}
-- apiUrl: ${API_URL}
-
-Reference docs first:
-- npm package: ${npmDocsUrl}
-- platform README: ${repoReadmeUrl}
-- API health: ${API_URL}/health
-
-Tasks to complete now:
-1) Install and connect CLI:
-   npx -y chaturbo-cli@latest connect --api-url ${API_URL} --owner-id ${ownerForPrompt} --agent-secret ${secretForPrompt}
-2) Run a local dry run and verify:
-   chaturbo scan agent --local-only
-3) Configure hourly sync job based on this OS:
-   ${cronExamples[activeOs]}
-4) Verify sync works:
-   chaturbo sync
-5) Enable workflow discovery/reuse commands for this machine:
-   chaturbo marketplace search --query "oauth"
-   chaturbo marketplace library
-6) If workflow is useful, purchase and save for execution:
-   chaturbo marketplace buy --id <workflow_id>
-7) Print final status:
-   - connected: yes/no
-   - scheduler installed: yes/no
-   - last sync result
-   - credits balance
-   - purchased workflows count
-
-Important constraints:
-- Never upload raw conversations.
-- Keep secrets local and redacted.
-- Use Chaturbo CLI and docs above for command syntax.`;
-
   return (
-    <div className="space-y-6">
-      <div className="card p-6">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="mt-2 text-slate-600">
-          Your AI agent already solved valuable problems. Chaturbo helps you turn them into reusable workflow assets.
-        </p>
-        <p className="mt-1 text-sm text-slate-500">
-          Raw conversations stay local. Only sanitized workflow drafts are uploaded after your approval.
-        </p>
-      </div>
-
-      <div className="card p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold text-ink">Credits & Purchases</h2>
-            <p className="mt-1 text-sm text-slate-600">Top up credits here, then your local agent can buy and reuse workflows via CLI.</p>
+    <LeadRescueShell>
+      <div className="space-y-6">
+        <section className="rounded-[32px] border border-slate-800 bg-slate-950 px-6 py-7 text-white shadow-[0_24px_90px_rgba(2,6,23,0.45)]">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <p className="text-xs uppercase tracking-[0.28em] text-slate-400">Lead rescue command center</p>
+              <h1 className="mt-4 text-4xl font-semibold tracking-tight lg:text-5xl">
+                Recover missed calls before customers call your competitor.
+              </h1>
+              <p className="mt-4 max-w-2xl text-base text-slate-300">
+                Manage contractor businesses, forward calls to owners, text back missed calls, qualify inbound leads, and generate personalized audits that close setup deals.
+              </p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-5 text-sm text-slate-300 lg:w-[320px]">
+              <p className="font-semibold text-white">Sales demo flow</p>
+              <ol className="mt-3 space-y-2">
+                {demoSteps.map((step, index) => (
+                  <li key={step} className="flex gap-3">
+                    <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-coral text-xs font-bold text-white">
+                      {index + 1}
+                    </span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
           </div>
-          <div className="text-right">
-            <p className="text-xs uppercase tracking-wide text-slate-500">Current balance</p>
-            <p className="text-2xl font-semibold text-ink">{credits ?? "-"} credits</p>
-            <p className="mt-1 text-xs text-slate-500">Top-up: {creditsPurchased ?? "-"} | Earned: {creditsEarned ?? "-"}</p>
-          </div>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            disabled={toppingUp || stripeEnabled === false}
-            onClick={async () => {
-              setToppingUp(true);
-              setError("");
-              try {
-                const res = await apiRequest<{ url: string }>("/credits/checkout-session", {
-                  method: "POST",
-                  body: JSON.stringify({ credits: 100 })
-                }, true);
+        </section>
 
-                if (!res.url) {
-                  throw new Error("Checkout URL not returned from API");
-                }
-
-                if (typeof window !== "undefined") {
-                  window.location.assign(res.url);
-                }
-              } catch (err) {
-                setError(err instanceof Error ? err.message : "Top-up failed");
-              } finally {
-                setToppingUp(false);
-              }
-            }}
-            className="rounded-lg bg-ink px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-          >
-            {toppingUp ? "Redirecting..." : "Top up +100 credits"}
-          </button>
-          <a href="/workflows" className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700">
-            Browse workflows to buy
-          </a>
-          <button
-            disabled={requestingPayout || !creditsEarned || creditsEarned < 10}
-            onClick={async () => {
-              setRequestingPayout(true);
-              setError("");
-              try {
-                const payoutCredits = Math.min(creditsEarned ?? 0, 100);
-                const res = await apiRequest<{
-                  credits: number;
-                  creditsPurchased: number;
-                  creditsEarned: number;
-                  payoutRequest: { id: string; usdAmount: number; status: string };
-                }>(
-                  "/credits/payout-request",
-                  {
-                    method: "POST",
-                    body: JSON.stringify({ credits: payoutCredits, note: "dashboard_requested" })
-                  },
-                  true
-                );
-                setCredits(res.credits);
-                setCreditsPurchased(res.creditsPurchased);
-                setCreditsEarned(res.creditsEarned);
-                setCopyMessage(`Payout requested: ${payoutCredits} credits ($${res.payoutRequest.usdAmount})`);
-              } catch (err) {
-                setError(err instanceof Error ? err.message : "Failed to request payout");
-              } finally {
-                setRequestingPayout(false);
-                setTimeout(() => setCopyMessage(""), 2200);
-              }
-            }}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 disabled:opacity-50"
-          >
-            {requestingPayout ? "Requesting payout..." : "Request payout (up to 100 earned credits)"}
-          </button>
-        </div>
-        {stripeEnabled === false ? (
-          <p className="mt-2 text-xs text-rose-600">Stripe is not configured on the API project. Set `STRIPE_SECRET_KEY` in API env.</p>
+        {error ? (
+          <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
         ) : null}
-        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-          <p className="font-medium text-slate-700">Agent CLI buy flow</p>
-          <p className="mt-1 font-mono">chaturbo marketplace search --query "oauth"</p>
-          <p className="mt-1 font-mono">chaturbo marketplace buy --id &lt;workflow_id&gt;</p>
-        </div>
-      </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <StatCard label="Detected workflows" value={String(stats.detected)} />
-        <StatCard label="Publish-ready workflows" value={String(stats.ready)} />
-        <StatCard label="Needs cleanup" value={String(stats.cleanup)} />
-        <StatCard label="Est. monthly earning low/high" value={`$${stats.revenueLow} - $${stats.revenueHigh}`} />
-        <StatCard label="Total token cost invested" value={`$${stats.tokenCost.toFixed(2)}`} />
-        <StatCard label="Total time spent" value={`${stats.hours.toFixed(1)} h`} />
-      </div>
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <StatCard label="New Leads" value={String(data?.stats.newLeads ?? 0)} helper="Missed calls and SMS replies waiting in the inbox." />
+          <StatCard label="Missed Calls Rescued" value={String(data?.stats.missedCallsRescued ?? 0)} helper="Forwarded calls that ended in a text-back." />
+          <StatCard label="Booked Jobs" value={String(data?.stats.bookedJobs ?? 0)} helper="Leads marked booked or won by the team." />
+          <StatCard label="Active Businesses" value={String(data?.stats.activeBusinesses ?? 0)} helper="Contractor clients currently live." />
+          <StatCard label="Audit Targets" value={String(data?.stats.auditTargets ?? 0)} helper="Prospects ready for lead-rescue audits." />
+        </section>
 
-      <div className="card p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-mint">Connect Your AI Agent</p>
-            <h2 className="mt-1 text-2xl font-semibold text-ink">How your local AI agent connects to Chaturbo</h2>
-            <p className="mt-2 max-w-3xl text-sm text-slate-600">
-              Chaturbo does not connect to your model directly. It reads local AI agent logs on your machine, sanitizes secrets
-              locally, then uploads only approved workflow drafts.
-            </p>
-          </div>
-          <button
-            onClick={loadDrafts}
-            disabled={loadingDrafts}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 disabled:opacity-50"
-          >
-            {loadingDrafts ? "Refreshing..." : "I ran connect, refresh drafts"}
-          </button>
-          <button
-            onClick={async () => {
-              setAutoPublishing(true);
-              setError("");
-              try {
-                const res = await apiRequest<{ evaluated: number; eligible: number; published: number }>(
-                  "/workflow-drafts/auto-publish",
-                  {
-                    method: "POST",
-                    body: JSON.stringify({ threshold: 85, maxCount: 50 })
-                  },
-                  true
-                );
-                setCopyMessage(`Auto-publish done: ${res.published}/${res.eligible} published`);
-                setTimeout(() => setCopyMessage(""), 2200);
-                await loadDrafts();
-              } catch (err) {
-                setError(err instanceof Error ? err.message : "Auto-publish failed");
-              } finally {
-                setAutoPublishing(false);
-              }
-            }}
-            disabled={autoPublishing}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 disabled:opacity-50"
-          >
-            {autoPublishing ? "Auto-publishing..." : "Auto-publish ready drafts"}
-          </button>
-        </div>
+        <section className="grid gap-6 xl:grid-cols-[1.6fr_0.9fr]">
+          <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-semibold text-ink">Recent Leads</h2>
+                <p className="mt-1 text-sm text-slate-500">Missed-call rescues, SMS replies, and manually added leads.</p>
+              </div>
+              <Link href="/dashboard/leads" className="text-sm font-semibold text-mint">
+                View inbox
+              </Link>
+            </div>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-semibold text-slate-800">First-time owner flow</p>
-            <div className="mt-2 space-y-1 text-sm text-slate-700">
-              <p>1. Run your local AI agent (OpenClaw, Hermes, Claude CLI, Gemini CLI) and complete at least one task so logs exist.</p>
-              <p>2. Generate machine credentials from this page (owner UID + secret).</p>
-              <p>3. Copy one command and run it on the machine where your local AI agent stores logs.</p>
-              <p>4. Add hourly/daily scheduler using <span className="font-mono font-semibold">chaturbo sync</span>.</p>
+            <div className="mt-5 overflow-hidden rounded-3xl border border-slate-200">
+              <table className="min-w-full divide-y divide-slate-200 text-sm">
+                <thead className="bg-slate-50 text-left text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3">Phone</th>
+                    <th className="px-4 py-3">Source</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Urgency</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white">
+                  {(data?.recentLeads || []).map((lead) => (
+                    <tr key={lead.id}>
+                      <td className="px-4 py-3 font-medium text-ink">
+                        <Link href={`/dashboard/leads/${lead.id}`} className="hover:underline">
+                          {lead.phone}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-slate-600">{lead.source.replace(/_/g, " ")}</td>
+                      <td className="px-4 py-3 text-slate-600">{lead.status}</td>
+                      <td className="px-4 py-3 text-slate-600">{lead.urgency || "medium"}</td>
+                    </tr>
+                  ))}
+                  {!data?.recentLeads?.length ? (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-10 text-center text-slate-500">
+                        No leads yet. Once the demo number misses a call, the lead will show here.
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
             </div>
-            <div className="mt-3 rounded-xl bg-white p-3 text-xs text-slate-600">
-              <p className="font-semibold text-slate-700">Owner UID</p>
-              <p className="mt-1 font-mono">{ownerUid || "Loading..."}</p>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                disabled={pairing}
-                onClick={async () => {
-                  setPairing(true);
-                  setError("");
-                  try {
-                    const res = await apiRequest<{
-                      credentials: { ownerUid: string; agentSecret: string };
-                    }>("/auth/agent/pair", { method: "POST", body: JSON.stringify({ name: "local-agent" }) }, true);
-                    setOwnerUid(res.credentials.ownerUid);
-                    setAgentSecret(res.credentials.agentSecret);
-                    saveSecret(res.credentials.ownerUid, res.credentials.agentSecret);
-                    setHasExistingCredential(true);
-                    setCopyMessage("Machine credentials generated. Copy command below.");
-                    setTimeout(() => setCopyMessage(""), 2500);
-                  } catch (err) {
-                    setError(err instanceof Error ? err.message : "Failed to generate machine credentials");
-                  } finally {
-                    setPairing(false);
-                  }
-                }}
-                className="rounded-lg bg-ink px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-              >
-                {pairing ? "Generating..." : hasExistingCredential ? "Rotate machine credentials" : "Generate machine credentials"}
-              </button>
-            </div>
-            {hasExistingCredential && !quickConnectCommand ? (
-              <p className="mt-2 text-xs text-slate-600">
-                Agent is already paired. Existing secret is hidden for security. Use the connect command below or rotate credentials.
-              </p>
-            ) : null}
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-4">
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setActiveOs("macos")}
-                className={`rounded-full px-3 py-1 text-sm ${activeOs === "macos" ? "bg-ink text-white" : "bg-slate-100 text-slate-700"}`}
-              >
-                macOS
-              </button>
-              <button
-                onClick={() => setActiveOs("linux")}
-                className={`rounded-full px-3 py-1 text-sm ${activeOs === "linux" ? "bg-ink text-white" : "bg-slate-100 text-slate-700"}`}
-              >
-                Linux
-              </button>
-              <button
-                onClick={() => setActiveOs("windows")}
-                className={`rounded-full px-3 py-1 text-sm ${activeOs === "windows" ? "bg-ink text-white" : "bg-slate-100 text-slate-700"}`}
-              >
-                Windows
-              </button>
+          <div className="space-y-6">
+            <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+              <h2 className="text-xl font-semibold text-ink">Setup checklist</h2>
+              <div className="mt-4 space-y-3">
+                {(data?.checklist || []).map((item) => (
+                  <div key={item.label} className="flex items-start gap-3 rounded-2xl border border-slate-100 px-4 py-3">
+                    <span className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${item.done ? "bg-emerald-500" : "bg-slate-300"} text-[10px] text-white`}>
+                      {item.done ? "✓" : "•"}
+                    </span>
+                    <span className="text-sm text-slate-700">{item.label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="mt-3 rounded-xl bg-[#10171c] p-3">
-              <p className="text-xs text-slate-300">Terminal command</p>
-              <p className="mt-1 font-mono text-sm text-emerald-300">
-                {commandText}
+            <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+              <h2 className="text-xl font-semibold text-ink">Quick actions</h2>
+              <div className="mt-4 flex flex-col gap-3">
+                <Link href="/dashboard/businesses/new" className="rounded-2xl bg-ink px-4 py-3 text-center text-sm font-semibold text-white">
+                  Create business
+                </Link>
+                <Link href="/dashboard/audits/new" className="rounded-2xl border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700">
+                  Add audit target
+                </Link>
+                <Link href="/dashboard/settings" className="rounded-2xl border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700">
+                  Demo instructions
+                </Link>
+              </div>
+            </div>
+
+            <div className="rounded-[30px] border border-coral/25 bg-coral/10 p-6 text-sm text-slate-700">
+              <p className="text-xs uppercase tracking-[0.22em] text-coral">Demo business</p>
+              <p className="mt-2 text-lg font-semibold text-ink">Demo Roofing Company</p>
+              <p className="mt-2">
+                Use this business to show the live missed-call flow: call the number, don&apos;t answer the forwarded call, wait for the SMS, then reply with a job request.
               </p>
             </div>
-            <div className="mt-3 rounded-xl bg-slate-100 p-3">
-              <p className="text-xs text-slate-600">Hourly automation example</p>
-              <p className="mt-1 font-mono text-xs text-slate-700">{cronExamples[activeOs]}</p>
-            </div>
-            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">AI Agent Bootstrap Prompt</p>
-              <p className="mt-1 text-xs text-slate-600">
-                Paste this prompt into your local AI agent so it can self-setup Chaturbo, install sync schedule, and enable workflow search/buy.
-              </p>
-              <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-white p-2 text-[11px] leading-5 text-slate-700">
-                {agentBootstrapPrompt}
-              </pre>
-            </div>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                disabled={!commandToCopy}
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(commandToCopy);
-                    setCopyMessage("Copied command");
-                  } catch {
-                    setCopyMessage("Copy failed. Select and copy manually.");
-                  }
-                  setTimeout(() => setCopyMessage(""), 1800);
-                }}
-                className="rounded-lg bg-mint px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-              >
-                Copy command
-              </button>
-              <button
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(agentBootstrapPrompt);
-                    setCopyMessage("Copied bootstrap prompt");
-                  } catch {
-                    setCopyMessage("Copy failed. Select and copy manually.");
-                  }
-                  setTimeout(() => setCopyMessage(""), 1800);
-                }}
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700"
-              >
-                Copy bootstrap prompt
-              </button>
-              <a href="/workflows" className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700">
-                See published examples
-              </a>
-            </div>
-            {copyMessage ? <p className="mt-2 text-xs text-mint">{copyMessage}</p> : null}
           </div>
-        </div>
+        </section>
 
-        <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-          <p className="text-sm font-semibold text-amber-900">No logs found?</p>
-          <div className="mt-1 space-y-1 text-sm text-amber-900/90">
-            <p>1. Make sure your local AI agent has run at least one task on this machine.</p>
-            <p>2. Re-run with explicit path: <span className="font-mono">chaturbo connect --path ~/.openclaw</span> or your Hermes/Claude/Gemini log folder.</p>
-            <p>3. Use local-only check first: <span className="font-mono">chaturbo connect --local-only</span></p>
+        <section className="grid gap-6 xl:grid-cols-2">
+          <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-ink">Recent Audit Targets</h2>
+                <p className="mt-1 text-sm text-slate-500">Prospects ready for a personalized audit and outreach sequence.</p>
+              </div>
+              <Link href="/dashboard/audits" className="text-sm font-semibold text-mint">
+                View audits
+              </Link>
+            </div>
+            <div className="mt-5 space-y-3">
+              {(data?.recentAudits || []).map((target) => (
+                <div key={target.id} className="rounded-2xl border border-slate-200 px-4 py-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="font-semibold text-ink">{target.businessName}</p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {target.industry} {target.city ? `• ${target.city}` : ""}
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">{target.status}</span>
+                  </div>
+                </div>
+              ))}
+              {!data?.recentAudits?.length ? (
+                <p className="rounded-2xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
+                  No audit targets yet. Add a contractor prospect to generate a personalized audit.
+                </p>
+              ) : null}
+            </div>
           </div>
-        </div>
+
+          <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+            <h2 className="text-xl font-semibold text-ink">Recent Businesses</h2>
+            <div className="mt-5 space-y-3">
+              {(data?.recentBusinesses || []).map((business) => (
+                <Link
+                  key={business.id}
+                  href={`/dashboard/businesses/${business.id}`}
+                  className="block rounded-2xl border border-slate-200 px-4 py-4 transition hover:border-mint/40 hover:bg-slate-50"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="font-semibold text-ink">{business.name}</p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {business.industry} {business.city ? `• ${business.city}` : ""}
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                      {business.status}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+              {!data?.recentBusinesses?.length ? (
+                <p className="rounded-2xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
+                  No businesses yet. Add your first contractor client from the Businesses page.
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </section>
       </div>
-
-      {error ? <div className="rounded-xl bg-rose-50 p-3 text-rose-700">{error}</div> : null}
-    </div>
+    </LeadRescueShell>
   );
 }

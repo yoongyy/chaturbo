@@ -1,33 +1,28 @@
-# Chaturbo
+# Chaturbo Lead Rescue
 
-Chaturbo is a done-for-you AI agent agency for Malaysian SMEs, especially KL and Selangor businesses.
+Chaturbo Lead Rescue is an MVP for missed-call recovery and AI lead qualification for US roofing, HVAC, plumbing, electrical, landscaping, and cleaning businesses.
 
-## What the live MVP does
+## What it does
 
-- Presents a conversion-focused public site for the new service model
-- Captures applications for free AI agent setup
-- Stores leads in MongoDB when configured
-- Falls back to a local JSON file in development when MongoDB is unavailable
-- Keeps the existing portal routes available for the legacy workflow product
-
-## Public pages
-
-- `/` Home
-- `/apply` Lead application form
-- `/demo` Demo flows
-- `/contact` Contact details and CTA
-
-## Lead API
-
-- `POST /api/leads`
-- Validates the application payload
-- Saves `createdAt`, `status: "new"`, and `source: "website_apply_form"`
+- Creates contractor businesses in a multi-tenant dashboard
+- Assigns Twilio numbers and forwards inbound calls to the owner
+- Sends an immediate SMS when the owner misses the call
+- Qualifies inbound SMS with one short question at a time
+- Stores leads, messages, calls, and owner notifications
+- Generates personalized audits, outreach emails, call scripts, and video scripts
+- Publishes a public audit page at `/audit/[slug]`
+- Runs in mock mode when OpenAI or Twilio are not configured
 
 ## Stack
 
-- Monorepo with npm workspaces
-- `apps/web`: Next.js App Router + TypeScript + Tailwind
-- `apps/api`: Express + TypeScript + MongoDB Atlas via Mongoose
+- Next.js App Router
+- TypeScript
+- Tailwind CSS
+- Express API
+- MongoDB with Mongoose
+- Twilio Node SDK
+- OpenAI SDK
+- Resend email abstraction
 
 ## 1. Install dependencies
 
@@ -37,44 +32,57 @@ npm install
 
 ## 2. Configure environment variables
 
-### API: `apps/api/.env`
+Copy `.env.example` to the repo root and `apps/api/.env.example` to `apps/api/.env`.
+
+Required basics:
 
 ```bash
-PORT=4000
-CORS_ORIGIN=http://localhost:3000
-MONGODB_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/chaturbo_ai_sme
+DATABASE_URL=mongodb+srv://<user>:<pass>@cluster.mongodb.net/chaturbo_ai_sme
 JWT_SECRET=change_me
-APP_BASE_URL=http://localhost:3000
-STRIPE_SECRET_KEY=sk_test_xxx
-GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-FACEBOOK_APP_ID=your_facebook_app_id
-FACEBOOK_APP_SECRET=your_facebook_app_secret
+APP_URL=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:4000
+ADMIN_EMAIL=demo@chaturbo.local
+ADMIN_PASSWORD=password123
 ```
 
-Notes:
-
-- `MONGODB_URI` is optional for the new public lead flow.
-- If `MONGODB_URI` is missing, `POST /api/leads` uses `apps/api/data/leads.json` in development.
-- Legacy auth and portal routes still expect the database and JWT secret.
-
-### Web: `apps/web/.env.local`
+Optional integrations:
 
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:4000
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
-NEXT_PUBLIC_FACEBOOK_APP_ID=your_facebook_app_id
+OPENAI_API_KEY=
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_MESSAGING_SERVICE_SID=
+TWILIO_DEFAULT_FROM_NUMBER=
+RESEND_API_KEY=
+FROM_EMAIL=
 ```
 
-## 3. Start the app
+## 3. Run the database migration/seed
 
-Start the API:
+This project uses MongoDB, so there is no SQL migration step. Seed the demo data instead:
+
+```bash
+npm run seed
+```
+
+Seed creates:
+
+- Demo Roofing Company
+- Demo HVAC Company
+- 5 fake leads
+- 3 audit targets
+- 1 generated audit
+- Demo admin login: `demo@chaturbo.local` / `password123`
+
+## 4. Start the dev servers
+
+API:
 
 ```bash
 npm run dev:api
 ```
 
-Start the web app:
+Web:
 
 ```bash
 npm run dev:web
@@ -82,42 +90,60 @@ npm run dev:web
 
 Open `http://localhost:3000`.
 
-## 4. Optional legacy portal
+## 5. Configure Twilio webhook URLs
 
-The older workflow marketplace and owner portal still exist in the repo under routes like:
+Set the inbound number to these URLs:
 
-- `/dashboard`
-- `/workflows`
-- `/register`
-- `/login`
+- Voice incoming: `{{APP_URL}}/api/twilio/voice/incoming`
+- Voice status: `{{APP_URL}}/api/twilio/voice/status`
+- SMS incoming: `{{APP_URL}}/api/twilio/sms/incoming`
 
-## 5. Build and lint
+If you are developing locally, expose the app with ngrok first and use the public ngrok URL as `APP_URL`.
+
+## 6. Test the missed-call flow
+
+1. Log in at `/login`
+2. Open the seeded Demo Roofing Company in `/dashboard/businesses`
+3. Make sure the Twilio number is assigned
+4. Call the Twilio number
+5. Do not answer the forwarded call
+6. Wait for the automatic SMS text-back
+7. Reply with a job request
+8. Watch the lead update in `/dashboard/leads`
+
+## 7. Generate an audit
+
+1. Open `/dashboard/audits/new`
+2. Add a contractor prospect
+3. Crawl the website
+4. Generate the audit
+5. Copy the cold email, follow-up emails, call script, and video script
+6. Share the public audit page link
+
+## 8. Convert an audit target to a business
+
+Open the audit target detail page and click `Convert to business`. The app creates a new contractor client record from the prospect data.
+
+## 9. Notes on compliance
+
+- The app only texts people who called or replied to a business
+- STOP, START, UNSTOP, CANCEL, END, QUIT, and UNSUBSCRIBE are handled
+- First SMS includes opt-out language
+- No cold SMS blasting is implemented
+- The crawler only fetches the public homepage URL entered by the admin
+
+## 10. Build and lint
 
 ```bash
 npm run build
 npm run lint
 ```
 
-## New business model
+## Production checklist
 
-Chaturbo now sells AI employee setup and maintenance for SMEs instead of workflow marketplace access.
-
-Core offer:
-
-- Free pilot for the first 10 KL/Selangor SMEs
-- Monthly maintenance starting from RM399/month
-- Custom builds from RM1,500 setup plus monthly maintenance
-
-## Lead fields collected
-
-- Full name
-- Company name
-- Phone / WhatsApp number
-- Email
-- Industry
-- Business location
-- Website / Facebook / Instagram
-- Task to automate
-- Customer message sources
-- Urgency
-- Consent to be contacted
+- Replace placeholder Terms and Privacy copy
+- Add final billing and payment flows
+- Configure real Twilio numbers per business
+- Add production webhook and ngrok replacement URLs
+- Decide whether to keep seeded demo credentials or force admin provisioning
+- Review SMS and email compliance before launch

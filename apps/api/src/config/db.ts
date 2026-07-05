@@ -8,7 +8,10 @@ export async function connectDb(): Promise<void> {
     return;
   }
 
-  const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+  const mongoUri =
+    process.env.DATABASE_URL ||
+    process.env.MONGODB_URI ||
+    process.env.MONGO_URI;
   if (!mongoUri) {
     return;
   }

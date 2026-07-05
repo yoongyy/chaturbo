@@ -9,9 +9,15 @@ import workflowRoutes from "./routes/workflowRoutes";
 import creditsRoutes from "./routes/creditsRoutes";
 import agentRoutes from "./routes/agentRoutes";
 import leadRoutes from "./routes/leadRoutes";
+import businessRoutes from "./routes/rescue/businessRoutes";
+import overviewRoutes from "./routes/rescue/overviewRoutes";
+import rescueLeadRoutes from "./routes/rescue/leadRoutes";
+import auditRoutes from "./routes/rescue/auditRoutes";
+import twilioRoutes from "./routes/twilioRoutes";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
+app.set("trust proxy", true);
 
 const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
   .split(",")
@@ -35,6 +41,7 @@ app.use(
   })
 );
 app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: false }));
 app.use(morgan("dev"));
 
 // Serverless-safe DB bootstrap: connect lazily per invocation and fail gracefully.
@@ -52,6 +59,11 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api/leads", leadRoutes);
+app.use("/api/rescue/overview", overviewRoutes);
+app.use("/api/rescue/businesses", businessRoutes);
+app.use("/api/rescue/leads", rescueLeadRoutes);
+app.use("/api/rescue/audits", auditRoutes);
+app.use("/api/twilio", twilioRoutes);
 app.use("/auth", authRoutes);
 app.use("/scan", scanRoutes);
 app.use("/workflow-drafts", workflowDraftRoutes);

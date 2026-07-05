@@ -2,137 +2,57 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useState } from "react";
 import { apiRequest, setToken } from "../../lib/api";
-import {
-  buildOAuthUrl,
-  GOOGLE_CLIENT_ID,
-  getRedirectUri,
-  SocialProvider
-} from "../../lib/socialOAuth";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [error, setError] = useState("");
-  const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const oauthProcessed = useRef(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
     setError("");
-    setStatus("Creating account...");
-
     const form = new FormData(event.currentTarget);
-    const email = String(form.get("email") || "");
-    const name = String(form.get("name") || "");
-    const password = String(form.get("password") || "");
-
     try {
       const data = await apiRequest<{ token: string }>("/auth/register", {
         method: "POST",
-        body: JSON.stringify({ email, name, password })
+        body: JSON.stringify({
+          name: String(form.get("name") || ""),
+          email: String(form.get("email") || ""),
+          password: String(form.get("password") || "")
+        })
       });
       setToken(data.token);
-      setStatus("Registration successful. Redirecting to dashboard...");
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
-      setStatus("");
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("code");
-    const state = params.get("state");
-    if (!code || !state || oauthProcessed.current) {
-      return;
-    }
-
-    if (state !== "google" && state !== "facebook") {
-      return;
-    }
-
-    oauthProcessed.current = true;
-    setLoading(true);
-    setError("");
-    setStatus("Completing Google registration...");
-
-    const provider = state as SocialProvider;
-    const redirectUri = getRedirectUri("/register");
-
-    apiRequest<{ token: string }>("/auth/oauth/callback", {
-      method: "POST",
-      body: JSON.stringify({
-        provider,
-        code,
-        redirectUri,
-        clientId: provider === "google" ? GOOGLE_CLIENT_ID : undefined
-      })
-    })
-      .then((data) => {
-        setToken(data.token);
-        setStatus("Registration successful. Redirecting to dashboard...");
-        router.push("/dashboard");
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : "Social login failed");
-        setStatus("");
-      })
-      .finally(() => setLoading(false));
-  }, [router]);
-
-  function startSocialLogin(provider: SocialProvider) {
-    setError("");
-    setStatus(provider === "google" ? "Redirecting to Google..." : "Redirecting...");
-    try {
-      const redirectUri = getRedirectUri("/register");
-      window.location.href = buildOAuthUrl(provider, redirectUri);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Social login is unavailable");
-      setStatus("");
-    }
-  }
-
   return (
-    <main className="mx-auto max-w-md px-4 py-12 md:py-16">
-      <form onSubmit={onSubmit} className="card w-full space-y-4 p-6">
-        <h1 className="text-2xl font-semibold">Create account</h1>
-        <p className="text-sm text-slate-600">Create your owner account and start publishing reusable AI workflows.</p>
-        <div className="grid gap-2">
-          <button
-            type="button"
-            onClick={() => startSocialLogin("google")}
-            disabled={!GOOGLE_CLIENT_ID}
-            className="rounded-xl border border-slate-300 p-3 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Continue with Google
+    <main className="min-h-screen bg-[linear-gradient(180deg,_#08111a_0%,_#f6f1e7_48%,_#f6f1e7_100%)] px-4 py-8">
+      <div className="mx-auto max-w-md rounded-[34px] border border-slate-200 bg-white p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+        <h1 className="text-3xl font-semibold text-ink">Create account</h1>
+        <p className="mt-2 text-sm text-slate-500">Create a dashboard login for your team.</p>
+        <form onSubmit={onSubmit} className="mt-6 space-y-4">
+          <input name="name" placeholder="Name" className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm" required />
+          <input name="email" type="email" placeholder="Email" className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm" required />
+          <input name="password" type="password" placeholder="Password" minLength={8} className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm" required />
+          {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+          <button disabled={loading} className="w-full rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">
+            {loading ? "Creating..." : "Create account"}
           </button>
-        </div>
-        <p className="text-center text-xs text-slate-500">or create account with email</p>
-        <input name="name" placeholder="Name" className="w-full rounded-xl border p-3" required />
-        <input name="email" placeholder="Email" type="email" className="w-full rounded-xl border p-3" required />
-        <input
-          name="password"
-          placeholder="Password"
-          type="password"
-          minLength={8}
-          className="w-full rounded-xl border p-3"
-          required
-        />
-        {status ? <p className="text-sm text-slate-600">{status}</p> : null}
-        {error ? <p className="text-sm text-rose-600">{error}</p> : null}
-        <button disabled={loading} className="w-full rounded-xl bg-mint p-3 text-white">
-          {loading ? "Creating..." : "Register"}
-        </button>
-        <p className="text-sm text-slate-600">
-          Have an account? <Link href="/login" className="text-mint">Login</Link>
+        </form>
+        <p className="mt-4 text-sm text-slate-500">
+          <Link href="/login" className="font-semibold text-mint">
+            Back to login
+          </Link>
         </p>
-      </form>
+      </div>
     </main>
   );
 }
