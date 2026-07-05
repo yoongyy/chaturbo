@@ -72,18 +72,18 @@ export default function ApplyPage() {
 
   if (submitted) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-8 md:px-6 md:py-10">
-        <section className="rounded-[32px] border border-black/5 bg-white/90 p-6 shadow-[0_18px_50px_rgba(18,46,54,0.08)] md:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-mint">Application received</p>
-          <h1 className="font-display mt-3 text-4xl font-semibold text-ink">Thank you. We received your application.</h1>
-          <p className="mt-4 max-w-2xl text-slate-600">
+      <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(229,106,65,0.14),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(29,122,107,0.12),_transparent_26%),linear-gradient(180deg,_#08111a_0%,_#0e1724_36%,_#f6f1e7_36%,_#f6f1e7_100%)] px-4 py-6">
+        <section className="mx-auto max-w-3xl rounded-[34px] border border-slate-800 bg-[linear-gradient(180deg,_rgba(15,23,42,0.98)_0%,_rgba(7,12,20,0.96)_100%)] p-6 text-white shadow-[0_24px_80px_rgba(2,6,23,0.45)] md:p-8">
+          <p className="text-xs font-black uppercase tracking-[0.24em] text-orange-400">Application received</p>
+          <h1 className="font-display mt-3 text-4xl font-black text-white">Thank you. We received your application.</h1>
+          <p className="mt-4 max-w-2xl text-slate-300">
             Chaturbo will contact you soon for a free consultation. We’ll review the workflow you want to automate and suggest the best starting pilot.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/apply" className="rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white">
+            <Link href="/apply" className="rounded-2xl bg-orange-500 px-5 py-3 text-sm font-semibold text-slate-950">
               Start Another Audit
             </Link>
-            <Link href="/apply" className="rounded-2xl border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-slate-700">
+            <Link href="/apply" className="rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white">
               Apply Free Setup
             </Link>
           </div>
@@ -93,16 +93,16 @@ export default function ApplyPage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-10">
-      <section className="rounded-[32px] border border-black/5 bg-[#0f1720] px-6 py-8 text-white shadow-[0_18px_50px_rgba(15,23,32,0.25)] md:px-8 md:py-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#9ae6c9]">Apply</p>
-        <h1 className="font-display mt-3 text-4xl font-semibold md:text-5xl">Apply for Free AI Agent Setup</h1>
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(229,106,65,0.14),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(29,122,107,0.12),_transparent_26%),linear-gradient(180deg,_#08111a_0%,_#0e1724_36%,_#f6f1e7_36%,_#f6f1e7_100%)] px-4 py-6">
+      <section className="mx-auto max-w-5xl rounded-[34px] border border-slate-800 bg-[linear-gradient(180deg,_rgba(15,23,42,0.98)_0%,_rgba(7,12,20,0.96)_100%)] px-6 py-8 text-white shadow-[0_24px_80px_rgba(2,6,23,0.45)] md:px-8 md:py-10">
+        <p className="text-xs font-black uppercase tracking-[0.24em] text-orange-400">Apply</p>
+        <h1 className="font-display mt-3 text-4xl font-black md:text-5xl">Apply for Free Setup</h1>
         <p className="mt-4 max-w-3xl text-slate-300">
           Tell us what repetitive task is slowing your team down. We’ll use the application to design your first pilot and reach out for a consultation.
         </p>
       </section>
 
-      <section className="mt-6 rounded-[32px] border border-black/5 bg-white/90 p-6 shadow-[0_18px_50px_rgba(18,46,54,0.08)] md:p-8">
+      <section className="mx-auto mt-6 max-w-5xl rounded-[34px] border border-orange-200 bg-[#f6f1e7] p-6 shadow-[0_18px_50px_rgba(18,46,54,0.08)] md:p-8">
         <form onSubmit={onSubmit} className="grid gap-5">
           <div className="grid gap-5 md:grid-cols-2">
             <label className="grid gap-2">

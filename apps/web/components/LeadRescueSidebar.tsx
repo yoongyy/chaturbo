@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getUserRole } from "../lib/api";
+import BrandMark from "./BrandMark";
 import LogoutButton from "./LogoutButton";
 
 const ownerItems = [
@@ -39,11 +40,9 @@ export default function LeadRescueSidebar() {
       : "Add the business, connect the phone number, and start catching missed calls. Technical setup should stay out of the owner's way.";
 
   return (
-    <aside className="flex h-full flex-col rounded-[28px] border border-white/10 bg-slate-950/95 p-5 text-slate-100 shadow-[0_20px_80px_rgba(2,6,23,0.5)]">
+    <aside className="flex h-full flex-col rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,_rgba(15,23,42,0.98)_0%,_rgba(7,12,20,0.96)_100%)] p-5 text-slate-100 shadow-[0_20px_80px_rgba(2,6,23,0.5)]">
       <div>
-        <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-coral/90 text-sm font-bold text-white">
-          CR
-        </div>
+        <BrandMark inverse compact />
         <div className="mt-4">
           <p className="text-sm font-semibold tracking-[0.18em] text-white">{title}</p>
           <p className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-400">{subtitle}</p>
@@ -56,8 +55,8 @@ export default function LeadRescueSidebar() {
             key={item.href}
             href={item.href}
             className={`block rounded-2xl px-4 py-3 text-sm font-medium transition ${
-              isActive(pathname, item.href)
-                ? "bg-white text-slate-950"
+                isActive(pathname, item.href)
+                ? "bg-orange-500 text-slate-950"
                 : "text-slate-300 hover:bg-white/8 hover:text-white"
             }`}
           >

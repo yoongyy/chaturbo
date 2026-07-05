@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import AuthShell from "../../../components/AuthShell";
 import { apiRequest, normalizeAppRole, setSession } from "../../../lib/api";
 
 export default function AdminLoginPage() {
@@ -47,43 +48,42 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(233,106,65,0.14),_transparent_24%),linear-gradient(180deg,_#08111a_0%,_#0e1825_45%,_#f6f1e7_45%,_#f6f1e7_100%)] px-4 py-8">
-      <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_0.9fr]">
-        <section className="rounded-[34px] bg-slate-950 px-8 py-10 text-white shadow-[0_24px_80px_rgba(2,6,23,0.45)]">
-          <p className="text-xs uppercase tracking-[0.28em] text-slate-400">Internal admin portal</p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight">Log in to manage onboarding, audits, and internal setup.</h1>
-          <p className="mt-4 max-w-xl text-sm leading-7 text-slate-300">
-            This login is for your internal team, not the contractor customer. Use it to manage admin-only tools and setup.
-          </p>
-        </section>
-
-        <form onSubmit={onSubmit} className="rounded-[34px] border border-slate-200 bg-white p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
-          <h2 className="text-2xl font-semibold text-ink">Admin sign in</h2>
-          <p className="mt-2 text-sm text-slate-500">Use the internal admin account to manage the platform.</p>
-          <div className="mt-6 space-y-4">
-            <label className="block">
-              <span className="text-sm font-medium text-slate-700">Email</span>
-              <input name="email" type="email" required className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint" />
-            </label>
-            <label className="block">
-              <span className="text-sm font-medium text-slate-700">Password</span>
-              <input name="password" type="password" required className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint" />
-            </label>
-          </div>
-          {status ? <p className="mt-4 text-sm text-slate-600">{status}</p> : null}
-          {error ? <p className="mt-4 text-sm text-rose-600">{error}</p> : null}
-          <button disabled={loading} className="mt-6 w-full rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">
-            {loading ? "Signing in..." : "Log in as admin"}
-          </button>
-          <p className="mt-4 text-sm text-slate-500">
-            Customer or owner login?
-            {" "}
-            <Link href="/login" className="font-semibold text-mint">
-              Use the owner portal
-            </Link>
-          </p>
-        </form>
-      </div>
-    </main>
+    <AuthShell
+      eyebrow="Internal admin"
+      title="Log in to manage onboarding and internal operations."
+      description="This portal is only for your internal team. Use it for audits, setup, and platform controls that customers should never see."
+      bullets={[
+        "Keep customer workflows separate.",
+        "Own audits and setup tasks.",
+        "Use only for internal management."
+      ]}
+    >
+      <form onSubmit={onSubmit} className="rounded-[30px] border border-orange-200 bg-white p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+        <p className="text-xs font-black uppercase tracking-[0.24em] text-orange-500">Admin sign in</p>
+        <h2 className="mt-3 text-2xl font-semibold text-ink">Internal portal access</h2>
+        <p className="mt-2 text-sm text-slate-600">Use the internal admin account to manage the platform.</p>
+        <div className="mt-6 space-y-4">
+          <label className="block">
+            <span className="text-sm font-medium text-slate-700">Email</span>
+            <input name="email" type="email" required className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-orange-400" />
+          </label>
+          <label className="block">
+            <span className="text-sm font-medium text-slate-700">Password</span>
+            <input name="password" type="password" required className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-orange-400" />
+          </label>
+        </div>
+        {status ? <p className="mt-4 text-sm text-slate-600">{status}</p> : null}
+        {error ? <p className="mt-4 text-sm text-rose-600">{error}</p> : null}
+        <button disabled={loading} className="mt-6 w-full rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">
+          {loading ? "Signing in..." : "Log in as admin"}
+        </button>
+        <p className="mt-4 text-sm text-slate-500">
+          Customer or owner login?{" "}
+          <Link href="/login" className="font-semibold text-orange-600">
+            Use the owner portal
+          </Link>
+        </p>
+      </form>
+    </AuthShell>
   );
 }

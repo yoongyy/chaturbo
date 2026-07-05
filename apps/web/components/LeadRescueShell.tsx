@@ -1,5 +1,6 @@
 import type { PropsWithChildren } from "react";
 import LeadRescueSidebar from "./LeadRescueSidebar";
+import BrandMark from "./BrandMark";
 import LogoutButton from "./LogoutButton";
 
 export default function LeadRescueShell({ children }: PropsWithChildren) {
@@ -13,11 +14,11 @@ export default function LeadRescueShell({ children }: PropsWithChildren) {
         </div>
 
         <main className="min-w-0 flex-1 pb-10 pt-1">
-          <div className="mb-4 rounded-[28px] border border-white/10 bg-slate-950 px-5 py-4 text-white shadow-[0_24px_80px_rgba(2,6,23,0.45)] lg:hidden">
+          <div className="mb-4 rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,_rgba(15,23,42,0.98)_0%,_rgba(7,12,20,0.96)_100%)] px-5 py-4 text-white shadow-[0_24px_80px_rgba(2,6,23,0.45)] lg:hidden">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Chaturbo Lead Rescue</p>
-                <p className="mt-1 text-lg font-semibold">Simple missed-call follow-up</p>
+                <BrandMark inverse compact />
+                <p className="mt-3 text-lg font-semibold">Simple missed-call follow-up</p>
               </div>
               <LogoutButton className="rounded-2xl border border-white/12 bg-white/8 px-3 py-2 text-sm font-semibold text-white" />
             </div>
