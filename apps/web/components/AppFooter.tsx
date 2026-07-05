@@ -7,6 +7,7 @@ export default function AppFooter() {
   const pathname = usePathname();
 
   if (
+    pathname === "/" ||
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/admin") ||
     pathname.startsWith("/audit") ||

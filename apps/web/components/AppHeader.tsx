@@ -25,6 +25,7 @@ export default function AppHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   if (
+    pathname === "/" ||
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/admin") ||
     pathname.startsWith("/audit") ||
