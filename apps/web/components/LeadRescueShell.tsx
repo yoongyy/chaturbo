@@ -5,7 +5,7 @@ import LogoutButton from "./LogoutButton";
 
 export default function LeadRescueShell({ children }: PropsWithChildren) {
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(229,106,65,0.12),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(29,122,107,0.12),_transparent_30%),linear-gradient(180deg,_#08111a_0%,_#0d1724_42%,_#f6f1e7_42%,_#f6f1e7_100%)]">
+    <div className="lead-rescue-shell min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(229,106,65,0.12),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(29,122,107,0.12),_transparent_30%),linear-gradient(180deg,_#08111a_0%,_#0d1724_42%,_#f6f1e7_42%,_#f6f1e7_100%)]">
       <div className="mx-auto flex min-h-screen max-w-[1600px] gap-6 px-4 py-4 lg:px-6">
         <div className="hidden w-[290px] shrink-0 lg:block">
           <div className="sticky top-4 h-[calc(100vh-2rem)]">
