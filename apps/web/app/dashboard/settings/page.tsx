@@ -2,6 +2,7 @@
 
 import LeadRescueShell from "../../../components/LeadRescueShell";
 import CopyButton from "../../../components/CopyButton";
+import { resolveApiBaseUrl } from "../../../lib/apiBaseUrl";
 
 const webhookPaths = [
   "/api/twilio/voice/incoming",
@@ -10,7 +11,7 @@ const webhookPaths = [
 ];
 
 export default function SettingsPage() {
-  const appUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+  const appUrl = resolveApiBaseUrl();
 
   return (
     <LeadRescueShell>

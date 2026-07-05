@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import type { Audit, AuditTarget } from "../../../lib/leadRescue";
+import { resolveApiBaseUrl } from "../../../lib/apiBaseUrl";
 
 async function getAudit(slug: string): Promise<{ audit: Audit; target: AuditTarget | null } | null> {
-  const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+  const requestHeaders = headers();
+  const forwardedHost = requestHeaders.get("x-forwarded-host");
+  const host = forwardedHost || requestHeaders.get("host") || "";
+  const proto = requestHeaders.get("x-forwarded-proto") || "http";
+  const base = resolveApiBaseUrl(host ? `${proto}://${host}` : undefined);
   const response = await fetch(`${base}/api/rescue/audits/public/${slug}`, { cache: "no-store" });
   if (!response.ok) return null;
   return response.json();

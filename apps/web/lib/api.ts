@@ -1,4 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+import { resolveApiBaseUrl } from "./apiBaseUrl";
+
+const API_URL = resolveApiBaseUrl();
 const REQUEST_TIMEOUT_MS = 15000;
 
 export function getToken() {
@@ -17,6 +19,7 @@ export function clearToken() {
 }
 
 export async function apiRequest<T>(path: string, options: RequestInit = {}, auth = false): Promise<T> {
+  const apiUrl = resolveApiBaseUrl();
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "application/json");
 
@@ -32,7 +35,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}, aut
 
   let response: Response;
   try {
-    response = await fetch(`${API_URL}${path}`, {
+    response = await fetch(`${apiUrl}${path}`, {
       ...options,
       headers,
       cache: "no-store",
