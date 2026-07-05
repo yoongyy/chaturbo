@@ -22,7 +22,8 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}, aut
   const apiUrl = resolveApiBaseUrl();
   const isBrowser = typeof window !== "undefined";
   const isLocalHost = isBrowser && ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
-  const requestPath = path === "/auth/login" && isBrowser && !isLocalHost ? "/api/auth/login" : path;
+  const useSameOriginRoute = isBrowser && !isLocalHost && (path === "/auth/login" || path === "/api/rescue/overview");
+  const requestPath = path === "/auth/login" && useSameOriginRoute ? "/api/auth/login" : path;
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "application/json");
 
@@ -38,7 +39,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}, aut
 
   let response: Response;
   try {
-    response = await fetch(`${path === requestPath ? apiUrl : ""}${requestPath}`, {
+    response = await fetch(`${useSameOriginRoute ? "" : apiUrl}${requestPath}`, {
       ...options,
       headers,
       cache: "no-store",
