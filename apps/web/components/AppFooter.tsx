@@ -35,6 +35,9 @@ export default function AppFooter() {
           <Link href="/" className="block text-slate-600 hover:text-slate-900">
             Home
           </Link>
+          <Link href="/pricing" className="block text-slate-600 hover:text-slate-900">
+            Pricing
+          </Link>
           <Link href="/audit/alpha-roofing-dallas-audit" className="block text-slate-600 hover:text-slate-900">
             Example audit
           </Link>

@@ -48,6 +48,7 @@ export default function BusinessesPage() {
                 <tr>
                   <th className="px-4 py-3">Business</th>
                   <th className="px-4 py-3">Industry</th>
+                  <th className="px-4 py-3">Plan</th>
                   <th className="px-4 py-3">Owner</th>
                   <th className="px-4 py-3">Business Line</th>
                   <th className="px-4 py-3">Status</th>
@@ -62,6 +63,9 @@ export default function BusinessesPage() {
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-slate-600">{business.industry}</td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {business.plan} · ${business.monthlyPrice}/mo
+                    </td>
                     <td className="px-4 py-3 text-slate-600">{business.ownerName || "-"}</td>
                     <td className="px-4 py-3 text-slate-600">{business.twilioPhoneNumber || "Not assigned"}</td>
                     <td className="px-4 py-3 text-slate-600">{business.status}</td>
@@ -69,7 +73,7 @@ export default function BusinessesPage() {
                 ))}
                 {!businesses.length ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-10 text-center text-slate-500">
+                    <td colSpan={6} className="px-4 py-10 text-center text-slate-500">
                       No businesses yet. Add Demo Roofing Company or create a new contractor client.
                     </td>
                   </tr>

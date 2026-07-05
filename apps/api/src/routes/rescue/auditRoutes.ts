@@ -221,10 +221,14 @@ router.post("/targets/:id/convert", async (req: AuthenticatedRequest, res) => {
     aiTone: "professional, concise, helpful",
     notificationMethod: "both",
     status: "draft",
-    plan: "setup",
+    plan: "pro",
     billingStatus: "manual",
     setupFeePaid: false,
     monthlyPrice: 149,
+    setupFeeAmount: 299,
+    setupFeeWaived: false,
+    foundingCustomer: false,
+    leadLimit: 200,
     demoMode: false
   });
 

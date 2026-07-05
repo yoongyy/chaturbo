@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import LeadRescueShell from "../../../../components/LeadRescueShell";
 import { apiRequest } from "../../../../lib/api";
-import type { BusinessIndustry } from "../../../../lib/leadRescue";
+import { defaultBusinessBilling } from "../../../../lib/pricing";
+import type { BusinessIndustry, BusinessPlan } from "../../../../lib/leadRescue";
 
 const industries: BusinessIndustry[] = ["roofing", "hvac", "plumbing", "electrical", "landscaping", "cleaning", "other"];
 
@@ -31,6 +32,12 @@ export default function NewBusinessPage() {
     serviceArea: "Dallas-Fort Worth",
     servicesText: "Roof repair\nRoof replacement\nEmergency leak repair",
     hoursText: "Mon-Fri 8am-5pm",
+    plan: defaultBusinessBilling.plan as BusinessPlan,
+    monthlyPrice: defaultBusinessBilling.monthlyPrice,
+    setupFeeAmount: defaultBusinessBilling.setupFeeAmount,
+    setupFeeWaived: defaultBusinessBilling.setupFeeWaived,
+    foundingCustomer: defaultBusinessBilling.foundingCustomer,
+    leadLimit: defaultBusinessBilling.leadLimit,
     emergencyService: true,
     demoMode: false
   });
@@ -58,10 +65,14 @@ export default function NewBusinessPage() {
         aiTone: "friendly, clear, helpful",
         notificationMethod: "both",
         status: "draft",
-        plan: "setup",
+        plan: form.plan,
         billingStatus: "manual",
-        setupFeePaid: false,
-        monthlyPrice: 149,
+        setupFeePaid: form.setupFeeWaived || form.foundingCustomer,
+        monthlyPrice: form.monthlyPrice,
+        setupFeeAmount: form.setupFeeAmount,
+        setupFeeWaived: form.setupFeeWaived,
+        foundingCustomer: form.foundingCustomer,
+        leadLimit: form.leadLimit,
         demoMode: form.demoMode
       };
       const res = await apiRequest<{ business: { id: string } }>("/api/rescue/businesses", {
@@ -136,6 +147,84 @@ export default function NewBusinessPage() {
             />
             <span className="text-sm font-medium text-slate-700">Use this as a demo business</span>
           </label>
+
+          <div className="rounded-3xl border border-orange-200 bg-orange-50/80 p-5 lg:col-span-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-ink">Billing defaults</h2>
+                <p className="text-sm text-slate-600">New businesses default to the Pro plan at $149/month with a $299 setup fee.</p>
+              </div>
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-orange-600">
+                Admin controls
+              </span>
+            </div>
+
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <label className="block">
+                <span className="text-sm font-medium text-slate-700">Plan</span>
+                <select
+                  value={form.plan}
+                  onChange={(event) => setForm((current) => ({ ...current, plan: event.target.value as BusinessPlan }))}
+                  className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
+                >
+                  <option value="starter">Starter - $79/month</option>
+                  <option value="pro">Pro - $149/month</option>
+                  <option value="growth">Growth - $299/month</option>
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-medium text-slate-700">Monthly price</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={form.monthlyPrice}
+                  onChange={(event) => setForm((current) => ({ ...current, monthlyPrice: Number(event.target.value) }))}
+                  className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-medium text-slate-700">Setup fee amount</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={form.setupFeeAmount}
+                  onChange={(event) => setForm((current) => ({ ...current, setupFeeAmount: Number(event.target.value) }))}
+                  className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-medium text-slate-700">Lead limit</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={form.leadLimit}
+                  onChange={(event) => setForm((current) => ({ ...current, leadLimit: Number(event.target.value) }))}
+                  className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
+                />
+              </label>
+
+              <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={form.setupFeeWaived}
+                  onChange={(event) => setForm((current) => ({ ...current, setupFeeWaived: event.target.checked }))}
+                />
+                <span className="text-sm font-medium text-slate-700">Free setup</span>
+              </label>
+
+              <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={form.foundingCustomer}
+                  onChange={(event) => setForm((current) => ({ ...current, foundingCustomer: event.target.checked }))}
+                />
+                <span className="text-sm font-medium text-slate-700">Founding customer</span>
+              </label>
+            </div>
+          </div>
 
           <label className="block lg:col-span-2">
             <span className="text-sm font-medium text-slate-700">Main services offered</span>

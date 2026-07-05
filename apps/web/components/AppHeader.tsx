@@ -11,6 +11,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: "/", label: "Home" },
+  { href: "/pricing", label: "Pricing" },
   { href: "/audit/alpha-roofing-dallas-audit", label: "Example Audit" },
   { href: "/login", label: "Login" }
 ];

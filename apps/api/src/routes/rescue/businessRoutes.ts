@@ -41,10 +41,14 @@ const businessSchema = z.object({
   aiTone: z.string().optional(),
   notificationMethod: z.enum(["sms", "email", "both"]).default("both"),
   status: z.enum(["draft", "active", "paused"]).default("draft"),
-  plan: z.enum(["setup", "monthly", "agency"]).default("setup"),
+  plan: z.enum(["starter", "pro", "growth"]).default("pro"),
   billingStatus: z.enum(["unpaid", "trial", "active", "past_due", "manual"]).default("manual"),
   setupFeePaid: z.boolean().default(false),
   monthlyPrice: z.number().default(149),
+  setupFeeAmount: z.number().default(299),
+  setupFeeWaived: z.boolean().default(false),
+  foundingCustomer: z.boolean().default(false),
+  leadLimit: z.number().default(200),
   trialEndsAt: z.string().datetime().optional().or(z.literal("")),
   demoMode: z.boolean().default(false)
 });
@@ -84,7 +88,8 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
     googleReviewUrl: data.googleReviewUrl || undefined,
     calendarUrl: data.calendarUrl || undefined,
     trialEndsAt: data.trialEndsAt ? new Date(data.trialEndsAt) : undefined,
-    twilioPhoneNumber: data.twilioPhoneNumber ? normalizePhone(data.twilioPhoneNumber) : undefined
+    twilioPhoneNumber: data.twilioPhoneNumber ? normalizePhone(data.twilioPhoneNumber) : undefined,
+    setupFeePaid: data.setupFeePaid || data.setupFeeWaived || data.foundingCustomer
   });
 
   return res.status(201).json({ business: serializeDoc(business.toObject()) });
@@ -138,7 +143,8 @@ router.patch("/:id", async (req: AuthenticatedRequest, res) => {
       googleReviewUrl: data.googleReviewUrl || undefined,
       calendarUrl: data.calendarUrl || undefined,
       trialEndsAt: data.trialEndsAt ? new Date(data.trialEndsAt) : undefined,
-      twilioPhoneNumber: data.twilioPhoneNumber ? normalizePhone(data.twilioPhoneNumber) : undefined
+      twilioPhoneNumber: data.twilioPhoneNumber ? normalizePhone(data.twilioPhoneNumber) : undefined,
+      setupFeePaid: data.setupFeePaid ?? (data.setupFeeWaived || data.foundingCustomer ? true : undefined)
     },
     { new: true }
   );

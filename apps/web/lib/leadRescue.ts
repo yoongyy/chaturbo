@@ -1,7 +1,7 @@
 export type BusinessIndustry = "roofing" | "hvac" | "plumbing" | "electrical" | "landscaping" | "cleaning" | "other";
 export type BusinessStatus = "draft" | "active" | "paused";
 export type BusinessNotificationMethod = "sms" | "email" | "both";
-export type BusinessPlan = "setup" | "monthly" | "agency";
+export type BusinessPlan = "starter" | "pro" | "growth";
 export type BillingStatus = "unpaid" | "trial" | "active" | "past_due" | "manual";
 export type LeadStatus = "new" | "contacted" | "booked" | "won" | "lost" | "spam";
 export type LeadUrgency = "low" | "medium" | "high" | "emergency";
@@ -33,6 +33,10 @@ export interface Business {
   billingStatus: BillingStatus;
   setupFeePaid: boolean;
   monthlyPrice: number;
+  setupFeeAmount: number;
+  setupFeeWaived: boolean;
+  foundingCustomer: boolean;
+  leadLimit: number;
   trialEndsAt?: string;
   demoMode: boolean;
   createdAt: string;

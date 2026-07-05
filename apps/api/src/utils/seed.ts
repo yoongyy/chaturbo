@@ -75,10 +75,14 @@ async function run() {
     aiTone: "professional, concise, helpful",
     notificationMethod: "both",
     status: "active",
-    plan: "setup",
+    plan: "starter",
     billingStatus: "manual",
-    setupFeePaid: false,
-    monthlyPrice: 149,
+    setupFeePaid: true,
+    monthlyPrice: 79,
+    setupFeeAmount: 299,
+    setupFeeWaived: true,
+    foundingCustomer: true,
+    leadLimit: 50,
     demoMode: true
   });
 
@@ -104,10 +108,14 @@ async function run() {
     aiTone: "friendly, fast, confident",
     notificationMethod: "both",
     status: "active",
-    plan: "monthly",
+    plan: "growth",
     billingStatus: "trial",
     setupFeePaid: true,
-    monthlyPrice: 149,
+    monthlyPrice: 299,
+    setupFeeAmount: 299,
+    setupFeeWaived: false,
+    foundingCustomer: false,
+    leadLimit: 600,
     demoMode: true
   });
 

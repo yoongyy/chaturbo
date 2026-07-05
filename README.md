@@ -11,6 +11,8 @@ Chaturbo Lead Rescue is an MVP for missed-call recovery and AI lead qualificatio
 - Stores leads, messages, calls, and owner notifications
 - Generates personalized audits, outreach emails, call scripts, and video scripts
 - Publishes a public audit page at `/audit/[slug]`
+- Publishes a public pricing page at `/pricing` with Starter, Pro, and Growth plans
+- Uses a founding offer for the first 10 contractors: free setup, then $299 one-time
 - Runs in mock mode when OpenAI or Twilio are not configured
 
 ## Stack

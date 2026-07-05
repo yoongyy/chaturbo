@@ -3,7 +3,7 @@ import { Document, Schema, Types, model } from "mongoose";
 export type BusinessIndustry = "roofing" | "hvac" | "plumbing" | "electrical" | "landscaping" | "cleaning" | "other";
 export type BusinessStatus = "draft" | "active" | "paused";
 export type BusinessNotificationMethod = "sms" | "email" | "both";
-export type BusinessPlan = "setup" | "monthly" | "agency";
+export type BusinessPlan = "starter" | "pro" | "growth";
 export type BillingStatus = "unpaid" | "trial" | "active" | "past_due" | "manual";
 
 export interface IBusiness extends Document {
@@ -33,6 +33,10 @@ export interface IBusiness extends Document {
   billingStatus: BillingStatus;
   setupFeePaid: boolean;
   monthlyPrice: number;
+  setupFeeAmount: number;
+  setupFeeWaived: boolean;
+  foundingCustomer: boolean;
+  leadLimit: number;
   trialEndsAt?: Date;
   demoMode: boolean;
   createdAt: Date;
@@ -63,10 +67,14 @@ const businessSchema = new Schema<IBusiness>(
     aiTone: { type: String, trim: true, default: "professional, concise, helpful" },
     notificationMethod: { type: String, enum: ["sms", "email", "both"], default: "both" },
     status: { type: String, enum: ["draft", "active", "paused"], default: "draft", index: true },
-    plan: { type: String, enum: ["setup", "monthly", "agency"], default: "setup" },
+    plan: { type: String, enum: ["starter", "pro", "growth"], default: "pro" },
     billingStatus: { type: String, enum: ["unpaid", "trial", "active", "past_due", "manual"], default: "manual" },
     setupFeePaid: { type: Boolean, default: false },
     monthlyPrice: { type: Number, default: 149 },
+    setupFeeAmount: { type: Number, default: 299 },
+    setupFeeWaived: { type: Boolean, default: false },
+    foundingCustomer: { type: Boolean, default: false },
+    leadLimit: { type: Number, default: 200 },
     trialEndsAt: { type: Date },
     demoMode: { type: Boolean, default: false }
   },

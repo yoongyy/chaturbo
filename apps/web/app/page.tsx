@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import { foundingOffer, pricingPlans, setupFeeHighlights } from "../lib/pricing";
 
 type TradeId = "roofing" | "hvac" | "plumbing" | "electrical";
 
@@ -121,12 +122,6 @@ const featureCards = [
     title: "The Owner Summary",
     text: "Every lead lands as a clean summary with the job, city, urgency, and next step. Nothing feels like software training."
   }
-];
-
-const offerPoints = [
-  "$997 one-time setup to configure tracking lines, call forwarding, and the booking flow.",
-  "$299/month maintenance to keep routing, texting, and workflow tuning running.",
-  "If the system does not save and book at least 3 high-ticket jobs in your first 30 days, the setup fee is refunded."
 ];
 
 const faqs = [
@@ -363,6 +358,12 @@ export default function HomePage() {
                   <span className="text-orange-500">↗</span>
                   <span>See ROI Math</span>
                 </button>
+              </div>
+
+              <div className="mt-8 max-w-2xl rounded-3xl border border-orange-500/20 bg-orange-500/10 px-5 py-4 text-left shadow-[0_0_40px_rgba(249,115,22,0.08)]">
+                <p className="text-[11px] font-black uppercase tracking-[0.22em] text-orange-400">Founding Offer</p>
+                <p className="mt-2 text-sm font-semibold text-white">{foundingOffer.headline}</p>
+                <p className="mt-1 text-sm leading-relaxed text-slate-300">{foundingOffer.body}</p>
               </div>
 
               <div className="mt-10 grid grid-cols-3 gap-6 border-t border-slate-900/80 pt-10">
@@ -770,90 +771,118 @@ export default function HomePage() {
       <section id="pricing" className="relative overflow-hidden py-24">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(249,115,22,0.08),_transparent_30%)] pointer-events-none" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto mb-16 max-w-3xl text-center">
+          <div className="mx-auto mb-10 max-w-3xl text-center">
             <span className="mb-3.5 block text-xs font-mono font-bold uppercase tracking-widest text-orange-500">
-              Transparent Pricing
+              Simple Pricing
             </span>
             <h2 className="mb-6 text-3xl font-black tracking-tight text-white sm:text-5xl">
-              Lock in your territory. Secure your leads.
+              Simple Pricing for Missed-Call Recovery
             </h2>
             <p className="text-sm text-slate-400 sm:text-base">
-              We do not sell complicated software dashboards that take months to learn. We build, install, integrate, and maintain your entire text-back architecture for you.
+              Start with free setup if you are one of the first 10 contractors. After that, setup is $299 one-time.
             </p>
           </div>
 
-          <div className="mx-auto max-w-3xl">
-            <div className="relative rounded-3xl border-2 border-orange-500 bg-slate-900 p-6 shadow-[0_0_50px_rgba(249,115,22,0.15)] sm:p-10">
-              <div className="absolute left-1/2 top-[-14px] -translate-x-1/2 rounded-full bg-orange-500 px-6 py-1.5 text-xs font-black uppercase tracking-widest text-slate-950 shadow-lg">
-                Exclusive Trade Partner Slot
-              </div>
+          <div className="mx-auto mb-10 max-w-4xl rounded-3xl border border-orange-500/20 bg-orange-500/10 px-6 py-5 text-center shadow-[0_0_40px_rgba(249,115,22,0.08)]">
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-orange-400">Founding Offer</p>
+            <p className="mt-2 text-sm font-semibold text-white">{foundingOffer.headline}</p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-300">{foundingOffer.body}</p>
+          </div>
 
-              <div className="mb-10 pt-4 text-center">
-                <h3 className="mb-2 text-2xl font-black uppercase tracking-wider text-orange-500">
-                  Chaturbo Lead Rescue Engine
-                </h3>
-                <p className="mb-6 text-xs text-slate-400">Fully custom engineered, deployed, and supported for your territory.</p>
-
-                <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6">
-                  <div className="text-center">
-                    <span className="text-4xl font-black text-white sm:text-5xl">$997</span>
-                    <span className="mt-1 block text-xs uppercase tracking-wider text-slate-400">One-Time Setup Fee</span>
+          <div className="grid gap-6 lg:grid-cols-3">
+            {pricingPlans.map((plan) => (
+              <div
+                key={plan.id}
+                className={`relative flex h-full flex-col rounded-[28px] border bg-slate-900 p-6 shadow-2xl ${
+                  plan.badge ? "border-orange-500/60 shadow-[0_0_50px_rgba(249,115,22,0.16)]" : "border-slate-850"
+                }`}
+              >
+                {plan.badge ? (
+                  <div className="absolute left-1/2 top-[-14px] -translate-x-1/2 rounded-full bg-orange-500 px-5 py-1.5 text-[11px] font-black uppercase tracking-[0.22em] text-slate-950 shadow-lg">
+                    {plan.badge}
                   </div>
-                  <div className="hidden text-3xl text-slate-700 sm:block">+</div>
-                  <div className="text-center">
-                    <span className="text-3xl font-black text-slate-200 sm:text-4xl">
-                      $299<span className="text-base font-normal text-slate-500">/mo</span>
-                    </span>
-                    <span className="mt-1 block text-xs uppercase tracking-wider text-slate-400">Maintenance Retainer</span>
-                  </div>
-                </div>
-              </div>
+                ) : null}
 
-              <div className="mb-10 border-t border-slate-800 pt-8 text-sm">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {[
-                    ["Custom tracking line config", "Setup and provisioning of a local virtual line matching your region."],
-                    ["Workflow custom training", "AI trained on your prices, trades, service areas, and company voice."],
-                    ["CRM & calendar integration", "Automated synchronization to Jobber, Housecall Pro, or simple calendar links."],
-                    ["Prompt & latency tuning", "We optimize response behavior to keep replies under 3 seconds."],
-                    ["Unlimited SMS conversations", "No limits on conversations, lead capture sessions, or follow-ups."],
-                    ["Territory exclusivity", "We license Chaturbo to only one contractor per trade, per territory."]
-                  ].map(([title, text]) => (
-                    <div key={title} className="flex items-start gap-3">
-                      <span className="mt-0.5 text-orange-500">✓</span>
-                      <div>
-                        <span className="block font-bold text-slate-200">{title}</span>
-                        <span className="text-xs text-slate-400">{text}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-slate-800 bg-slate-950 p-6">
-                <div className="flex flex-col items-start gap-4 sm:flex-row">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-orange-500/20 bg-orange-500/10">
-                    <span className="text-2xl text-orange-500">⛨</span>
-                  </div>
+                <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h4 className="mb-1.5 text-lg font-black text-white">Our Unconditional 30-Day Cash Guarantee</h4>
-                    <p className="text-xs leading-relaxed text-slate-300 sm:text-sm">
-                      If our text-back engine does not save and book at least 3 high-ticket jobs for your business within the first 30 days of going live, you pay absolutely nothing. We will refund your $997 setup fee entirely and cancel your retainer.
-                    </p>
+                    <p className="text-[11px] font-black uppercase tracking-[0.22em] text-orange-400">Plan</p>
+                    <h3 className="mt-2 text-2xl font-black text-white">{plan.name}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-400">{plan.bestFor}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-4xl font-black text-white">
+                      ${plan.price}
+                      <span className="ml-1 text-sm font-semibold text-slate-400">/month</span>
+                    </div>
+                    <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-500">Cancel anytime</p>
                   </div>
                 </div>
-              </div>
 
-              <div className="mt-8 text-center">
-                <button
-                  onClick={() => scrollToSection("audit-form")}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-10 py-4 text-sm font-bold text-slate-950 transition-all hover:bg-orange-600 active:scale-95 sm:text-base"
-                >
-                  <span>SECURE MY TRADE SLOT & GET AUDIT</span>
-                  <span>→</span>
-                </button>
+                <div className="mt-6 border-t border-slate-800 pt-5">
+                  <ul className="space-y-3 text-sm text-slate-300">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex gap-3">
+                        <span className="mt-0.5 text-orange-500">✓</span>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mt-auto pt-6">
+                  <Link
+                    href="/register"
+                    className={`inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-bold transition-all active:scale-95 ${
+                      plan.badge
+                        ? "bg-orange-500 text-slate-950 hover:bg-orange-600"
+                        : "border border-slate-700 bg-slate-950 text-white hover:border-orange-500/60 hover:bg-slate-900"
+                    }`}
+                  >
+                    {plan.cta}
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="rounded-3xl border border-slate-850 bg-slate-900 p-6">
+              <h3 className="text-xl font-black text-white">Setup fee</h3>
+              <div className="mt-4 space-y-3 text-sm text-slate-300">
+                {setupFeeHighlights.map((item) => (
+                  <div key={item} className="flex gap-3">
+                    <span className="mt-0.5 text-orange-500">•</span>
+                    <span>{item}</span>
+                  </div>
+                ))}
               </div>
             </div>
+
+            <div className="rounded-3xl border border-slate-850 bg-slate-900 p-6">
+              <h3 className="text-xl font-black text-white">Built for contractors</h3>
+              <p className="mt-4 text-sm leading-relaxed text-slate-300">
+                Chaturbo is not a full receptionist service. It is a missed-call recovery system that helps contractors save leads they already paid for.
+              </p>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                {[
+                  "Keep your existing number",
+                  "Instant text-back when you miss a call",
+                  "Lead summary by SMS/email",
+                  "Admin can mark free setup or founding customer"
+                ].map((item) => (
+                  <div key={item} className="rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-slate-200">
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 text-center">
+            <Link href="/pricing" className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:border-orange-500/60 hover:bg-slate-950">
+              View the full pricing page
+              <span>→</span>
+            </Link>
           </div>
         </div>
       </section>

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import LeadRescueShell from "../../../../components/LeadRescueShell";
 import CopyButton from "../../../../components/CopyButton";
-import { apiRequest } from "../../../../lib/api";
+import { apiRequest, getUserRole } from "../../../../lib/api";
+import { pricingLabelMap } from "../../../../lib/pricing";
 import type { Business, CallLog, Lead, Message, PhoneNumber } from "../../../../lib/leadRescue";
 
 type Payload = {
@@ -20,6 +21,7 @@ export default function BusinessDetailPage({ params }: { params: { id: string } 
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [assigning, setAssigning] = useState(false);
+  const [canEditBilling, setCanEditBilling] = useState(false);
   const [form, setForm] = useState({
     twilioPhoneNumber: "",
     ownerName: "",
@@ -29,11 +31,18 @@ export default function BusinessDetailPage({ params }: { params: { id: string } 
     city: "",
     state: "",
     serviceArea: "",
+    plan: "pro" as Business["plan"],
+    monthlyPrice: 149,
+    setupFeeAmount: 299,
+    setupFeeWaived: false,
+    foundingCustomer: false,
+    leadLimit: 200,
     status: "draft" as Business["status"]
   });
   const [phoneForm, setPhoneForm] = useState({ phoneNumber: "", status: "active" as "active" | "inactive" | "pending" });
 
   useEffect(() => {
+    setCanEditBilling(getUserRole() === "admin");
     apiRequest<Payload>(`/api/rescue/businesses/${params.id}`, {}, true)
       .then((res) => {
         setData(res);
@@ -46,6 +55,12 @@ export default function BusinessDetailPage({ params }: { params: { id: string } 
           city: res.business.city || "",
           state: res.business.state || "",
           serviceArea: res.business.serviceArea || "",
+          plan: res.business.plan || "pro",
+          monthlyPrice: res.business.monthlyPrice || 149,
+          setupFeeAmount: res.business.setupFeeAmount || 299,
+          setupFeeWaived: res.business.setupFeeWaived || false,
+          foundingCustomer: res.business.foundingCustomer || false,
+          leadLimit: res.business.leadLimit || 200,
           status: res.business.status
         });
         setPhoneForm((current) => ({ ...current, phoneNumber: res.business.twilioPhoneNumber || "" }));
@@ -136,12 +151,116 @@ export default function BusinessDetailPage({ params }: { params: { id: string } 
                 <label key={key} className="block">
                   <span className="text-sm font-medium text-slate-700">{label}</span>
                   <input
-                    value={(form as Record<string, string>)[key]}
+                    value={(form[key as keyof typeof form] as string) || ""}
                     onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
                     className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
                   />
                 </label>
               ))}
+
+              <div className="rounded-3xl border border-orange-200 bg-orange-50/70 p-4 md:col-span-2">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-ink">Billing snapshot</h3>
+                    <p className="text-sm text-slate-600">Simple contractor-friendly pricing. Admins can adjust the plan and setup flags here.</p>
+                  </div>
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-orange-600">
+                    {canEditBilling ? "Admin edit" : "Read only"}
+                  </span>
+                </div>
+
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <label className="block">
+                    <span className="text-sm font-medium text-slate-700">Plan</span>
+                    {canEditBilling ? (
+                      <select
+                        value={form.plan}
+                        onChange={(event) => setForm((current) => ({ ...current, plan: event.target.value as Business["plan"] }))}
+                        className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
+                      >
+                        {(["starter", "pro", "growth"] as Business["plan"][]).map((plan) => (
+                          <option key={plan} value={plan}>
+                            {pricingLabelMap[plan]}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="mt-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                        {pricingLabelMap[form.plan]}
+                      </div>
+                    )}
+                  </label>
+
+                  <label className="block">
+                    <span className="text-sm font-medium text-slate-700">Monthly price</span>
+                    {canEditBilling ? (
+                      <input
+                        type="number"
+                        min="0"
+                        value={form.monthlyPrice}
+                        onChange={(event) => setForm((current) => ({ ...current, monthlyPrice: Number(event.target.value) }))}
+                        className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
+                      />
+                    ) : (
+                      <div className="mt-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">${form.monthlyPrice}/month</div>
+                    )}
+                  </label>
+
+                  <label className="block">
+                    <span className="text-sm font-medium text-slate-700">Setup fee amount</span>
+                    {canEditBilling ? (
+                      <input
+                        type="number"
+                        min="0"
+                        value={form.setupFeeAmount}
+                        onChange={(event) => setForm((current) => ({ ...current, setupFeeAmount: Number(event.target.value) }))}
+                        className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
+                      />
+                    ) : (
+                      <div className="mt-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                        {form.setupFeeWaived ? "Free setup" : `$${form.setupFeeAmount} one-time`}
+                      </div>
+                    )}
+                  </label>
+
+                  <label className="block">
+                    <span className="text-sm font-medium text-slate-700">Lead limit</span>
+                    {canEditBilling ? (
+                      <input
+                        type="number"
+                        min="0"
+                        value={form.leadLimit}
+                        onChange={(event) => setForm((current) => ({ ...current, leadLimit: Number(event.target.value) }))}
+                        className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-mint"
+                      />
+                    ) : (
+                      <div className="mt-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                        Up to {form.leadLimit} rescued leads/month
+                      </div>
+                    )}
+                  </label>
+
+                  <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={form.setupFeeWaived}
+                      onChange={(event) => setForm((current) => ({ ...current, setupFeeWaived: event.target.checked }))}
+                      disabled={!canEditBilling}
+                    />
+                    <span className="text-sm font-medium text-slate-700">Free setup</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={form.foundingCustomer}
+                      onChange={(event) => setForm((current) => ({ ...current, foundingCustomer: event.target.checked }))}
+                      disabled={!canEditBilling}
+                    />
+                    <span className="text-sm font-medium text-slate-700">Founding customer</span>
+                  </label>
+                </div>
+              </div>
 
               <label className="block">
                 <span className="text-sm font-medium text-slate-700">Business status</span>

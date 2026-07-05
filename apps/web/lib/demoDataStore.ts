@@ -8,6 +8,7 @@ import type {
   OverviewResponse,
   PhoneNumber
 } from "./leadRescue";
+import { defaultBusinessBilling } from "./pricing";
 
 type DemoUser = {
   id: string;
@@ -36,7 +37,19 @@ export type DemoActor = {
   role: "owner" | "admin";
 };
 
-type CreateBusinessInput = Omit<Business, "id" | "slug" | "createdAt" | "updatedAt"> & { name: string };
+type CreateBusinessInput = Omit<
+  Business,
+  "id" | "slug" | "createdAt" | "updatedAt" | "plan" | "monthlyPrice" | "setupFeeAmount" | "setupFeeWaived" | "foundingCustomer" | "leadLimit" | "setupFeePaid"
+> & {
+  name: string;
+  plan?: Business["plan"];
+  monthlyPrice?: number;
+  setupFeeAmount?: number;
+  setupFeeWaived?: boolean;
+  foundingCustomer?: boolean;
+  leadLimit?: number;
+  setupFeePaid?: boolean;
+};
 type UpdateBusinessInput = Partial<Omit<Business, "id" | "slug" | "createdAt" | "updatedAt">>;
 type CreatePhoneNumberInput = { phoneNumber: string; twilioSid?: string; status: PhoneNumber["status"] };
 type UpdateLeadInput = Partial<Pick<Lead, "status" | "urgency" | "notes" | "summary">>;
@@ -145,10 +158,14 @@ function createInitialStore(): DemoStore {
       aiTone: "professional, concise, helpful",
       notificationMethod: "both",
       status: "active",
-      plan: "setup",
+      plan: "starter",
       billingStatus: "manual",
-      setupFeePaid: false,
-      monthlyPrice: 149,
+      setupFeePaid: true,
+      monthlyPrice: 79,
+      setupFeeAmount: 299,
+      setupFeeWaived: true,
+      foundingCustomer: true,
+      leadLimit: 50,
       demoMode: true,
       createdAt,
       updatedAt: createdAt
@@ -175,10 +192,14 @@ function createInitialStore(): DemoStore {
       aiTone: "friendly, fast, confident",
       notificationMethod: "both",
       status: "active",
-      plan: "monthly",
+      plan: "growth",
       billingStatus: "trial",
       setupFeePaid: true,
-      monthlyPrice: 149,
+      monthlyPrice: 299,
+      setupFeeAmount: 299,
+      setupFeeWaived: false,
+      foundingCustomer: false,
+      leadLimit: 600,
       demoMode: true,
       createdAt,
       updatedAt: createdAt
@@ -576,6 +597,7 @@ export function listBusinesses(actor: DemoActor) {
 export function createBusiness(actor: DemoActor, input: CreateBusinessInput) {
   const createdAt = nowIso();
   const business: Business = {
+    ...defaultBusinessBilling,
     ...input,
     id: makeId("business"),
     slug: slugify(input.name) || makeId("business"),
@@ -785,10 +807,14 @@ export function convertAuditTarget(actor: DemoActor, id: string) {
     aiTone: "professional, concise, helpful",
     notificationMethod: "both",
     status: "draft",
-    plan: "setup",
+    plan: "pro",
     billingStatus: "manual",
     setupFeePaid: false,
     monthlyPrice: 149,
+    setupFeeAmount: 299,
+    setupFeeWaived: false,
+    foundingCustomer: false,
+    leadLimit: 200,
     trialEndsAt: "",
     demoMode: false
   });
