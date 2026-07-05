@@ -6,7 +6,13 @@ import { usePathname } from "next/navigation";
 export default function AppFooter() {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/audit") || pathname === "/login" || pathname === "/register") {
+  if (
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/audit") ||
+    pathname === "/login" ||
+    pathname === "/register"
+  ) {
     return null;
   }
 

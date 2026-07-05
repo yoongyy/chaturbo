@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { apiRequest, setToken } from "../../lib/api";
+import { apiRequest, setSession } from "../../lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,11 +22,16 @@ export default function LoginPage() {
     const password = String(form.get("password") || "");
 
     try {
-      const data = await apiRequest<{ token: string }>("/auth/login", {
+      const data = await apiRequest<{ token: string; user: { email: string; name: string; role: "owner" } }>("/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password })
       });
-      setToken(data.token);
+      setSession({
+        token: data.token,
+        email: data.user.email,
+        name: data.user.name,
+        role: data.user.role
+      });
       setStatus("Signed in. Redirecting...");
       router.push("/dashboard");
     } catch (err) {
@@ -42,20 +47,20 @@ export default function LoginPage() {
       <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_0.9fr]">
         <section className="rounded-[34px] bg-slate-950 px-8 py-10 text-white shadow-[0_24px_80px_rgba(2,6,23,0.45)]">
           <p className="text-xs uppercase tracking-[0.28em] text-slate-400">Chaturbo Lead Rescue</p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight">Log in to the lead rescue dashboard</h1>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight">Log in to the business owner portal</h1>
           <p className="mt-4 max-w-xl text-sm leading-7 text-slate-300">
             Use the dashboard to manage businesses, review missed-call leads, and follow up with customers quickly.
           </p>
           <div className="mt-8 rounded-[28px] border border-white/10 bg-white/5 p-5 text-sm text-slate-300">
-            <p className="font-semibold text-white">Seeded demo login</p>
+            <p className="font-semibold text-white">Seeded owner login</p>
             <p className="mt-2">Email: demo@chaturbo.local</p>
             <p>Password: password123</p>
           </div>
         </section>
 
         <form onSubmit={onSubmit} className="rounded-[34px] border border-slate-200 bg-white p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
-          <h2 className="text-2xl font-semibold text-ink">Admin sign in</h2>
-          <p className="mt-2 text-sm text-slate-500">Access the dashboard with the seeded admin account.</p>
+          <h2 className="text-2xl font-semibold text-ink">Owner sign in</h2>
+          <p className="mt-2 text-sm text-slate-500">This login is for the roofing, HVAC, plumbing, or service-business owner team.</p>
           <div className="mt-6 space-y-4">
             <label className="block">
               <span className="text-sm font-medium text-slate-700">Email</span>
@@ -72,7 +77,11 @@ export default function LoginPage() {
             {loading ? "Signing in..." : "Login"}
           </button>
           <p className="mt-4 text-sm text-slate-500">
-            Need to reseed demo data? Run the API seed script and log in with the seeded account again.
+            Admin team?
+            {" "}
+            <Link href="/admin/login" className="font-semibold text-mint">
+              Use the admin login
+            </Link>
           </p>
           <p className="mt-2 text-sm text-slate-500">
             <Link href="/" className="font-semibold text-mint">

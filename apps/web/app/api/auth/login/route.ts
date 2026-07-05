@@ -4,7 +4,7 @@ import { signJwt } from "../../../../lib/jwt";
 
 const DEFAULT_EMAIL = "demo@chaturbo.local";
 const DEFAULT_PASSWORD = "password123";
-const DEFAULT_NAME = "Demo Admin";
+const DEFAULT_NAME = "Demo Owner";
 const DEFAULT_SECRET = "dev-secret-chaturbo-lead-rescue";
 
 export async function POST(request: Request) {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
   const allowedEmail = (process.env.ADMIN_EMAIL || DEFAULT_EMAIL).trim().toLowerCase();
   const allowedPassword = process.env.ADMIN_PASSWORD || DEFAULT_PASSWORD;
-  const demoUser = findDemoUser(email, password);
+  const demoUser = findDemoUser(email, password, "owner");
 
   if (!demoUser && (email !== allowedEmail || password !== allowedPassword)) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
@@ -42,6 +42,7 @@ export async function POST(request: Request) {
       id: userId,
       email,
       name: userName,
+      role: "owner",
       credits: 0,
       creditsPurchased: 0,
       creditsEarned: 0,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { clearToken } from "../lib/api";
+import { clearSession, getUserRole } from "../lib/api";
 
 export default function LogoutButton({ className = "" }: { className?: string }) {
   const router = useRouter();
@@ -10,8 +10,9 @@ export default function LogoutButton({ className = "" }: { className?: string })
     <button
       type="button"
       onClick={() => {
-        clearToken();
-        router.replace("/login");
+        const role = getUserRole();
+        clearSession();
+        router.replace(role === "admin" ? "/admin/login" : "/login");
       }}
       className={className}
     >

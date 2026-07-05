@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { apiRequest, setToken } from "../../lib/api";
+import { apiRequest, setSession } from "../../lib/api";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -16,7 +16,7 @@ export default function RegisterPage() {
     setError("");
     const form = new FormData(event.currentTarget);
     try {
-      const data = await apiRequest<{ token: string }>("/auth/register", {
+      const data = await apiRequest<{ token: string; user: { email: string; name: string; role: "owner" } }>("/auth/register", {
         method: "POST",
         body: JSON.stringify({
           name: String(form.get("name") || ""),
@@ -24,7 +24,12 @@ export default function RegisterPage() {
           password: String(form.get("password") || "")
         })
       });
-      setToken(data.token);
+      setSession({
+        token: data.token,
+        email: data.user.email,
+        name: data.user.name,
+        role: data.user.role
+      });
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");

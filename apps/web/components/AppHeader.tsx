@@ -24,7 +24,13 @@ export default function AppHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/audit") || pathname === "/login" || pathname === "/register") {
+  if (
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/audit") ||
+    pathname === "/login" ||
+    pathname === "/register"
+  ) {
     return null;
   }
 

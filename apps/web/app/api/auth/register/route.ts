@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const user = registerDemoUser({ name, email, password });
+    const user = registerDemoUser({ name, email, password, role: "owner" });
     const secret = process.env.JWT_SECRET || DEFAULT_SECRET;
     const token = signJwt({ userId: user.id, email: user.email }, secret);
 
@@ -32,6 +32,7 @@ export async function POST(request: Request) {
         id: user.id,
         email: user.email,
         name: user.name,
+        role: "owner",
         credits: 0,
         creditsPurchased: 0,
         creditsEarned: 0,

@@ -14,6 +14,7 @@ type DemoUser = {
   name: string;
   email: string;
   password: string;
+  role: "owner" | "admin";
 };
 
 type DemoStore = {
@@ -45,11 +46,20 @@ type CreateAuditTargetInput = Omit<
   | "status"
 > & { businessName: string; industry: string };
 
-const DEFAULT_USER = {
+const DEFAULT_OWNER_USER = {
   id: "web_demo_chaturbo_local",
-  name: "Demo Admin",
+  name: "Demo Owner",
   email: "demo@chaturbo.local",
-  password: "password123"
+  password: "password123",
+  role: "owner" as const
+};
+
+const DEFAULT_ADMIN_USER = {
+  id: "admin_chaturbo_local",
+  name: "Admin User",
+  email: "admin@chaturbo.local",
+  password: "password123",
+  role: "admin" as const
 };
 
 function nowIso(): string {
@@ -365,7 +375,7 @@ function createInitialStore(): DemoStore {
   const audits = [createAuditCopy(auditTargets[0])];
 
   return {
-    users: [DEFAULT_USER],
+    users: [DEFAULT_OWNER_USER, DEFAULT_ADMIN_USER],
     businesses,
     phoneNumbers,
     leads,
@@ -402,7 +412,7 @@ function requireAuditTarget(id: string): AuditTarget {
   return target;
 }
 
-export function registerDemoUser(input: { name: string; email: string; password: string }) {
+export function registerDemoUser(input: { name: string; email: string; password: string; role?: "owner" | "admin" }) {
   const email = input.email.trim().toLowerCase();
   const existing = store.users.find((user) => user.email === email);
   if (existing) {
@@ -413,15 +423,18 @@ export function registerDemoUser(input: { name: string; email: string; password:
     id: `web_${email.replace(/[^a-z0-9]+/g, "_")}`,
     name: input.name.trim(),
     email,
-    password: input.password
+    password: input.password,
+    role: input.role || "owner"
   };
   store.users.unshift(user);
   return clone(user);
 }
 
-export function findDemoUser(email: string, password: string) {
+export function findDemoUser(email: string, password: string, role?: "owner" | "admin") {
   const normalizedEmail = email.trim().toLowerCase();
-  const user = store.users.find((item) => item.email === normalizedEmail && item.password === password);
+  const user = store.users.find(
+    (item) => item.email === normalizedEmail && item.password === password && (!role || item.role === role)
+  );
   return user ? clone(user) : null;
 }
 
