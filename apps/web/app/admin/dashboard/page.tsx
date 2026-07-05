@@ -79,10 +79,10 @@ export default function AdminDashboardPage() {
               <Link href="/dashboard/leads" className="rounded-2xl border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700">
                 Review lead inbox
               </Link>
-              <Link href="/dashboard/audits" className="rounded-2xl border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700">
+              <Link href="/admin/audits" className="rounded-2xl border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700">
                 Manage audits
               </Link>
-              <Link href="/dashboard/settings" className="rounded-2xl border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700">
+              <Link href="/admin/settings" className="rounded-2xl border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700">
                 Internal help
               </Link>
             </div>

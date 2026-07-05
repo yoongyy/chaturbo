@@ -134,7 +134,7 @@ export default function DashboardPage() {
                 <Link href="/dashboard/leads" className="rounded-2xl border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700">
                   Open lead inbox
                 </Link>
-                <Link href="/dashboard/settings" className="rounded-2xl border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700">
+                <Link href="/dashboard/help" className="rounded-2xl border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700">
                   Get help
                 </Link>
               </div>

@@ -31,8 +31,8 @@ router.post("/register", async (req, res) => {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const user = await User.create({ email, name, passwordHash });
-  const token = signJwt(user.id, user.email);
+  const user = await User.create({ email, name, passwordHash, role: "member" });
+  const token = signJwt(user.id, user.email, user.role, user.ownerUid);
 
   return res.status(201).json({
     token,
@@ -40,6 +40,7 @@ router.post("/register", async (req, res) => {
       id: user.id,
       email: user.email,
       name: user.name,
+      role: user.role,
       credits: user.credits,
       creditsPurchased: user.creditsPurchased,
       creditsEarned: user.creditsEarned,
@@ -53,6 +54,49 @@ const loginSchema = z.object({
   password: z.string().min(1)
 });
 
+async function authenticateUser(email: string, password: string) {
+  const user = await User.findOne({ email: email.toLowerCase() });
+  if (!user) {
+    return null;
+  }
+
+  const matches = await bcrypt.compare(password, user.passwordHash);
+  if (!matches) {
+    return null;
+  }
+
+  return user;
+}
+
+function serializeAuthUser(user: {
+  id?: string;
+  _id?: unknown;
+  email: string;
+  name?: string;
+  role: "admin" | "member";
+  credits: number;
+  creditsPurchased: number;
+  creditsEarned: number;
+  ownerUid: string;
+}) {
+  const userId = user.id || String(user._id || "");
+  const token = signJwt(userId, user.email, user.role, user.ownerUid);
+
+  return {
+    token,
+    user: {
+      id: userId,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      credits: user.credits,
+      creditsPurchased: user.creditsPurchased,
+      creditsEarned: user.creditsEarned,
+      ownerUid: user.ownerUid
+    }
+  };
+}
+
 router.post("/login", async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -60,29 +104,35 @@ router.post("/login", async (req, res) => {
   }
 
   const { email, password } = parsed.data;
-  const user = await User.findOne({ email: email.toLowerCase() });
+  const user = await authenticateUser(email, password);
   if (!user) {
     return sendError(res, 401, "Invalid credentials");
   }
 
-  const matches = await bcrypt.compare(password, user.passwordHash);
-  if (!matches) {
+  if (user.role === "admin") {
+    return sendError(res, 403, "Use the admin login for internal accounts");
+  }
+
+  return res.json(serializeAuthUser(user));
+});
+
+router.post("/admin-login", async (req, res) => {
+  const parsed = loginSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return sendError(res, 400, "Invalid payload");
+  }
+
+  const { email, password } = parsed.data;
+  const user = await authenticateUser(email, password);
+  if (!user) {
     return sendError(res, 401, "Invalid credentials");
   }
 
-  const token = signJwt(user.id, user.email);
-  return res.json({
-    token,
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      credits: user.credits,
-      creditsPurchased: user.creditsPurchased,
-      creditsEarned: user.creditsEarned,
-      ownerUid: user.ownerUid
-    }
-  });
+  if (user.role !== "admin") {
+    return sendError(res, 403, "Use the owner login for customer accounts");
+  }
+
+  return res.json(serializeAuthUser(user));
 });
 
 const oauthCallbackSchema = z.object({
@@ -107,7 +157,8 @@ async function upsertSocialUser(profile: SocialProfile) {
   return User.create({
     email: profile.email.toLowerCase(),
     name: profile.name,
-    passwordHash
+    passwordHash,
+    role: "member"
   });
 }
 
@@ -217,7 +268,7 @@ router.post("/oauth/callback", async (req, res) => {
         : await exchangeFacebookCode(code, redirectUri);
 
     const user = await upsertSocialUser(profile);
-    const token = signJwt(user.id, user.email);
+    const token = signJwt(user.id, user.email, user.role, user.ownerUid);
 
     return res.json({
       token,
@@ -225,6 +276,7 @@ router.post("/oauth/callback", async (req, res) => {
         id: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
         credits: user.credits,
         creditsPurchased: user.creditsPurchased,
         creditsEarned: user.creditsEarned,
@@ -239,7 +291,7 @@ router.post("/oauth/callback", async (req, res) => {
 
 router.get("/me", requireAuth, async (req: AuthenticatedRequest, res) => {
   const user = await User.findById(req.user?.userId).select(
-    "email name credits creditsPurchased creditsEarned ownerUid createdAt updatedAt"
+    "email name role credits creditsPurchased creditsEarned ownerUid createdAt updatedAt"
   );
   if (!user) {
     return sendError(res, 404, "User not found");

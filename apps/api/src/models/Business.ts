@@ -7,6 +7,8 @@ export type BusinessPlan = "setup" | "monthly" | "agency";
 export type BillingStatus = "unpaid" | "trial" | "active" | "past_due" | "manual";
 
 export interface IBusiness extends Document {
+  ownerId: Types.ObjectId;
+  ownerUid: string;
   slug: string;
   name: string;
   industry: BusinessIndustry;
@@ -39,6 +41,8 @@ export interface IBusiness extends Document {
 
 const businessSchema = new Schema<IBusiness>(
   {
+    ownerId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    ownerUid: { type: String, required: true, index: true },
     slug: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true, trim: true },
     industry: { type: String, required: true, enum: ["roofing", "hvac", "plumbing", "electrical", "landscaping", "cleaning", "other"], index: true },
@@ -71,5 +75,6 @@ const businessSchema = new Schema<IBusiness>(
 
 businessSchema.index({ name: 1 });
 businessSchema.index({ status: 1, industry: 1 });
+businessSchema.index({ ownerId: 1, createdAt: -1 });
 
 export const Business = model<IBusiness>("Business", businessSchema);

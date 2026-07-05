@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 import { registerDemoUser } from "../../../../lib/demoDataStore";
 import { signJwt } from "../../../../lib/jwt";
+import { proxyToExternalApi } from "../../../../lib/serverApiProxy";
 
 const DEFAULT_SECRET = "dev-secret-chaturbo-lead-rescue";
 
 export async function POST(request: Request) {
+  const proxied = await proxyToExternalApi(request, "/auth/register");
+  if (proxied) {
+    return proxied;
+  }
+
   let body: unknown;
 
   try {
@@ -24,7 +30,7 @@ export async function POST(request: Request) {
   try {
     const user = registerDemoUser({ name, email, password, role: "owner" });
     const secret = process.env.JWT_SECRET || DEFAULT_SECRET;
-    const token = signJwt({ userId: user.id, email: user.email }, secret);
+    const token = signJwt({ userId: user.id, email: user.email, role: "owner" }, secret);
 
     return NextResponse.json({
       token,

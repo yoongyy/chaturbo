@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { findDemoUser } from "../../../../lib/demoDataStore";
 import { signJwt } from "../../../../lib/jwt";
+import { proxyToExternalApi } from "../../../../lib/serverApiProxy";
 
 const DEFAULT_EMAIL = "admin@chaturbo.local";
 const DEFAULT_PASSWORD = "password123";
@@ -8,6 +9,11 @@ const DEFAULT_NAME = "Admin User";
 const DEFAULT_SECRET = "dev-secret-chaturbo-lead-rescue";
 
 export async function POST(request: Request) {
+  const proxied = await proxyToExternalApi(request, "/auth/admin-login");
+  if (proxied) {
+    return proxied;
+  }
+
   let body: unknown;
 
   try {

@@ -3,6 +3,8 @@ import { Document, Schema, Types, model } from "mongoose";
 export type CrawlStatus = "pending" | "crawled" | "failed";
 
 export interface IAuditTarget extends Document {
+  ownerId: Types.ObjectId;
+  ownerUid: string;
   slug: string;
   businessName: string;
   industry: string;
@@ -28,6 +30,8 @@ export interface IAuditTarget extends Document {
 
 const auditTargetSchema = new Schema<IAuditTarget>(
   {
+    ownerId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    ownerUid: { type: String, required: true, index: true },
     slug: { type: String, required: true, unique: true, index: true },
     businessName: { type: String, required: true, trim: true, index: true },
     industry: { type: String, required: true, trim: true, index: true },
@@ -54,5 +58,7 @@ const auditTargetSchema = new Schema<IAuditTarget>(
   },
   { timestamps: true }
 );
+
+auditTargetSchema.index({ ownerId: 1, createdAt: -1 });
 
 export const AuditTarget = model<IAuditTarget>("AuditTarget", auditTargetSchema);

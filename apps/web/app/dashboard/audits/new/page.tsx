@@ -40,7 +40,7 @@ export default function NewAuditTargetPage() {
         method: "POST",
         body: JSON.stringify(payload)
       }, true);
-      router.push(`/dashboard/audits/${res.target.id}`);
+      router.push(`/admin/audits/${res.target.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create target");
     } finally {

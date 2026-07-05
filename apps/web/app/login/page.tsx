@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { apiRequest, setSession } from "../../lib/api";
+import { apiRequest, normalizeAppRole, setSession } from "../../lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,15 +22,19 @@ export default function LoginPage() {
     const password = String(form.get("password") || "");
 
     try {
-      const data = await apiRequest<{ token: string; user: { email: string; name: string; role: "owner" } }>("/auth/login", {
+      const data = await apiRequest<{ token: string; user: { email: string; name: string; role: "member" | "owner" | "admin" } }>("/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password })
       });
+      const role = normalizeAppRole(data.user.role);
+      if (role !== "owner") {
+        throw new Error("Use the admin login for internal accounts.");
+      }
       setSession({
         token: data.token,
         email: data.user.email,
         name: data.user.name,
-        role: data.user.role
+        role
       });
       setStatus("Signed in. Redirecting...");
       router.push("/dashboard");

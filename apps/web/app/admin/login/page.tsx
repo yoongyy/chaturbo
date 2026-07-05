@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { apiRequest, setSession } from "../../../lib/api";
+import { apiRequest, normalizeAppRole, setSession } from "../../../lib/api";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -22,15 +22,19 @@ export default function AdminLoginPage() {
     const password = String(form.get("password") || "");
 
     try {
-      const data = await apiRequest<{ token: string; user: { email: string; name: string; role: "admin" } }>("/auth/admin-login", {
+      const data = await apiRequest<{ token: string; user: { email: string; name: string; role: "member" | "owner" | "admin" } }>("/auth/admin-login", {
         method: "POST",
         body: JSON.stringify({ email, password })
       });
+      const role = normalizeAppRole(data.user.role);
+      if (role !== "admin") {
+        throw new Error("Use the owner portal for customer accounts.");
+      }
       setSession({
         token: data.token,
         email: data.user.email,
         name: data.user.name,
-        role: data.user.role
+        role
       });
       setStatus("Signed in. Redirecting...");
       router.push("/admin/dashboard");

@@ -24,10 +24,10 @@ export default function BusinessesPage() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="text-3xl font-semibold text-ink">Businesses</h1>
-              <p className="mt-2 text-sm text-slate-500">Create contractor clients and manage their missed-call recovery setup.</p>
+              <p className="mt-2 text-sm text-slate-500">Add businesses, keep the owner contact clear, and connect the missed-call flow.</p>
             </div>
             <Link href="/dashboard/businesses/new" className="rounded-2xl bg-ink px-4 py-3 text-sm font-semibold text-white">
-              New business
+              Add business
             </Link>
           </div>
         </section>
@@ -49,7 +49,7 @@ export default function BusinessesPage() {
                   <th className="px-4 py-3">Business</th>
                   <th className="px-4 py-3">Industry</th>
                   <th className="px-4 py-3">Owner</th>
-                  <th className="px-4 py-3">Twilio Number</th>
+                  <th className="px-4 py-3">Business Line</th>
                   <th className="px-4 py-3">Status</th>
                 </tr>
               </thead>

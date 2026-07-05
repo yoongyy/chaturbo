@@ -5,11 +5,21 @@ import { requireAuth } from "../../middleware/auth";
 import { Business } from "../../models/Business";
 import { Lead } from "../../models/Lead";
 import { Message } from "../../models/Message";
+import { AuthenticatedRequest } from "../../types";
 import { sendError } from "../../utils/http";
 import { sendSms } from "../../services/leadRescue/communications";
 import { serializeDoc, normalizePhone } from "../../services/leadRescue/utils";
 
 const router = Router();
+
+async function getScopedBusinessIds(user?: { userId?: string; role?: string }) {
+  if (user?.role === "admin") {
+    return null;
+  }
+
+  const businesses = await Business.find({ ownerId: user?.userId }).select("_id").lean();
+  return businesses.map((business) => business._id);
+}
 
 const statusSchema = z.object({
   status: z.enum(["new", "contacted", "booked", "won", "lost", "spam"]),
@@ -25,10 +35,18 @@ const replySchema = z.object({
 
 router.use(requireAuth);
 
-router.get("/", async (req, res) => {
+router.get("/", async (req: AuthenticatedRequest, res) => {
   const { businessId, status, source } = req.query;
   const query: Record<string, unknown> = {};
-  if (typeof businessId === "string" && Types.ObjectId.isValid(businessId)) query.businessId = businessId;
+  const scopedBusinessIds = await getScopedBusinessIds(req.user);
+  if (typeof businessId === "string" && Types.ObjectId.isValid(businessId)) {
+    if (scopedBusinessIds && !scopedBusinessIds.some((ownedId) => ownedId.equals(businessId))) {
+      return res.json({ leads: [] });
+    }
+    query.businessId = businessId;
+  } else if (scopedBusinessIds) {
+    query.businessId = { $in: scopedBusinessIds };
+  }
   if (typeof status === "string") query.status = status;
   if (typeof source === "string") query.source = source;
 
@@ -36,14 +54,18 @@ router.get("/", async (req, res) => {
   return res.json({ leads: leads.map((lead) => serializeDoc(lead)) });
 });
 
-router.get("/:id", async (req, res) => {
-  const { id } = req.params;
+router.get("/:id", async (req: AuthenticatedRequest, res) => {
+  const id = String(req.params.id);
   if (!Types.ObjectId.isValid(id)) {
     return sendError(res, 400, "Invalid lead id");
   }
 
+  const scopedBusinessIds = await getScopedBusinessIds(req.user);
   const lead = await Lead.findById(id).lean();
   if (!lead) {
+    return sendError(res, 404, "Lead not found");
+  }
+  if (scopedBusinessIds && (!lead.businessId || !scopedBusinessIds.some((businessId) => businessId.equals(lead.businessId!)))) {
     return sendError(res, 404, "Lead not found");
   }
 
@@ -57,8 +79,8 @@ router.get("/:id", async (req, res) => {
   });
 });
 
-router.patch("/:id", async (req, res) => {
-  const { id } = req.params;
+router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+  const id = String(req.params.id);
   if (!Types.ObjectId.isValid(id)) {
     return sendError(res, 400, "Invalid lead id");
   }
@@ -66,6 +88,16 @@ router.patch("/:id", async (req, res) => {
   const parsed = statusSchema.partial().safeParse(req.body ?? {});
   if (!parsed.success) {
     return sendError(res, 400, "Invalid lead payload");
+  }
+
+  const existingLead = await Lead.findById(id).select("businessId");
+  if (!existingLead) {
+    return sendError(res, 404, "Lead not found");
+  }
+
+  const scopedBusinessIds = await getScopedBusinessIds(req.user);
+  if (scopedBusinessIds && (!existingLead.businessId || !scopedBusinessIds.some((businessId) => businessId.equals(existingLead.businessId!)))) {
+    return sendError(res, 404, "Lead not found");
   }
 
   const updated = await Lead.findByIdAndUpdate(id, parsed.data, { new: true });
@@ -76,8 +108,8 @@ router.patch("/:id", async (req, res) => {
   return res.json({ lead: serializeDoc(updated.toObject()) });
 });
 
-router.post("/:id/reply", async (req, res) => {
-  const { id } = req.params;
+router.post("/:id/reply", async (req: AuthenticatedRequest, res) => {
+  const id = String(req.params.id);
   if (!Types.ObjectId.isValid(id)) {
     return sendError(res, 400, "Invalid lead id");
   }
@@ -89,6 +121,11 @@ router.post("/:id/reply", async (req, res) => {
 
   const lead = await Lead.findById(id);
   if (!lead) {
+    return sendError(res, 404, "Lead not found");
+  }
+
+  const scopedBusinessIds = await getScopedBusinessIds(req.user);
+  if (scopedBusinessIds && (!lead.businessId || !scopedBusinessIds.some((businessId) => businessId.equals(lead.businessId!)))) {
     return sendError(res, 404, "Lead not found");
   }
 

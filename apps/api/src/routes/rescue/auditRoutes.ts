@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { Types } from "mongoose";
 import { z } from "zod";
-import { requireAuth } from "../../middleware/auth";
+import { requireAdmin, requireAuth } from "../../middleware/auth";
 import { Audit } from "../../models/Audit";
 import { AuditTarget } from "../../models/AuditTarget";
 import { Business } from "../../models/Business";
+import { AuthenticatedRequest } from "../../types";
 import { sendError } from "../../utils/http";
 import { slugify } from "../../utils/slug";
 import { crawlWebsite } from "../../services/leadRescue/crawl";
@@ -42,13 +43,14 @@ router.get("/public/:slug", async (req, res) => {
 });
 
 router.use(requireAuth);
+router.use(requireAdmin);
 
 router.get("/targets", async (_req, res) => {
   const targets = await AuditTarget.find().sort({ createdAt: -1 }).lean();
   return res.json({ targets: targets.map((item) => serializeDoc(item)) });
 });
 
-router.post("/targets", async (req, res) => {
+router.post("/targets", async (req: AuthenticatedRequest, res) => {
   const parsed = targetSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
     return sendError(res, 400, "Invalid audit target payload");
@@ -57,6 +59,8 @@ router.post("/targets", async (req, res) => {
   const slug = slugify(parsed.data.businessName);
   const exists = await AuditTarget.findOne({ slug });
   const target = await AuditTarget.create({
+    ownerId: req.user?.userId,
+    ownerUid: req.user?.ownerUid,
     ...parsed.data,
     slug: exists ? `${slug}-${Date.now()}` : slug,
     crawlStatus: "pending",
@@ -71,7 +75,7 @@ router.post("/targets", async (req, res) => {
 });
 
 router.get("/targets/:id", async (req, res) => {
-  const { id } = req.params;
+  const id = String(req.params.id);
   if (!Types.ObjectId.isValid(id)) {
     return sendError(res, 400, "Invalid audit target id");
   }
@@ -90,7 +94,7 @@ router.get("/targets/:id", async (req, res) => {
 });
 
 router.patch("/targets/:id", async (req, res) => {
-  const { id } = req.params;
+  const id = String(req.params.id);
   if (!Types.ObjectId.isValid(id)) {
     return sendError(res, 400, "Invalid audit target id");
   }
@@ -119,7 +123,7 @@ router.patch("/targets/:id", async (req, res) => {
 });
 
 router.post("/targets/:id/crawl", async (req, res) => {
-  const { id } = req.params;
+  const id = String(req.params.id);
   if (!Types.ObjectId.isValid(id)) {
     return sendError(res, 400, "Invalid audit target id");
   }
@@ -143,8 +147,8 @@ router.post("/targets/:id/crawl", async (req, res) => {
   });
 });
 
-router.post("/targets/:id/generate", async (req, res) => {
-  const { id } = req.params;
+router.post("/targets/:id/generate", async (req: AuthenticatedRequest, res) => {
+  const id = String(req.params.id);
   if (!Types.ObjectId.isValid(id)) {
     return sendError(res, 400, "Invalid audit target id");
   }
@@ -161,6 +165,8 @@ router.post("/targets/:id/generate", async (req, res) => {
   const slug = existing ? `${slugBase}-${Date.now()}` : slugBase;
 
   const audit = await Audit.create({
+    ownerId: req.user?.userId,
+    ownerUid: req.user?.ownerUid,
     auditTargetId: target._id,
     slug,
     summary: auditPayload.summary,
@@ -181,8 +187,8 @@ router.post("/targets/:id/generate", async (req, res) => {
   });
 });
 
-router.post("/targets/:id/convert", async (req, res) => {
-  const { id } = req.params;
+router.post("/targets/:id/convert", async (req: AuthenticatedRequest, res) => {
+  const id = String(req.params.id);
   if (!Types.ObjectId.isValid(id)) {
     return sendError(res, 400, "Invalid audit target id");
   }
@@ -195,6 +201,8 @@ router.post("/targets/:id/convert", async (req, res) => {
   const businessSlug = `${target.slug}-business`;
   const existingBusiness = await Business.findOne({ slug: businessSlug });
   const business = await Business.create({
+    ownerId: req.user?.userId,
+    ownerUid: req.user?.ownerUid,
     slug: existingBusiness ? `${businessSlug}-${Date.now()}` : businessSlug,
     name: target.businessName,
     industry: target.industry,
@@ -235,7 +243,7 @@ router.get("/", async (_req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const { id } = req.params;
+  const id = String(req.params.id);
   if (!Types.ObjectId.isValid(id)) {
     return sendError(res, 400, "Invalid audit id");
   }

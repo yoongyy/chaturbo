@@ -26,7 +26,7 @@ export default function AuditsPage() {
               <h1 className="text-3xl font-semibold text-ink">Audits</h1>
               <p className="mt-2 text-sm text-slate-500">Generate personalized lead-rescue audits and outreach assets.</p>
             </div>
-            <Link href="/dashboard/audits/new" className="rounded-2xl bg-ink px-4 py-3 text-sm font-semibold text-white">
+            <Link href="/admin/audits/new" className="rounded-2xl bg-ink px-4 py-3 text-sm font-semibold text-white">
               New audit target
             </Link>
           </div>
@@ -61,7 +61,7 @@ export default function AuditsPage() {
                     <td className="px-4 py-3 text-slate-600">{target.crawlStatus}</td>
                     <td className="px-4 py-3 text-slate-600">{target.status}</td>
                     <td className="px-4 py-3">
-                      <Link href={`/dashboard/audits/${target.id}`} className="font-semibold text-mint">
+                      <Link href={`/admin/audits/${target.id}`} className="font-semibold text-mint">
                         Open
                       </Link>
                     </td>

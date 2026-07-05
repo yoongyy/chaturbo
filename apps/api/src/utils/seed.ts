@@ -17,16 +17,31 @@ dotenv.config();
 async function run() {
   await connectDb();
 
-  const adminEmail = "demo@chaturbo.local";
-  let admin = await User.findOne({ email: adminEmail });
-  if (!admin) {
-    admin = await User.create({
+  const ownerEmail = "demo@chaturbo.local";
+  const ownerPasswordHash = await bcrypt.hash("password123", 10);
+  let owner = await User.findOneAndUpdate(
+    { email: ownerEmail },
+    {
+      email: ownerEmail,
+      name: "Demo Owner",
+      passwordHash: ownerPasswordHash,
+      role: "member"
+    },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
+
+  const adminEmail = "admin@chaturbo.local";
+  const adminPasswordHash = await bcrypt.hash("password123", 10);
+  let admin = await User.findOneAndUpdate(
+    { email: adminEmail },
+    {
       email: adminEmail,
-      name: "Demo Admin",
-      passwordHash: await bcrypt.hash("password123", 10),
+      name: "Admin User",
+      passwordHash: adminPasswordHash,
       role: "admin"
-    });
-  }
+    },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
 
   await Promise.all([
     Lead.deleteMany({}),
@@ -39,6 +54,8 @@ async function run() {
   ]);
 
   const roofingBusiness = await Business.create({
+    ownerId: owner._id,
+    ownerUid: owner.ownerUid,
     slug: slugify("Demo Roofing Company"),
     name: "Demo Roofing Company",
     industry: "roofing",
@@ -66,6 +83,8 @@ async function run() {
   });
 
   const hvacBusiness = await Business.create({
+    ownerId: owner._id,
+    ownerUid: owner.ownerUid,
     slug: slugify("Demo HVAC Company"),
     name: "Demo HVAC Company",
     industry: "hvac",
@@ -239,6 +258,8 @@ async function run() {
   const targets = await AuditTarget.insertMany([
     {
       slug: slugify("Alpha Roofing Dallas"),
+      ownerId: admin._id,
+      ownerUid: admin.ownerUid,
       businessName: "Alpha Roofing Dallas",
       industry: "roofing",
       websiteUrl: "https://example.com/alpha-roofing",
@@ -260,6 +281,8 @@ async function run() {
     },
     {
       slug: slugify("Better HVAC Houston"),
+      ownerId: admin._id,
+      ownerUid: admin.ownerUid,
       businessName: "Better HVAC Houston",
       industry: "hvac",
       websiteUrl: "https://example.com/better-hvac",
@@ -281,6 +304,8 @@ async function run() {
     },
     {
       slug: slugify("Prime Plumbing Austin"),
+      ownerId: admin._id,
+      ownerUid: admin.ownerUid,
       businessName: "Prime Plumbing Austin",
       industry: "plumbing",
       websiteUrl: "https://example.com/prime-plumbing",
@@ -301,6 +326,8 @@ async function run() {
 
   const generatedAuditPayload = await generateAudit(targets[0] as any, (targets[0] as any).extractedWebsiteText || "");
   await Audit.create({
+    ownerId: admin._id,
+    ownerUid: admin.ownerUid,
     auditTargetId: targets[0]._id,
     slug: `${targets[0].slug}-audit`,
     summary: generatedAuditPayload.summary,
@@ -316,7 +343,8 @@ async function run() {
     publicPageHtml: generatedAuditPayload.publicPageHtml
   });
 
-  console.log("Seed complete. Demo login: demo@chaturbo.local / password123");
+  console.log("Seed complete. Owner login: demo@chaturbo.local / password123");
+  console.log("Admin login: admin@chaturbo.local / password123");
   console.log(`Created businesses: ${roofingBusiness.name}, ${hvacBusiness.name}`);
   console.log(`Created lead rescue call log: ${call.twilioCallSid}`);
   process.exit(0);

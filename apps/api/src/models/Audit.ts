@@ -1,6 +1,8 @@
 import { Document, Schema, Types, model } from "mongoose";
 
 export interface IAudit extends Document {
+  ownerId: Types.ObjectId;
+  ownerUid: string;
   auditTargetId: Types.ObjectId;
   slug: string;
   summary: string;
@@ -20,6 +22,8 @@ export interface IAudit extends Document {
 
 const auditSchema = new Schema<IAudit>(
   {
+    ownerId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    ownerUid: { type: String, required: true, index: true },
     auditTargetId: { type: Schema.Types.ObjectId, ref: "AuditTarget", required: true, index: true },
     slug: { type: String, required: true, unique: true, index: true },
     summary: { type: String, required: true },
@@ -36,5 +40,7 @@ const auditSchema = new Schema<IAudit>(
   },
   { timestamps: true }
 );
+
+auditSchema.index({ ownerId: 1, createdAt: -1 });
 
 export const Audit = model<IAudit>("Audit", auditSchema);

@@ -6,6 +6,7 @@ const TOKEN_STORAGE_KEY = "chaturbo_token";
 const SESSION_STORAGE_KEY = "chaturbo_session";
 
 export type AppRole = "owner" | "admin";
+export type ApiAuthRole = AppRole | "member";
 
 export type AuthSession = {
   token: string;
@@ -13,6 +14,12 @@ export type AuthSession = {
   email: string;
   name: string;
 };
+
+export function normalizeAppRole(role: unknown): AppRole | null {
+  if (role === "admin") return "admin";
+  if (role === "owner" || role === "member") return "owner";
+  return null;
+}
 
 function getHostedAppRequestPath(path: string): string | null {
   if (path.startsWith("/api/")) {
@@ -48,10 +55,21 @@ export function getSession(): AuthSession | null {
 
   try {
     const parsed = JSON.parse(raw) as Partial<AuthSession>;
-    if (!parsed.token || !parsed.role || !parsed.email || !parsed.name) {
+    const role = normalizeAppRole(parsed.role);
+    if (
+      typeof parsed.token !== "string" ||
+      !role ||
+      typeof parsed.email !== "string" ||
+      typeof parsed.name !== "string"
+    ) {
       return null;
     }
-    return parsed as AuthSession;
+    return {
+      token: parsed.token,
+      role,
+      email: parsed.email,
+      name: parsed.name
+    };
   } catch {
     return null;
   }

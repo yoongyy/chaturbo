@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { apiRequest, setSession } from "../../lib/api";
+import { apiRequest, normalizeAppRole, setSession } from "../../lib/api";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -16,7 +16,7 @@ export default function RegisterPage() {
     setError("");
     const form = new FormData(event.currentTarget);
     try {
-      const data = await apiRequest<{ token: string; user: { email: string; name: string; role: "owner" } }>("/auth/register", {
+      const data = await apiRequest<{ token: string; user: { email: string; name: string; role: "member" | "owner" | "admin" } }>("/auth/register", {
         method: "POST",
         body: JSON.stringify({
           name: String(form.get("name") || ""),
@@ -24,11 +24,15 @@ export default function RegisterPage() {
           password: String(form.get("password") || "")
         })
       });
+      const role = normalizeAppRole(data.user.role);
+      if (role !== "owner") {
+        throw new Error("Unexpected account role returned during registration.");
+      }
       setSession({
         token: data.token,
         email: data.user.email,
         name: data.user.name,
-        role: data.user.role
+        role
       });
       router.push("/dashboard");
     } catch (err) {

@@ -7,11 +7,20 @@ import { CallLog } from "../../models/CallLog";
 import { Lead } from "../../models/Lead";
 import { Message } from "../../models/Message";
 import { PhoneNumber } from "../../models/PhoneNumber";
+import { AuthenticatedRequest } from "../../types";
 import { sendError } from "../../utils/http";
 import { normalizePhone, serializeDoc } from "../../services/leadRescue/utils";
 import { slugify } from "../../utils/slug";
 
 const router = Router();
+
+function getBusinessScope(user?: { userId?: string; role?: string }) {
+  if (user?.role === "admin") {
+    return {};
+  }
+
+  return { ownerId: user?.userId };
+}
 
 const businessSchema = z.object({
   name: z.string().min(1),
@@ -48,13 +57,13 @@ const phoneAssignSchema = z.object({
 
 router.use(requireAuth);
 
-router.get("/", async (_req, res) => {
-  const businesses = await Business.find().sort({ createdAt: -1 }).lean();
+router.get("/", async (req: AuthenticatedRequest, res) => {
+  const businesses = await Business.find(getBusinessScope(req.user)).sort({ createdAt: -1 }).lean();
   const mapped = businesses.map((business) => serializeDoc(business));
   return res.json({ businesses: mapped });
 });
 
-router.post("/", async (req, res) => {
+router.post("/", async (req: AuthenticatedRequest, res) => {
   const parsed = businessSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
     return sendError(res, 400, "Invalid business payload");
@@ -66,6 +75,8 @@ router.post("/", async (req, res) => {
   const resolvedSlug = existingSlug ? `${slug}-${Date.now()}` : slug;
 
   const business = await Business.create({
+    ownerId: req.user?.userId,
+    ownerUid: req.user?.ownerUid,
     ...data,
     slug: resolvedSlug,
     ownerEmail: data.ownerEmail || undefined,
@@ -79,13 +90,13 @@ router.post("/", async (req, res) => {
   return res.status(201).json({ business: serializeDoc(business.toObject()) });
 });
 
-router.get("/:id", async (req, res) => {
-  const { id } = req.params;
+router.get("/:id", async (req: AuthenticatedRequest, res) => {
+  const id = String(req.params.id);
   if (!Types.ObjectId.isValid(id)) {
     return sendError(res, 400, "Invalid business id");
   }
 
-  const business = await Business.findById(id).lean();
+  const business = await Business.findOne({ _id: id, ...getBusinessScope(req.user) }).lean();
   if (!business) {
     return sendError(res, 404, "Business not found");
   }
@@ -106,8 +117,8 @@ router.get("/:id", async (req, res) => {
   });
 });
 
-router.patch("/:id", async (req, res) => {
-  const { id } = req.params;
+router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+  const id = String(req.params.id);
   if (!Types.ObjectId.isValid(id)) {
     return sendError(res, 400, "Invalid business id");
   }
@@ -118,8 +129,8 @@ router.patch("/:id", async (req, res) => {
   }
 
   const data = parsed.data;
-  const business = await Business.findByIdAndUpdate(
-    id,
+  const business = await Business.findOneAndUpdate(
+    { _id: id, ...getBusinessScope(req.user) },
     {
       ...data,
       ownerEmail: data.ownerEmail || undefined,
@@ -139,8 +150,8 @@ router.patch("/:id", async (req, res) => {
   return res.json({ business: serializeDoc(business.toObject()) });
 });
 
-router.post("/:id/phone-number", async (req, res) => {
-  const { id } = req.params;
+router.post("/:id/phone-number", async (req: AuthenticatedRequest, res) => {
+  const id = String(req.params.id);
   if (!Types.ObjectId.isValid(id)) {
     return sendError(res, 400, "Invalid business id");
   }
@@ -150,7 +161,7 @@ router.post("/:id/phone-number", async (req, res) => {
     return sendError(res, 400, "Invalid phone number payload");
   }
 
-  const business = await Business.findById(id);
+  const business = await Business.findOne({ _id: id, ...getBusinessScope(req.user) });
   if (!business) {
     return sendError(res, 404, "Business not found");
   }

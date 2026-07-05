@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { findDemoUser } from "../../../../lib/demoDataStore";
 import { signJwt } from "../../../../lib/jwt";
+import { proxyToExternalApi } from "../../../../lib/serverApiProxy";
 
 const DEFAULT_EMAIL = "demo@chaturbo.local";
 const DEFAULT_PASSWORD = "password123";
@@ -8,6 +9,11 @@ const DEFAULT_NAME = "Demo Owner";
 const DEFAULT_SECRET = "dev-secret-chaturbo-lead-rescue";
 
 export async function POST(request: Request) {
+  const proxied = await proxyToExternalApi(request, "/auth/login");
+  if (proxied) {
+    return proxied;
+  }
+
   let body: unknown;
 
   try {
@@ -35,7 +41,7 @@ export async function POST(request: Request) {
   const userId = demoUser?.id || `web_${email.replace(/[^a-z0-9]+/g, "_")}`;
   const userName = demoUser?.name || process.env.ADMIN_NAME || DEFAULT_NAME;
 
-  const token = signJwt({ userId, email }, secret);
+  const token = signJwt({ userId, email, role: "owner" }, secret);
   return NextResponse.json({
     token,
     user: {

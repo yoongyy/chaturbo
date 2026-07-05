@@ -34,10 +34,10 @@ export default function HomePage() {
 
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link href="/login" className="rounded-2xl bg-coral px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-coral/20 hover:brightness-110">
-                  Open dashboard
+                  Open owner portal
                 </Link>
-                <Link href="/dashboard/audits/new" className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15">
-                  Create audit target
+                <Link href="/demo" className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15">
+                  See live demo
                 </Link>
               </div>
 
@@ -71,7 +71,7 @@ export default function HomePage() {
           {[
             ["01", "Sales pages that close", "Personalized audit pages and outreach scripts built for each contractor prospect."],
             ["02", "Missed-call recovery", "Forward the call, detect the miss, and text the lead back automatically."],
-            ["03", "Simple admin inbox", "Track leads, update status, send replies, and keep the summary clean."]
+            ["03", "Simple owner inbox", "Track leads, update status, send replies, and keep the summary clean."]
           ].map(([num, title, text]) => (
             <div key={title} className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
               <p className="text-xs uppercase tracking-[0.24em] text-mint">{num}</p>
@@ -91,8 +91,8 @@ export default function HomePage() {
               </p>
             </div>
             <div className="flex gap-3">
-              <Link href="/dashboard" className="rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white">
-                Dashboard
+              <Link href="/login" className="rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white">
+                Owner login
               </Link>
               <Link href="/audit/alpha-roofing-dallas-audit" className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700">
                 Public audit example

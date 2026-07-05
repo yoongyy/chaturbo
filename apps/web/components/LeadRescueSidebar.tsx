@@ -9,15 +9,17 @@ const ownerItems = [
   { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/businesses", label: "Businesses" },
   { href: "/dashboard/leads", label: "Lead Inbox" },
-  { href: "/dashboard/settings", label: "Help" }
+  { href: "/dashboard/help", label: "Help" }
 ];
 
 const adminItems = [
   { href: "/admin/dashboard", label: "Admin Home" },
   { href: "/dashboard/businesses", label: "Businesses" },
   { href: "/dashboard/leads", label: "Lead Inbox" },
-  { href: "/dashboard/audits", label: "Audits" },
-  { href: "/dashboard/settings", label: "Settings" }
+  { href: "/admin/audits", label: "Audits" },
+  { href: "/admin/workflow-drafts", label: "Workflow Drafts" },
+  { href: "/admin/workflows", label: "Published Workflows" },
+  { href: "/admin/settings", label: "Settings" }
 ];
 
 function isActive(pathname: string, href: string) {

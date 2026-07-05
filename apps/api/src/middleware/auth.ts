@@ -27,3 +27,15 @@ export function requireAuth(req: AuthenticatedRequest, res: Response, next: Next
     return sendError(res, 401, "Invalid token");
   }
 }
+
+export function requireAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  if (!req.user) {
+    return sendError(res, 401, "Unauthorized");
+  }
+
+  if (req.user.role !== "admin") {
+    return sendError(res, 403, "Admin access required");
+  }
+
+  return next();
+}

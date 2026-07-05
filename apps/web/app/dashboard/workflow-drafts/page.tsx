@@ -57,7 +57,7 @@ export default function WorkflowDraftsPage() {
               </Badge>
               <Badge>Readiness {draft.quality.publishReadinessScore}</Badge>
               <Badge tone={statusTones[draft.status]}>{draft.status}</Badge>
-              <Link href={`/dashboard/workflow-drafts/${draft._id}`} className="rounded-lg bg-mint px-3 py-1.5 text-white">
+              <Link href={`/admin/workflow-drafts/${draft._id}`} className="rounded-lg bg-mint px-3 py-1.5 text-white">
                 Review
               </Link>
             </div>

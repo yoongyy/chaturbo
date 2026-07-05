@@ -20,12 +20,20 @@ type DemoUser = {
 type DemoStore = {
   users: DemoUser[];
   businesses: Business[];
+  businessOwners: Record<string, string>;
   phoneNumbers: PhoneNumber[];
   leads: Lead[];
   calls: CallLog[];
   messages: Message[];
   auditTargets: AuditTarget[];
+  auditTargetOwners: Record<string, string>;
   audits: Audit[];
+};
+
+export type DemoActor = {
+  userId: string;
+  email: string;
+  role: "owner" | "admin";
 };
 
 type CreateBusinessInput = Omit<Business, "id" | "slug" | "createdAt" | "updatedAt"> & { name: string };
@@ -374,19 +382,42 @@ function createInitialStore(): DemoStore {
 
   const audits = [createAuditCopy(auditTargets[0])];
 
+  const businessOwners = Object.fromEntries(businesses.map((business) => [business.id, DEFAULT_OWNER_USER.id]));
+  const auditTargetOwners = Object.fromEntries(auditTargets.map((target) => [target.id, DEFAULT_ADMIN_USER.id]));
+
   return {
     users: [DEFAULT_OWNER_USER, DEFAULT_ADMIN_USER],
     businesses,
+    businessOwners,
     phoneNumbers,
     leads,
     calls,
     messages,
     auditTargets,
+    auditTargetOwners,
     audits
   };
 }
 
 let store = createInitialStore();
+
+function isAdmin(actor: DemoActor): boolean {
+  return actor.role === "admin";
+}
+
+function canAccessBusiness(actor: DemoActor, businessId: string): boolean {
+  return isAdmin(actor) || store.businessOwners[businessId] === actor.userId;
+}
+
+function canAccessAuditTarget(actor: DemoActor, targetId: string): boolean {
+  return isAdmin(actor) || store.auditTargetOwners[targetId] === actor.userId;
+}
+
+function getAccessibleBusinessIds(actor: DemoActor): string[] {
+  return isAdmin(actor)
+    ? store.businesses.map((business) => business.id)
+    : store.businesses.filter((business) => store.businessOwners[business.id] === actor.userId).map((business) => business.id);
+}
 
 function requireBusiness(id: string): Business {
   const business = store.businesses.find((item) => item.id === id);
@@ -407,6 +438,33 @@ function requireLead(id: string): Lead {
 function requireAuditTarget(id: string): AuditTarget {
   const target = store.auditTargets.find((item) => item.id === id);
   if (!target) {
+    throw new Error("Audit target not found");
+  }
+  return target;
+}
+
+function requireOwnedBusiness(actor: DemoActor, id: string): Business {
+  const business = requireBusiness(id);
+  if (!canAccessBusiness(actor, business.id)) {
+    throw new Error("Business not found");
+  }
+  return business;
+}
+
+function requireOwnedLead(actor: DemoActor, id: string): Lead {
+  const lead = requireLead(id);
+  if (lead.businessId && !canAccessBusiness(actor, lead.businessId)) {
+    throw new Error("Lead not found");
+  }
+  if (!lead.businessId && !isAdmin(actor)) {
+    throw new Error("Lead not found");
+  }
+  return lead;
+}
+
+function requireOwnedAuditTarget(actor: DemoActor, id: string): AuditTarget {
+  const target = requireAuditTarget(id);
+  if (!canAccessAuditTarget(actor, target.id)) {
     throw new Error("Audit target not found");
   }
   return target;
@@ -477,11 +535,17 @@ export function createApplicationLead(input: {
   return clone(lead);
 }
 
-export function getDemoOverview(): OverviewResponse {
-  const newLeads = store.leads.filter((lead) => lead.status === "new").length;
-  const bookedJobs = store.leads.filter((lead) => lead.status === "booked" || lead.status === "won").length;
-  const activeBusinesses = store.businesses.filter((business) => business.status === "active").length;
-  const missedCallsRescued = store.leads.filter((lead) => lead.source === "missed_call" && lead.ownerNotificationStatus === "sent").length;
+export function getDemoOverview(actor: DemoActor): OverviewResponse {
+  const businessIds = getAccessibleBusinessIds(actor);
+  const visibleBusinesses = store.businesses.filter((business) => businessIds.includes(business.id));
+  const visibleLeads = store.leads.filter((lead) => lead.businessId && businessIds.includes(lead.businessId));
+  const visibleAuditTargets = isAdmin(actor)
+    ? store.auditTargets
+    : store.auditTargets.filter((target) => store.auditTargetOwners[target.id] === actor.userId);
+  const newLeads = visibleLeads.filter((lead) => lead.status === "new").length;
+  const bookedJobs = visibleLeads.filter((lead) => lead.status === "booked" || lead.status === "won").length;
+  const activeBusinesses = visibleBusinesses.filter((business) => business.status === "active").length;
+  const missedCallsRescued = visibleLeads.filter((lead) => lead.source === "missed_call" && lead.ownerNotificationStatus === "sent").length;
 
   return clone({
     stats: {
@@ -489,27 +553,27 @@ export function getDemoOverview(): OverviewResponse {
       missedCallsRescued,
       bookedJobs,
       activeBusinesses,
-      auditTargets: store.auditTargets.length
+      auditTargets: visibleAuditTargets.length
     },
-    recentLeads: store.leads.slice(0, 5),
-    recentAudits: store.auditTargets.slice(0, 5),
-    recentBusinesses: store.businesses.slice(0, 5),
-    hasAssignedTwilioNumber: store.businesses.some((business) => Boolean(business.twilioPhoneNumber)),
+    recentLeads: visibleLeads.slice(0, 5),
+    recentAudits: visibleAuditTargets.slice(0, 5),
+    recentBusinesses: visibleBusinesses.slice(0, 5),
+    hasAssignedTwilioNumber: visibleBusinesses.some((business) => Boolean(business.twilioPhoneNumber)),
     checklist: [
-      { label: "Create your first business", done: store.businesses.length > 0 },
-      { label: "Assign a Twilio number", done: store.phoneNumbers.length > 0 },
-      { label: "Add an audit target", done: store.auditTargets.length > 0 },
-      { label: "Seed demo data", done: true },
-      { label: "Configure webhooks", done: false }
+      { label: "Create your first business", done: visibleBusinesses.length > 0 },
+      { label: "Assign a business phone line", done: visibleBusinesses.some((business) => Boolean(business.twilioPhoneNumber)) },
+      { label: "Receive your first lead", done: visibleLeads.length > 0 },
+      { label: "Mark a lead as contacted", done: visibleLeads.some((lead) => lead.status === "contacted" || lead.status === "booked" || lead.status === "won") },
+      { label: "Go live with missed-call follow-up", done: activeBusinesses > 0 }
     ]
   });
 }
 
-export function listBusinesses() {
-  return clone(store.businesses);
+export function listBusinesses(actor: DemoActor) {
+  return clone(store.businesses.filter((business) => canAccessBusiness(actor, business.id)));
 }
 
-export function createBusiness(input: CreateBusinessInput) {
+export function createBusiness(actor: DemoActor, input: CreateBusinessInput) {
   const createdAt = nowIso();
   const business: Business = {
     ...input,
@@ -519,11 +583,12 @@ export function createBusiness(input: CreateBusinessInput) {
     updatedAt: createdAt
   };
   store.businesses.unshift(business);
+  store.businessOwners[business.id] = actor.userId;
   return clone(business);
 }
 
-export function getBusinessPayload(id: string) {
-  const business = requireBusiness(id);
+export function getBusinessPayload(actor: DemoActor, id: string) {
+  const business = requireOwnedBusiness(actor, id);
   return clone({
     business,
     leads: store.leads.filter((lead) => lead.businessId === id),
@@ -533,14 +598,14 @@ export function getBusinessPayload(id: string) {
   });
 }
 
-export function updateBusiness(id: string, patch: UpdateBusinessInput) {
-  const business = requireBusiness(id);
+export function updateBusiness(actor: DemoActor, id: string, patch: UpdateBusinessInput) {
+  const business = requireOwnedBusiness(actor, id);
   Object.assign(business, patch, { updatedAt: nowIso() });
   return clone(business);
 }
 
-export function assignPhoneNumber(id: string, input: CreatePhoneNumberInput) {
-  const business = requireBusiness(id);
+export function assignPhoneNumber(actor: DemoActor, id: string, input: CreatePhoneNumberInput) {
+  const business = requireOwnedBusiness(actor, id);
   const current = store.phoneNumbers.find((item) => item.businessId === id && item.phoneNumber === input.phoneNumber);
   const updatedAt = nowIso();
 
@@ -567,8 +632,14 @@ export function assignPhoneNumber(id: string, input: CreatePhoneNumberInput) {
   return clone(business);
 }
 
-export function listLeads(filters?: { businessId?: string; status?: string; source?: string }) {
+export function listLeads(actor: DemoActor, filters?: { businessId?: string; status?: string; source?: string }) {
+  const businessIds = getAccessibleBusinessIds(actor);
   const results = store.leads.filter((lead) => {
+    if (lead.businessId) {
+      if (!businessIds.includes(lead.businessId)) return false;
+    } else if (!isAdmin(actor)) {
+      return false;
+    }
     if (filters?.businessId && lead.businessId !== filters.businessId) return false;
     if (filters?.status && lead.status !== filters.status) return false;
     if (filters?.source && lead.source !== filters.source) return false;
@@ -577,8 +648,8 @@ export function listLeads(filters?: { businessId?: string; status?: string; sour
   return clone(results);
 }
 
-export function getLeadPayload(id: string) {
-  const lead = requireLead(id);
+export function getLeadPayload(actor: DemoActor, id: string) {
+  const lead = requireOwnedLead(actor, id);
   return clone({
     lead,
     business: lead.businessId ? store.businesses.find((item) => item.id === lead.businessId) || null : null,
@@ -586,15 +657,15 @@ export function getLeadPayload(id: string) {
   });
 }
 
-export function updateLead(id: string, patch: UpdateLeadInput) {
-  const lead = requireLead(id);
+export function updateLead(actor: DemoActor, id: string, patch: UpdateLeadInput) {
+  const lead = requireOwnedLead(actor, id);
   Object.assign(lead, patch, { updatedAt: nowIso() });
   return clone(lead);
 }
 
-export function sendLeadReply(id: string, body: string, to?: string) {
-  const lead = requireLead(id);
-  const business = lead.businessId ? requireBusiness(lead.businessId) : null;
+export function sendLeadReply(actor: DemoActor, id: string, body: string, to?: string) {
+  const lead = requireOwnedLead(actor, id);
+  const business = lead.businessId ? requireOwnedBusiness(actor, lead.businessId) : null;
   if (!business) {
     throw new Error("Associated business not found");
   }
@@ -623,11 +694,11 @@ export function sendLeadReply(id: string, body: string, to?: string) {
   return clone({ message, lead });
 }
 
-export function listAuditTargets() {
-  return clone(store.auditTargets);
+export function listAuditTargets(actor: DemoActor) {
+  return clone(store.auditTargets.filter((target) => canAccessAuditTarget(actor, target.id)));
 }
 
-export function createAuditTarget(input: CreateAuditTargetInput) {
+export function createAuditTarget(actor: DemoActor, input: CreateAuditTargetInput) {
   const createdAt = nowIso();
   const target: AuditTarget = {
     ...input,
@@ -640,19 +711,20 @@ export function createAuditTarget(input: CreateAuditTargetInput) {
     updatedAt: createdAt
   };
   store.auditTargets.unshift(target);
+  store.auditTargetOwners[target.id] = actor.userId;
   return clone(target);
 }
 
-export function getAuditTargetPayload(id: string) {
-  const target = requireAuditTarget(id);
+export function getAuditTargetPayload(actor: DemoActor, id: string) {
+  const target = requireOwnedAuditTarget(actor, id);
   return clone({
     target,
     audits: store.audits.filter((audit) => audit.auditTargetId === id).sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   });
 }
 
-export function crawlAuditTarget(id: string) {
-  const target = requireAuditTarget(id);
+export function crawlAuditTarget(actor: DemoActor, id: string) {
+  const target = requireOwnedAuditTarget(actor, id);
   const updatedAt = nowIso();
   target.crawlStatus = "crawled";
   target.extractedTitle = target.businessName;
@@ -665,10 +737,10 @@ export function crawlAuditTarget(id: string) {
   return clone(target);
 }
 
-export function generateAudit(id: string) {
-  const target = requireAuditTarget(id);
+export function generateAudit(actor: DemoActor, id: string) {
+  const target = requireOwnedAuditTarget(actor, id);
   if (target.crawlStatus !== "crawled") {
-    crawlAuditTarget(id);
+    crawlAuditTarget(actor, id);
   }
   const audit = createAuditCopy(target);
   store.audits.unshift(audit);
@@ -676,8 +748,8 @@ export function generateAudit(id: string) {
   return clone(audit);
 }
 
-export function convertAuditTarget(id: string) {
-  const target = requireAuditTarget(id);
+export function convertAuditTarget(actor: DemoActor, id: string) {
+  const target = requireOwnedAuditTarget(actor, id);
   const existing = store.businesses.find((business) => business.name === target.businessName);
   if (existing) {
     target.status = "converted";
@@ -685,7 +757,7 @@ export function convertAuditTarget(id: string) {
     return clone(existing);
   }
 
-  const business = createBusiness({
+  const business = createBusiness(actor, {
     name: target.businessName,
     industry:
       target.industry === "roofing" ||

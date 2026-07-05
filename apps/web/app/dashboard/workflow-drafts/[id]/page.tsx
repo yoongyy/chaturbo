@@ -39,7 +39,7 @@ export default function DraftDetailPage() {
       await apiRequest(path, { method }, true);
       if (method === "DELETE") {
         setSuccess("Draft deleted successfully. Redirecting...");
-        setTimeout(() => router.push("/dashboard/workflow-drafts"), 700);
+        setTimeout(() => router.push("/admin/workflow-drafts"), 700);
       } else {
         setSuccess(path.endsWith("/publish") ? "Draft published successfully." : "Draft rejected successfully.");
         load();
