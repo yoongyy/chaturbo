@@ -89,9 +89,9 @@ const TRADE_SCENARIOS: Record<TradeId, TradeScenario> = {
 };
 
 const topMetrics = [
-  { value: "3s", label: "Response time" },
-  { value: "85%+", label: "Lead rescue rate" },
-  { value: "24/7", label: "Digital dispatcher" }
+  { value: "3s", label: "Response time", tone: "white" as const },
+  { value: "85%+", label: "Lead rescue rate", tone: "emerald" as const },
+  { value: "24/7", label: "Digital dispatcher", tone: "orange" as const }
 ];
 
 const painCards = [
@@ -111,18 +111,47 @@ const painCards = [
 
 const featureCards = [
   {
+    icon: "call" as const,
     title: "The 24/7 Instant Text-Back",
     text: "The moment a call is missed, the system texts the homeowner so they know somebody is responding."
   },
   {
+    icon: "message" as const,
     title: "The Live SMS Dispatcher",
     text: "One question at a time: what job, where, and how urgent. Then the lead is qualified without admin overhead."
   },
   {
+    icon: "summary" as const,
     title: "The Owner Summary",
     text: "Every lead lands as a clean summary with the job, city, urgency, and next step. Nothing feels like software training."
   }
 ];
+
+function FeatureGlyph({ kind }: { kind: "call" | "message" | "summary" }) {
+  return (
+    <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 text-orange-500 transition-transform group-hover:scale-110">
+      {kind === "call" ? (
+        <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M22 16.92v2a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.1 4.18 2 2 0 0 1 5.08 2h2a2 2 0 0 1 2 1.72c.12.9.37 1.78.74 2.61a2 2 0 0 1-.45 2.12L8.1 9.93a16 16 0 0 0 6 6l1.48-1.27a2 2 0 0 1 2.12-.45c.83.37 1.71.62 2.61.74A2 2 0 0 1 22 16.92Z" />
+          <path d="M16 2h6v6" />
+        </svg>
+      ) : kind === "message" ? (
+        <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+          <path d="M7 10h10" />
+          <path d="M7 14h6" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 3h6l2 2v16H7V5z" />
+          <path d="M9 9h6" />
+          <path d="M9 13h6" />
+          <path d="M9 17h4" />
+        </svg>
+      )}
+    </div>
+  );
+}
 
 const faqs = [
   {
@@ -363,14 +392,14 @@ export default function HomePage() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <button
                   onClick={() => scrollToSection("audit-form")}
-                  className="group flex items-center justify-center gap-3 rounded-xl bg-orange-500 px-8 py-4.5 text-sm font-bold text-slate-950 shadow-[0_0_25px_rgba(249,115,22,0.35)] transition-all hover:bg-orange-600 hover:shadow-[0_0_35px_rgba(249,115,22,0.5)] active:scale-95 sm:text-base"
+                  className="group flex min-h-[60px] items-center justify-center gap-3 rounded-xl bg-orange-500 px-10 py-4 text-sm font-black tracking-wide text-slate-950 shadow-[0_0_25px_rgba(249,115,22,0.35)] transition-all hover:bg-orange-600 hover:shadow-[0_0_35px_rgba(249,115,22,0.5)] active:scale-95 sm:px-12 sm:text-base"
                 >
                   <span>GET MY FREE REVENUE AUDIT</span>
                   <span className="transition-transform group-hover:translate-x-1.5">→</span>
                 </button>
                 <button
                   onClick={() => scrollToSection("roi")}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-900/30 px-7 py-4.5 text-sm font-semibold text-slate-300 transition-all hover:border-slate-700 hover:bg-slate-900/80 hover:text-white active:scale-95"
+                  className="flex min-h-[60px] items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-900/30 px-8 py-4 text-sm font-semibold text-slate-300 transition-all hover:border-slate-700 hover:bg-slate-900/80 hover:text-white active:scale-95"
                 >
                   <span className="text-orange-500">↗</span>
                   <span>See ROI Math</span>
@@ -386,7 +415,13 @@ export default function HomePage() {
               <div className="mt-10 grid grid-cols-3 gap-6 border-t border-slate-900/80 pt-10">
                 {topMetrics.map((metric) => (
                   <div key={metric.label}>
-                    <div className="text-2xl font-black text-white sm:text-3xl">{metric.value}</div>
+                    <div
+                      className={`text-2xl font-display font-black sm:text-3xl ${
+                        metric.tone === "emerald" ? "text-emerald-400" : metric.tone === "orange" ? "text-orange-400" : "text-white"
+                      }`}
+                    >
+                      {metric.value}
+                    </div>
                     <div className="mt-1 text-xs uppercase text-slate-400">{metric.label}</div>
                   </div>
                 ))}
@@ -574,9 +609,7 @@ export default function HomePage() {
                 key={card.title}
                 className="group flex flex-col rounded-2xl border border-slate-850 bg-slate-900 p-8 transition-all duration-300 hover:border-orange-500/50 hover:shadow-[0_0_30px_rgba(249,115,22,0.05)]"
               >
-                <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 text-orange-500 transition-transform group-hover:scale-110">
-                  <span className="text-lg font-black">●</span>
-                </div>
+                <FeatureGlyph kind={card.icon} />
                 <h3 className="mb-3 text-xl font-black text-white">{card.title}</h3>
                 <p className="mb-4 text-sm leading-relaxed text-slate-400">{card.text}</p>
                 <div className="mt-auto flex items-center gap-1.5 text-xs font-bold text-orange-400 transition-transform group-hover:translate-x-1.5">
