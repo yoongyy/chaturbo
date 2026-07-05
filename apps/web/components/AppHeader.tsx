@@ -30,7 +30,7 @@ export default function AppHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/80 text-white backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950 text-white shadow-[0_12px_40px_rgba(2,6,23,0.28)] backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-6">
         <Link href="/" className="flex items-center gap-2">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-coral text-sm font-bold text-white shadow-lg shadow-coral/20">
@@ -47,9 +47,9 @@ export default function AppHeader() {
             <Link
               key={item.href}
               href={item.href}
-                className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
-                  isActive(pathname, item.href) ? "bg-white text-slate-950 shadow-sm" : "text-slate-300 hover:bg-white/10 hover:text-white"
-                }`}
+              className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                isActive(pathname, item.href) ? "bg-white text-slate-950 shadow-sm" : "text-slate-300 hover:bg-white/10 hover:text-white"
+              }`}
             >
               {item.label}
             </Link>
@@ -57,10 +57,10 @@ export default function AppHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <Link href="/dashboard" className="rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold text-white">
+          <Link href="/dashboard" className="rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10">
             Dashboard
           </Link>
-          <Link href="/login" className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-black/20">
+          <Link href="/login" className="rounded-xl bg-coral px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-black/20 hover:brightness-110">
             Log in
           </Link>
         </div>
@@ -75,7 +75,7 @@ export default function AppHeader() {
       </div>
 
       {menuOpen ? (
-        <div className="border-t border-white/10 bg-slate-950 px-4 py-3 md:hidden">
+        <div className="border-t border-slate-800 bg-slate-950 px-4 py-3 md:hidden">
           <div className="flex flex-col gap-2">
             {navItems.map((item) => (
               <Link

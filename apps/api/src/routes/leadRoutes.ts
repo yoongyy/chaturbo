@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { sendError } from "../utils/http";
-import { storeLead } from "../services/leadStorage";
+import { storeLead, type LeadSubmission } from "../services/leadStorage";
 
 const router = Router();
 
@@ -36,7 +36,8 @@ router.post("/", async (req, res) => {
     return sendError(res, 400, "Please complete the lead form with valid details.");
   }
 
-  const { lead, storage } = await storeLead(parsed.data);
+  const submission = parsed.data as LeadSubmission;
+  const { lead, storage } = await storeLead(submission);
 
   return res.status(201).json({
     success: true,

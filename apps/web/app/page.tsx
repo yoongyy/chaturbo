@@ -33,10 +33,10 @@ export default function HomePage() {
               </p>
 
               <div className="mt-7 flex flex-wrap gap-3">
-                <Link href="/login" className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950">
+                <Link href="/login" className="rounded-2xl bg-coral px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-coral/20 hover:brightness-110">
                   Open dashboard
                 </Link>
-                <Link href="/dashboard/audits/new" className="rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white">
+                <Link href="/dashboard/audits/new" className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15">
                   Create audit target
                 </Link>
               </div>
@@ -58,7 +58,7 @@ export default function HomePage() {
                 </div>
               ))}
 
-              <div className="rounded-[28px] border border-coral/25 bg-coral/10 p-5 text-sm text-slate-200">
+              <div className="rounded-[28px] border border-coral/30 bg-coral/15 p-5 text-sm text-slate-100 shadow-[0_18px_60px_rgba(233,106,65,0.12)]">
                 <p className="text-xs uppercase tracking-[0.22em] text-coral">Sales demo</p>
                 <p className="mt-2 text-lg font-semibold text-white">Call the number, miss the call, get the text-back.</p>
                 <p className="mt-2">Then reply by SMS and watch the lead summary land in the dashboard.</p>
