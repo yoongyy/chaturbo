@@ -19,8 +19,7 @@ import { errorHandler } from "./middleware/errorHandler";
 const app = express();
 app.set("trust proxy", true);
 
-const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
-  .split(",")
+const allowedOrigins = ["http://localhost:3000", "http://127.0.0.1:3000", ...(process.env.CORS_ORIGIN || "").split(",")]
   .map((origin) => origin.trim())
   .filter(Boolean);
 
