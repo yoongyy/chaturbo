@@ -36,7 +36,8 @@ router.post("/", async (req, res) => {
     return sendError(res, 400, "Please complete the lead form with valid details.");
   }
 
-  const { lead, storage } = await storeLead(parsed.data);
+  const submission = parsed.data as LeadSubmission;
+  const { lead, storage } = await storeLead(submission);
 
   return res.status(201).json({
     success: true,
