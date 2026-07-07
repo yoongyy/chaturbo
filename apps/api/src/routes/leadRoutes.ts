@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { sendError } from "../utils/http";
-import { storeLead } from "../services/leadStorage";
+import { storeLead, type LeadSubmission } from "../services/leadStorage";
 
 const router = Router();
 
