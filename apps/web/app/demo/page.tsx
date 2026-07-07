@@ -117,8 +117,7 @@ export default function DemoPage() {
         
         {/* Header Block */}
         <section className="rounded-[34px] border border-slate-800 bg-[linear-gradient(180deg,_rgba(15,23,42,0.98)_0%,_rgba(7,12,20,0.96)_100%)] p-6 text-white shadow-[0_24px_80px_rgba(2,6,23,0.45)] md:p-8">
-          <BrandMark inverse />
-          <p className="mt-6 text-xs font-black uppercase tracking-[0.24em] text-orange-400">Interactive Sandbox</p>
+          <p className="text-xs font-black uppercase tracking-[0.24em] text-orange-400">Interactive Sandbox</p>
           <h1 className="font-display mt-3 text-4xl font-black text-white md:text-5xl">Test Missed-Call Rescue Live</h1>
           <p className="mt-4 max-w-3xl text-slate-300">
             See exactly how Chaturbo works. Enter your mobile number below, and our system will call your phone, simulate a missed call, and text you back automatically in 3 seconds.
