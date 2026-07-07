@@ -23,6 +23,28 @@ function getTwilioClient(): ReturnType<typeof twilio> | null {
   return twilioClient;
 }
 
+export async function makeCall(to: string, twiml: string): Promise<{ ok: boolean; sid?: string; error?: string }> {
+  const env = getEnv();
+  const client = getTwilioClient();
+  const fromNumber = env.TWILIO_DEFAULT_FROM_NUMBER;
+
+  if (!client || !fromNumber) {
+    console.log("[mock call]", { to, twiml });
+    return { ok: true, sid: "mock-call-sid" };
+  }
+
+  try {
+    const call = await client.calls.create({
+      to,
+      from: fromNumber,
+      twiml
+    });
+    return { ok: true, sid: call.sid };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Call failed" };
+  }
+}
+
 export async function sendSms(to: string, body: string, mediaUrls?: string[]): Promise<{ ok: boolean; sid?: string; error?: string }> {
   const env = getEnv();
   const client = getTwilioClient();

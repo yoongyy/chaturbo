@@ -30,7 +30,7 @@ export default function AdminLoginPage() {
       });
       const role = normalizeAppRole(data.user.role);
       if (role !== "admin") {
-        throw new Error("Use the owner portal for customer accounts.");
+        throw new Error("Use the contractor portal for customer accounts.");
       }
       setSession({
         token: data.token,
@@ -79,9 +79,9 @@ export default function AdminLoginPage() {
           {loading ? "Signing in..." : "Log in as admin"}
         </AppButton>
         <p className="mt-4 text-sm text-slate-400">
-          Customer or owner login?{" "}
+          Looking for customer login?{" "}
           <Link href="/login" className="font-semibold text-orange-400">
-            Use the owner portal
+            Use the portal
           </Link>
         </p>
       </form>

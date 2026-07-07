@@ -47,13 +47,13 @@ export default function AdminDashboardPage() {
               <p className="text-xs uppercase tracking-[0.28em] text-slate-400">Internal admin</p>
               <h1 className="mt-4 text-4xl font-semibold tracking-tight lg:text-5xl">Manage onboarding, quality, and internal operations.</h1>
               <p className="mt-4 max-w-2xl text-base text-slate-300">
-                This area is for your team. Keep customer-facing owners in the simple business and lead workflow. Use this side for audits, internal setup, and operational checks.
+                This area is for your team. Keep customer-facing contractor accounts in the simple business and lead workflow. Use this side for audits, internal setup, and operational checks.
               </p>
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5 text-sm text-slate-300 lg:w-[320px]">
               <p className="font-semibold text-white">Admin rules</p>
               <ol className="mt-3 space-y-2">
-                <li>1. Owners should not see technical setup.</li>
+                <li>1. Contractors should not see technical setup.</li>
                 <li>2. Audits and internal controls stay with admin.</li>
                 <li>3. Businesses and lead quality should be reviewed here before rollout.</li>
               </ol>
@@ -92,7 +92,7 @@ export default function AdminDashboardPage() {
           <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
             <h2 className="text-xl font-semibold text-ink">Readiness checks</h2>
             <div className="mt-4 space-y-3 text-sm text-slate-600">
-              <p>Owner portal is simple enough for basic pilot use.</p>
+              <p>Contractor portal is simple enough for basic pilot use.</p>
               <p>Admin tools still need stricter server-side authorization before real production rollout.</p>
               <p>Phone, SMS, and onboarding flows still need final validation with real customer data.</p>
               <p>Use this admin side for internal control, not customer-facing daily use.</p>

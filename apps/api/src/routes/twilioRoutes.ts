@@ -6,7 +6,7 @@ import { Lead } from "../models/Lead";
 import { Message } from "../models/Message";
 import { EventLog } from "../models/EventLog";
 import { PhoneNumber } from "../models/PhoneNumber";
-import { sendEmail, sendSms, getAppUrl, getSmsTwiml, getVoiceTwiml, validateTwilioSignature } from "../services/leadRescue/communications";
+import { sendEmail, sendSms, makeCall, getAppUrl, getSmsTwiml, getVoiceTwiml, validateTwilioSignature } from "../services/leadRescue/communications";
 import { buildFollowupQuestion, isStartMessage, isStopMessage, shouldSendMissedCallSms, updateConversationState } from "../services/leadRescue/conversation";
 import { generateSmsReply, summarizeLead, classifyLeadUrgency } from "../services/leadRescue/ai";
 import { normalizePhone, safeJson, serializeDoc } from "../services/leadRescue/utils";
@@ -271,6 +271,92 @@ router.post("/sms/incoming", async (req, res) => {
   }
 
   return res.send(getSmsTwiml(responseText));
+});
+
+router.post("/demo/test-call", async (req, res) => {
+  const { phone } = req.body as { phone?: string };
+  if (!phone) {
+    return res.status(400).json({ error: "Phone number is required" });
+  }
+
+  const normalizedPhone = normalizePhone(phone);
+  
+  // Find default admin user to assign as owner of the demo business
+  const { User } = require("../models/User");
+  let admin = await User.findOne({ role: "admin" });
+  if (!admin) admin = await User.findOne({});
+  if (!admin) {
+    return res.status(500).json({ error: "No admin user found. Seed the database first." });
+  }
+
+  // Find or create a demo business "Apex Roofing AI"
+  const fromNumber = process.env.TWILIO_DEFAULT_FROM_NUMBER || "+15017122661"; // Fallback demo number
+  let business = await Business.findOne({ name: "Apex Roofing AI" });
+  if (!business) {
+    business = await Business.create({
+      ownerId: admin._id,
+      ownerUid: admin.ownerUid || "admin",
+      name: "Apex Roofing AI",
+      slug: "apex-roofing-ai",
+      industry: "roofing",
+      twilioPhoneNumber: normalizePhone(fromNumber),
+      ownerMobile: admin.mobile || normalizedPhone,
+      ownerEmail: admin.email,
+      notificationMethod: "both"
+    });
+  }
+
+  // Clear/create a fresh demo lead for this phone number
+  await Lead.deleteOne({ businessId: business._id, phone: normalizedPhone });
+  const lead = await Lead.create({
+    businessId: business._id,
+    phone: normalizedPhone,
+    source: "missed_call",
+    status: "new",
+    urgency: "medium",
+    optedOut: false,
+    ownerNotificationStatus: "pending",
+    conversationStateJson: { questionStage: "service", turns: 0 }
+  });
+
+  const twiml = '<Response><Say>Simulating missed call from Chaturbo. Please hang up to receive your auto text.</Say><Delay length="4"/><Hangup/></Response>';
+  
+  console.log(`[Demo] Calling user ${normalizedPhone} to simulate missed call...`);
+  const callResult = await makeCall(normalizedPhone, twiml);
+
+  // If mock mode (no Twilio configured), trigger the SMS simulation immediately
+  const isMock = callResult.sid === "mock-call-sid";
+
+  // Send the missed call SMS 6 seconds later
+  const smsBody = buildMissedCallMessage(business.name);
+  setTimeout(async () => {
+    console.log(`[Demo] Sending rescue SMS to ${normalizedPhone}...`);
+    const smsResult = await sendSms(normalizedPhone, smsBody);
+    
+    await Message.create({
+      businessId: business._id,
+      leadId: lead._id,
+      direction: "outbound",
+      channel: "sms",
+      from: business.twilioPhoneNumber || "",
+      to: lead.phone,
+      body: smsBody,
+      mediaUrlsJson: [],
+      providerMessageSid: smsResult.sid,
+      status: smsResult.ok ? "sent" : "failed"
+    });
+
+    lead.lastMissedCallSmsAt = new Date();
+    lead.lastMessageAt = new Date();
+    await lead.save();
+  }, 6000);
+
+  return res.json({
+    success: true,
+    mode: isMock ? "mock" : "real",
+    businessId: business._id,
+    leadId: lead._id
+  });
 });
 
 export default router;

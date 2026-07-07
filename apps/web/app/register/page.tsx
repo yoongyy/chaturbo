@@ -46,11 +46,11 @@ export default function RegisterPage() {
 
   return (
     <AuthShell
-      eyebrow="Owner signup"
+      eyebrow="Portal signup"
       title="Create your contractor portal login."
       description="Set up an account for your team so you can review leads, manage businesses, and keep missed-call recovery simple."
       bullets={[
-        "One login for the owner team.",
+        "One login for your business.",
         "Manage leads and businesses.",
         "Start with the Pro workflow."
       ]}
