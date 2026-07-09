@@ -2,6 +2,18 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import clientPromise from "../../../lib/mongodb";
 
+// Point to the VPS API server serving static videos
+const VPS_VIDEO_BASE = "http://161.142.140.113:4000/uploads/videos";
+
+async function checkVideoExists(url: string): Promise<boolean> {
+  try {
+    const res = await fetch(url, { method: "HEAD", next: { revalidate: 60 } });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 async function getAudit(slug: string) {
   try {
     const client = await clientPromise;
@@ -12,7 +24,7 @@ async function getAudit(slug: string) {
 
     const target = await db.collection("audittargets").findOne({ _id: audit.auditTargetId });
 
-    // Increment view count (fire and forget — don't block page render)
+    // Increment view count (fire and forget)
     db.collection("audittargets").updateOne(
       { _id: audit.auditTargetId },
       { $inc: { viewsCount: 1 }, $set: { lastViewedAt: new Date() } }
@@ -52,9 +64,8 @@ export default async function PublicAuditPage({ params }: { params: { slug: stri
   const { audit, target } = data;
 
   const targetSlug = params.slug.replace("-audit", "");
-  // Videos are hosted on the VPS — link directly via absolute URL if we have them
-  // For Vercel, we show the script text fallback since videos are on the local server
-  const videoScript = audit.videoScript;
+  const videoUrl = `${VPS_VIDEO_BASE}/vps-${targetSlug}-final.mp4`;
+  const hasVideo = await checkVideoExists(videoUrl);
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(29,122,107,0.14),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(233,106,65,0.12),_transparent_30%),linear-gradient(180deg,_#07111b_0%,_#0f1724_22%,_#f6f1e7_22%,_#f6f1e7_100%)] px-4 py-6">
@@ -63,6 +74,17 @@ export default async function PublicAuditPage({ params }: { params: { slug: stri
           <p className="text-xs uppercase tracking-[0.28em] text-slate-400">Chaturbo Lead Rescue</p>
           <h1 className="mt-3 text-4xl font-semibold text-ink">Lead Rescue Audit for {target?.businessName || "This business"}</h1>
           <p className="mt-4 max-w-3xl text-base text-slate-600">{audit.summary}</p>
+
+          {hasVideo && (
+            <div className="mt-8 overflow-hidden rounded-[28px] border border-slate-200 bg-slate-950 shadow-[0_20px_50px_rgba(15,23,42,0.15)] relative aspect-video">
+              <video
+                src={videoUrl}
+                controls
+                playsInline
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
 
           <div className="mt-8 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
             <section className="rounded-[28px] bg-slate-950 p-6 text-white">
@@ -89,10 +111,10 @@ export default async function PublicAuditPage({ params }: { params: { slug: stri
             </section>
           </div>
 
-          {videoScript && (
+          {!hasVideo && audit.videoScript && (
             <section className="mt-8 rounded-[28px] border border-slate-200 bg-white p-6">
               <h2 className="text-xl font-semibold text-ink">What we found</h2>
-              <p className="mt-3 text-sm text-slate-600 whitespace-pre-wrap">{videoScript}</p>
+              <p className="mt-3 text-sm text-slate-600 whitespace-pre-wrap">{audit.videoScript}</p>
             </section>
           )}
 
