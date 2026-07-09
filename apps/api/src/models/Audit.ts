@@ -16,10 +16,11 @@ export interface IAudit extends Document {
   contactFormMessage: string;
   videoScript: string;
   publicPageHtml: string;
+  videoUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
-
+ 
 const auditSchema = new Schema<IAudit>(
   {
     ownerId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
@@ -36,7 +37,8 @@ const auditSchema = new Schema<IAudit>(
     facebookMessage: { type: String, required: true },
     contactFormMessage: { type: String, required: true },
     videoScript: { type: String, required: true },
-    publicPageHtml: { type: String, required: true }
+    publicPageHtml: { type: String, required: true },
+    videoUrl: { type: String }
   },
   { timestamps: true }
 );

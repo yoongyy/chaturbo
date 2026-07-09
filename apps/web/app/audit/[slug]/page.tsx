@@ -2,18 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import clientPromise from "../../../lib/mongodb";
 
-// Point to the VPS API server serving static videos
-const VPS_VIDEO_BASE = "http://161.142.140.113:4000/uploads/videos";
-
-async function checkVideoExists(url: string): Promise<boolean> {
-  try {
-    const res = await fetch(url, { method: "HEAD", next: { revalidate: 60 } });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
 async function getAudit(slug: string) {
   try {
     const client = await clientPromise;
@@ -38,6 +26,7 @@ async function getAudit(slug: string) {
         recommendationsJson: audit.recommendationsJson || [],
         videoScript: audit.videoScript || "",
         summary: audit.summary || "",
+        videoUrl: audit.videoUrl || "",
       },
       target: target ? {
         ...target,
@@ -63,10 +52,6 @@ export default async function PublicAuditPage({ params }: { params: { slug: stri
 
   const { audit, target } = data;
 
-  const targetSlug = params.slug.replace("-audit", "");
-  const videoUrl = `${VPS_VIDEO_BASE}/vps-${targetSlug}-final.mp4`;
-  const hasVideo = await checkVideoExists(videoUrl);
-
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(29,122,107,0.14),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(233,106,65,0.12),_transparent_30%),linear-gradient(180deg,_#07111b_0%,_#0f1724_22%,_#f6f1e7_22%,_#f6f1e7_100%)] px-4 py-6">
       <div className="mx-auto max-w-5xl">
@@ -75,15 +60,33 @@ export default async function PublicAuditPage({ params }: { params: { slug: stri
           <h1 className="mt-3 text-4xl font-semibold text-ink">Lead Rescue Audit for {target?.businessName || "This business"}</h1>
           <p className="mt-4 max-w-3xl text-base text-slate-600">{audit.summary}</p>
 
-          {hasVideo && (
-            <div className="mt-8 overflow-hidden rounded-[28px] border border-slate-200 bg-slate-950 shadow-[0_20px_50px_rgba(15,23,42,0.15)] relative aspect-video">
-              <video
-                src={videoUrl}
-                controls
-                playsInline
-                className="w-full h-full object-cover"
-              />
+          {audit.videoUrl ? (
+            <div className="mt-8 overflow-hidden rounded-[28px] border border-slate-800 bg-slate-950 p-8 shadow-[0_20px_50px_rgba(15,23,42,0.15)] relative flex flex-col items-center justify-center text-center min-h-[280px] bg-[radial-gradient(circle_at_center,_rgba(249,115,22,0.12),_transparent_75%)]">
+              <span className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-orange-500 text-white shadow-[0_0_30px_rgba(249,115,22,0.5)] transition hover:scale-105">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="h-10 w-10 ml-1">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </span>
+              <h3 className="mt-6 text-xl font-semibold text-white">Your Custom Video Audit is Ready</h3>
+              <p className="mt-2 max-w-md text-sm text-slate-400">
+                We recorded a 45-second live walkthrough of your website showing where calls are leaking.
+              </p>
+              <a
+                href={audit.videoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-orange-500 px-6 py-3.5 text-base font-bold text-slate-950 shadow-[0_16px_30px_rgba(249,115,22,0.3)] hover:bg-orange-400 transition"
+              >
+                Watch Video Walkthrough (Hosted on GoFile)
+              </a>
             </div>
+          ) : (
+            audit.videoScript && (
+              <section className="mt-8 rounded-[28px] border border-slate-200 bg-white p-6">
+                <h2 className="text-xl font-semibold text-ink">What we found</h2>
+                <p className="mt-3 text-sm text-slate-600 whitespace-pre-wrap">{audit.videoScript}</p>
+              </section>
+            )
           )}
 
           <div className="mt-8 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
@@ -110,13 +113,6 @@ export default async function PublicAuditPage({ params }: { params: { slug: stri
               </div>
             </section>
           </div>
-
-          {!hasVideo && audit.videoScript && (
-            <section className="mt-8 rounded-[28px] border border-slate-200 bg-white p-6">
-              <h2 className="text-xl font-semibold text-ink">What we found</h2>
-              <p className="mt-3 text-sm text-slate-600 whitespace-pre-wrap">{audit.videoScript}</p>
-            </section>
-          )}
 
           <section className="mt-8 rounded-[28px] border border-slate-200 bg-white p-6">
             <h2 className="text-xl font-semibold text-ink">Business details</h2>
