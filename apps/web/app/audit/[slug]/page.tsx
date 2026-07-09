@@ -1,18 +1,48 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { headers } from "next/headers";
-import type { Audit, AuditTarget } from "../../../lib/leadRescue";
-import { resolveApiBaseUrl } from "../../../lib/apiBaseUrl";
+import clientPromise from "../../../lib/mongodb";
 
-async function getAudit(slug: string): Promise<{ audit: Audit; target: AuditTarget | null } | null> {
-  const requestHeaders = headers();
-  const forwardedHost = requestHeaders.get("x-forwarded-host");
-  const host = forwardedHost || requestHeaders.get("host") || "";
-  const proto = requestHeaders.get("x-forwarded-proto") || "http";
-  const base = resolveApiBaseUrl(host ? `${proto}://${host}` : undefined);
-  const response = await fetch(`${base}/api/rescue/audits/public/${slug}`, { cache: "no-store" });
-  if (!response.ok) return null;
-  return response.json();
+async function getAudit(slug: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db();
+
+    const audit = await db.collection("audits").findOne({ slug });
+    if (!audit) return null;
+
+    const target = await db.collection("audittargets").findOne({ _id: audit.auditTargetId });
+
+    // Increment view count (fire and forget — don't block page render)
+    db.collection("audittargets").updateOne(
+      { _id: audit.auditTargetId },
+      { $inc: { viewsCount: 1 }, $set: { lastViewedAt: new Date() } }
+    ).catch(() => {});
+
+    return {
+      audit: {
+        ...audit,
+        id: audit._id.toString(),
+        problemsJson: audit.problemsJson || [],
+        recommendationsJson: audit.recommendationsJson || [],
+        videoScript: audit.videoScript || "",
+        summary: audit.summary || "",
+      },
+      target: target ? {
+        ...target,
+        id: target._id.toString(),
+        businessName: target.businessName || "",
+        industry: target.industry || "",
+        city: target.city || "",
+        state: target.state || "",
+        websiteUrl: target.websiteUrl || "",
+        ownerName: target.ownerName || "",
+        phone: target.phone || "",
+        email: target.email || "",
+      } : null
+    };
+  } catch {
+    return null;
+  }
 }
 
 export default async function PublicAuditPage({ params }: { params: { slug: string } }) {
@@ -20,6 +50,11 @@ export default async function PublicAuditPage({ params }: { params: { slug: stri
   if (!data) notFound();
 
   const { audit, target } = data;
+
+  const targetSlug = params.slug.replace("-audit", "");
+  // Videos are hosted on the VPS — link directly via absolute URL if we have them
+  // For Vercel, we show the script text fallback since videos are on the local server
+  const videoScript = audit.videoScript;
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(29,122,107,0.14),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(233,106,65,0.12),_transparent_30%),linear-gradient(180deg,_#07111b_0%,_#0f1724_22%,_#f6f1e7_22%,_#f6f1e7_100%)] px-4 py-6">
@@ -33,7 +68,7 @@ export default async function PublicAuditPage({ params }: { params: { slug: stri
             <section className="rounded-[28px] bg-slate-950 p-6 text-white">
               <h2 className="text-xl font-semibold">Key problems</h2>
               <ul className="mt-4 space-y-3 text-sm text-slate-300">
-                {audit.problemsJson.map((item) => (
+                {audit.problemsJson.map((item: string) => (
                   <li key={item} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                     {item}
                   </li>
@@ -48,11 +83,18 @@ export default async function PublicAuditPage({ params }: { params: { slug: stri
               </p>
               <div className="mt-5 rounded-2xl bg-white p-4 text-sm text-slate-700 shadow-sm">
                 <p className="font-semibold text-ink">Suggested next step</p>
-                <p className="mt-2">Book setup or reply to the email that sent this audit.</p>
-                <p className="mt-2">Call Kenny if you want the demo walked through live.</p>
+                <p className="mt-2">Reply to the email that sent this audit, or book a quick call below.</p>
+                <p className="mt-2">Kenny will set up a free test number for your line — no commitment.</p>
               </div>
             </section>
           </div>
+
+          {videoScript && (
+            <section className="mt-8 rounded-[28px] border border-slate-200 bg-white p-6">
+              <h2 className="text-xl font-semibold text-ink">What we found</h2>
+              <p className="mt-3 text-sm text-slate-600 whitespace-pre-wrap">{videoScript}</p>
+            </section>
+          )}
 
           <section className="mt-8 rounded-[28px] border border-slate-200 bg-white p-6">
             <h2 className="text-xl font-semibold text-ink">Business details</h2>
@@ -66,20 +108,15 @@ export default async function PublicAuditPage({ params }: { params: { slug: stri
             </div>
           </section>
 
-          <section className="mt-8 rounded-[28px] border border-slate-200 bg-white p-6">
-            <h2 className="text-xl font-semibold text-ink">Demo explanation</h2>
-            <p className="mt-3 text-sm text-slate-600 whitespace-pre-wrap">{audit.videoScript}</p>
-          </section>
-
           <section className="mt-8 flex flex-wrap gap-3">
-            <Link href="/login" className="rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white">
-              Book setup
-            </Link>
-            <a href={`mailto:${target?.email || ""}`} className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700">
-              Reply to email
+            <a
+              href="mailto:mail@chaturbo.com?subject=I want the free test number"
+              className="rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white"
+            >
+              Reply YES — Get Free Test Number
             </a>
-            <a href="tel:+12125550199" className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700">
-              Call Kenny
+            <a href="https://chaturbo.com/free-audit" className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700">
+              Request a Full Audit
             </a>
           </section>
         </div>

@@ -14,6 +14,7 @@ import overviewRoutes from "./routes/rescue/overviewRoutes";
 import rescueLeadRoutes from "./routes/rescue/leadRoutes";
 import auditRoutes from "./routes/rescue/auditRoutes";
 import twilioRoutes from "./routes/twilioRoutes";
+import marketingRoutes from "./routes/marketingRoutes";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -69,6 +70,7 @@ app.use("/workflow-drafts", workflowDraftRoutes);
 app.use("/workflows", workflowRoutes);
 app.use("/credits", creditsRoutes);
 app.use("/agent", agentRoutes);
+app.use("/api/marketing", marketingRoutes);
 
 app.use(errorHandler);
 

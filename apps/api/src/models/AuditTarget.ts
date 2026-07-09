@@ -24,10 +24,12 @@ export interface IAuditTarget extends Document {
   extractedDescription?: string;
   extractedPhoneNumbers: string[];
   status: "new" | "contacted" | "replied" | "demo_booked" | "converted";
+  viewsCount: number;
+  lastViewedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
-
+ 
 const auditTargetSchema = new Schema<IAuditTarget>(
   {
     ownerId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
@@ -50,6 +52,8 @@ const auditTargetSchema = new Schema<IAuditTarget>(
     extractedTitle: { type: String },
     extractedDescription: { type: String },
     extractedPhoneNumbers: [{ type: String }],
+    viewsCount: { type: Number, default: 0 },
+    lastViewedAt: { type: Date },
     status: {
       type: String,
       enum: ["new", "contacted", "replied", "demo_booked", "converted"],

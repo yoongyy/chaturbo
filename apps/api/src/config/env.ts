@@ -20,8 +20,8 @@ const schema = z.object({
   TWILIO_MESSAGING_SERVICE_SID: z.string().optional(),
   TWILIO_DEFAULT_FROM_NUMBER: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
-  FROM_EMAIL: z.string().email().optional(),
-  ADMIN_EMAIL: z.string().email().optional(),
+  FROM_EMAIL: z.string().email().optional().or(z.literal("")),
+  ADMIN_EMAIL: z.string().email().optional().or(z.literal("")),
   ADMIN_PASSWORD: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
@@ -30,7 +30,10 @@ const schema = z.object({
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   HEYGEN_API_KEY: z.string().optional(),
-  TAVUS_API_KEY: z.string().optional()
+  TAVUS_API_KEY: z.string().optional(),
+  OPENROUTER_API_KEY: z.string().optional(),
+  OPENROUTER_BASE_URL: z.string().url().default("https://openrouter.ai/api/v1"),
+  AYRSHARE_API_KEY: z.string().optional()
 });
 
 type Env = z.infer<typeof schema>;
@@ -69,7 +72,10 @@ export function getEnv(): Env {
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     HEYGEN_API_KEY: process.env.HEYGEN_API_KEY,
-    TAVUS_API_KEY: process.env.TAVUS_API_KEY
+    TAVUS_API_KEY: process.env.TAVUS_API_KEY,
+    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+    OPENROUTER_BASE_URL: process.env.OPENROUTER_BASE_URL,
+    AYRSHARE_API_KEY: process.env.AYRSHARE_API_KEY
   });
 
   if (!parsed.success) {

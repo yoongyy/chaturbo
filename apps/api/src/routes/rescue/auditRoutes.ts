@@ -35,7 +35,13 @@ router.get("/public/:slug", async (req, res) => {
     return sendError(res, 404, "Audit not found");
   }
 
-  const target = await AuditTarget.findById(audit.auditTargetId).lean();
+  // Increment view count and log last view date
+  const target = await AuditTarget.findByIdAndUpdate(
+    audit.auditTargetId,
+    { $inc: { viewsCount: 1 }, $set: { lastViewedAt: new Date() } },
+    { new: true }
+  ).lean();
+
   return res.json({
     audit: serializeDoc(audit),
     target: target ? serializeDoc(target) : null
