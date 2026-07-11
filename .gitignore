@@ -12,6 +12,8 @@ packages/cli/.chaturbo
 .run-logs/
 .playwright-mcp/
 apps/api/data/*.json
+chaturbo_contractor_leads.csv
+scratch/videos/
 
 apps/web/tsconfig.tsbuildinfo
 .vercel
