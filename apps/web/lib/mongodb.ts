@@ -10,20 +10,22 @@ declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
-if (!uri) {
-  throw new Error("Please add MONGO_URI to your .env file");
-}
-
-if (process.env.NODE_ENV === "development") {
-  // In development, reuse the client across hot-reloads
-  if (!global._mongoClientPromise) {
+if (uri) {
+  if (process.env.NODE_ENV === "development") {
+    if (!global._mongoClientPromise) {
+      client = new MongoClient(uri);
+      global._mongoClientPromise = client.connect();
+    }
+    clientPromise = global._mongoClientPromise;
+  } else {
     client = new MongoClient(uri);
-    global._mongoClientPromise = client.connect();
+    clientPromise = client.connect();
   }
-  clientPromise = global._mongoClientPromise;
 } else {
-  client = new MongoClient(uri);
-  clientPromise = client.connect();
+  // Defer throwing to prevent build-time failures when env variables are absent
+  clientPromise = Promise.reject(
+    new Error("Please add MONGO_URI or MONGODB_URI to your environment variables.")
+  );
 }
 
 export default clientPromise;

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import clientPromise from "../../../lib/mongodb";
 
+export const dynamic = "force-dynamic";
+
 async function getAudit(slug: string) {
   try {
     const client = await clientPromise;
