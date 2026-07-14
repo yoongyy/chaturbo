@@ -40,6 +40,16 @@ export async function runDailyPublisher(forcedTopic?: string): Promise<PublishRe
   try {
     await generateMarketingCard(post.statisticTitle, post.statisticValue, outputPath);
     console.log(`[SAM-Publisher] Card rendered and saved to: ${outputPath}`);
+
+    // Save pending post details to a temp JSON file for the auto-poster
+    const pendingPostPath = path.join(__dirname, "../../../../../scratch/pending_post.json");
+    fs.writeFileSync(pendingPostPath, JSON.stringify({
+      imagePath: outputPath,
+      caption: post.caption,
+      hashtags: post.hashtags
+    }, null, 2), "utf-8");
+    console.log(`[SAM-Publisher] Pending post info saved to: ${pendingPostPath}`);
+
   } catch (err) {
     console.error("[SAM-Publisher] Failed to render image card:", err);
     return {

@@ -67,6 +67,79 @@ router.post("/voice/incoming", async (req, res) => {
   const to = params.To || "";
   const callSid = params.CallSid || "";
 
+  // Check if this is the dedicated live demo number
+  const demoNum = process.env.TWILIO_DEMO_NUMBER;
+  if (demoNum && normalizePhone(to) === normalizePhone(demoNum)) {
+    console.log(`[Live Demo] Received inbound call from ${from} to demo line ${to}`);
+    
+    // 1. Return TwiML to speak a message and hang up
+    const twilio = require("twilio");
+    const voiceResponse = new twilio.twiml.VoiceResponse();
+    voiceResponse.say({ voice: "alice" }, "Thanks for testing Chaturbo lead rescue. Hang up now to see how fast we text you back!");
+    voiceResponse.hangup();
+    const voiceResponseTwiML = voiceResponse.toString();
+
+    // 2. Clear/create a fresh demo lead for this phone number under Apex Roofing AI
+    const { User } = require("../models/User");
+    let admin = await User.findOne({ role: "admin" });
+    if (!admin) admin = await User.findOne({});
+    
+    if (admin) {
+      let business = await Business.findOne({ name: "Apex Roofing AI" });
+      if (!business) {
+        business = await Business.create({
+          ownerId: admin._id,
+          ownerUid: admin.ownerUid || "admin",
+          name: "Apex Roofing AI",
+          slug: "apex-roofing-ai",
+          industry: "roofing",
+          twilioPhoneNumber: normalizePhone(to),
+          ownerMobile: admin.mobile || normalizePhone(from),
+          ownerEmail: admin.email,
+          notificationMethod: "both"
+        });
+      }
+
+      await Lead.deleteOne({ businessId: business._id, phone: normalizePhone(from) });
+      const lead = await Lead.create({
+        businessId: business._id,
+        phone: normalizePhone(from),
+        source: "missed_call",
+        status: "new",
+        urgency: "medium",
+        optedOut: false,
+        ownerNotificationStatus: "pending",
+        conversationStateJson: { questionStage: "service", turns: 0 }
+      });
+
+      // Send the rescue SMS 3 seconds later
+      const smsBody = "Hey! This is Kenny from Chaturbo. If this was your actual business, you would have just saved a lead who hung up! Reply YES to this text to get a free test number configured on your business line.";
+      setTimeout(async () => {
+        console.log(`[Live Demo] Sending rescue SMS to ${from}...`);
+        const smsResult = await sendSms(normalizePhone(from), smsBody);
+        
+        await Message.create({
+          businessId: business._id,
+          leadId: lead._id,
+          direction: "outbound",
+          channel: "sms",
+          from: normalizePhone(to),
+          to: normalizePhone(from),
+          body: smsBody,
+          mediaUrlsJson: [],
+          providerMessageSid: smsResult.sid,
+          status: smsResult.ok ? "sent" : "failed"
+        });
+
+        lead.lastMissedCallSmsAt = new Date();
+        lead.lastMessageAt = new Date();
+        await lead.save();
+      }, 3000);
+    }
+
+    return res.send(voiceResponseTwiML);
+  }
+
   const business = await findBusinessByNumber(to);
   if (!business) {
     return res.send(getVoiceTwiml("Sorry, this number is not configured.", "", `${getAppUrl()}/api/twilio/voice/status`));

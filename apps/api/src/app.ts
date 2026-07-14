@@ -44,6 +44,9 @@ app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: false }));
 app.use(morgan("dev"));
 
+import path from "path";
+app.use("/uploads", express.static(path.join(process.cwd(), "apps/web/public/uploads")));
+
 // Serverless-safe DB bootstrap: connect lazily per invocation and fail gracefully.
 app.use(async (_req, res, next) => {
   try {

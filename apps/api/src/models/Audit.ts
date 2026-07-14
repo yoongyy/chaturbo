@@ -17,6 +17,8 @@ export interface IAudit extends Document {
   videoScript: string;
   publicPageHtml: string;
   videoUrl?: string;
+  rating?: number;
+  reviewCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,7 +40,9 @@ const auditSchema = new Schema<IAudit>(
     contactFormMessage: { type: String, required: true },
     videoScript: { type: String, required: true },
     publicPageHtml: { type: String, required: true },
-    videoUrl: { type: String }
+    videoUrl: { type: String },
+    rating: { type: Number },
+    reviewCount: { type: Number }
   },
   { timestamps: true }
 );
