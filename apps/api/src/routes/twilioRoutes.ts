@@ -56,6 +56,16 @@ function buildMissedCallMessage(businessName: string): string {
   return `Hi, this is ${businessName}. Sorry we missed your call. What service do you need, and what city are you in? You can also send a photo here. Reply STOP to opt out.`;
 }
 
+router.all("/voice/ai-sales", (_req, res) => {
+  const twilio = require("twilio");
+  const voiceResponse = new twilio.twiml.VoiceResponse();
+  const connect = voiceResponse.connect();
+  const streamUrl = process.env.TWILIO_WS_STREAM_URL || "wss://chaturbo-api.vercel.app/api/twilio/voice/live-sales";
+  connect.stream({ url: streamUrl });
+  res.type("text/xml");
+  return res.send(voiceResponse.toString());
+});
+
 router.post("/voice/incoming", async (req, res) => {
   const params = req.body as Record<string, string>;
   const fullUrl = `${getAppUrl()}${req.originalUrl}`;
